@@ -4,8 +4,10 @@
 #include "overlays.h"
 #include "stroke.h"
 #include "session.h"
+#include "persistence.h"
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
 
 /* ── Forward decls ──────────────────────────────────────────────────────── */
 static void update_toolbar_state(AppState *app);
@@ -341,7 +343,9 @@ static GtkWidget *g_overlay_label;
 static GtkWidget *g_overlay_cat_btns[3];
 static GtkWidget *g_overlay_nav_box;
 static GtkWidget *g_layout_btns[LAYOUT_COUNT];
-static GtkWidget *g_right_slot_btns[2];  /* cycle buttons for right column */
+static GtkWidget *g_right_slot_btns[2];
+static GtkWidget *g_mode_btns[APP_MODE_COUNT];
+static GtkWidget *g_file_status_label;   /* shared status in file tab + mode strip */
 static AppState  *g_app_ref;
 
 static void update_toolbar_state(AppState *app)
@@ -426,6 +430,45 @@ static void update_toolbar_state(AppState *app)
             gtk_label_set_text(GTK_LABEL(g_overlay_label), "Off");
         }
     }
+
+    for (int i = 0; i < APP_MODE_COUNT; i++) {
+        if (!g_mode_btns[i]) continue;
+        gtk_widget_set_name(g_mode_btns[i],
+            (AppMode)i == app->current_mode ? "mode-btn-active" : "mode-btn");
+    }
+}
+
+/* ── Auto-save ───────────────────────────────────────────────────────────── */
+void window_autosave(AppState *app)
+{
+    if (!app->session_file[0]) return;
+    gboolean ok = persistence_save(app);
+    if (ok) ok = session_export_subj_png(app);
+    if (g_file_status_label) {
+        if (ok) {
+            time_t now = time(NULL);
+            struct tm *t = localtime(&now);
+            char msg[32];
+            strftime(msg, sizeof(msg), "Saved %H:%M", t);
+            gtk_label_set_text(GTK_LABEL(g_file_status_label), msg);
+        } else {
+            gtk_label_set_text(GTK_LABEL(g_file_status_label), "Save failed");
+        }
+    }
+}
+
+/* ── Mode strip callback ─────────────────────────────────────────────────── */
+static void on_mode_clicked(GtkButton *btn, gpointer data)
+{
+    (void)btn;
+    gpointer *pair  = data;
+    AppState  *app  = pair[0];
+    AppMode    mode = (AppMode)(gintptr)pair[1];
+    if (app->current_mode == mode) return;
+    window_autosave(app);
+    app->current_mode = mode;
+    update_toolbar_state(app);
+    canvas_invalidate(app);
 }
 
 /* ── Shared button factory ───────────────────────────────────────────────── */
@@ -474,8 +517,8 @@ static void apply_css(void)
         "  background: #e0e0e0; color: #444; border: 1px solid #bbb; border-radius: 4px; }"
         "#zoom-btn:hover { background: #d0d0d0; }"
 
-        /* ── Tab bar ── */
-        "#sidebar { background: #1e1e1e; min-width: 110px; max-width: 110px; }"
+        /* ── Sidebar + tab bar ── */
+        "#sidebar { background: #1e1e1e; min-width: 150px; max-width: 150px; }"
         "#tab-bar { background: #151515; padding: 2px 2px 0 2px; }"
         "#tab-btn { background: #2a2a2a; color: #777; font-size: 11px;"
         "  border-radius: 4px 4px 0 0; min-height: 34px; min-width: 0;"
@@ -484,8 +527,35 @@ static void apply_css(void)
         "  border-radius: 4px 4px 0 0; min-height: 34px; min-width: 0;"
         "  border: none; padding: 0 4px; }"
 
-        /* ── File tab ── */
+        /* ── Mode strip ── */
+        "#mode-strip { background: #111118; padding: 3px; }"
+        "#mode-btn { background: #222230; color: #667; font-size: 12px; font-weight: bold;"
+        "  border-radius: 4px; min-height: 34px; min-width: 0; border: 1px solid #333348; }"
+        "#mode-btn:hover { background: #2a2a40; color: #99a; }"
+        "#mode-btn-active { background: #1a3a5a; color: #8cf; font-size: 12px; font-weight: bold;"
+        "  border-radius: 4px; min-height: 34px; min-width: 0; border: 2px solid #3a7aaa; }"
+
+        /* ── File tab + launch dialog ── */
         "#file-status { color: #7bc; font-size: 10px; padding: 4px 2px; }"
+        "#launch-win { background: #1a1a2a; }"
+        "#launch-title { font-size: 18px; font-weight: bold; color: #cdf;"
+        "  margin-bottom: 6px; }"
+        "#launch-label { font-size: 11px; color: #888; margin-top: 6px; }"
+        "#launch-entry { font-size: 14px; min-height: 40px; background: #252535;"
+        "  color: #dde; border: 1px solid #445; border-radius: 4px; padding: 0 8px; }"
+        "#launch-row { background: #252535; border-radius: 4px; padding: 6px 10px; "
+        "  margin: 1px 0; }"
+        "#launch-row:selected, #launch-row:hover { background: #2a3a5a; }"
+        "#launch-row-id { font-size: 13px; font-weight: bold; color: #8cf; }"
+        "#launch-row-label { font-size: 12px; color: #bbc; }"
+        "#launch-row-date { font-size: 11px; color: #667; }"
+        "#launch-btn { font-size: 14px; min-height: 48px;"
+        "  background: #1a3a5a; color: #cdf; border: 1px solid #3a6a9a;"
+        "  border-radius: 6px; }"
+        "#launch-btn:hover { background: #2a4a6a; color: #fff; }"
+        "#launch-btn-dim { font-size: 14px; min-height: 48px;"
+        "  background: #252535; color: #556; border: 1px solid #334;"
+        "  border-radius: 6px; }"
 
         /* ── Note wizard ── */
         "#wiz-title { font-size: 15px; font-weight: bold; color: #ddd;"
@@ -512,7 +582,6 @@ static void apply_css(void)
 #define N_TABS 2
 static GtkWidget *g_tab_stack;
 static GtkWidget *g_tab_btns[N_TABS];
-static GtkWidget *g_file_status;
 
 static const char *TAB_NAMES[N_TABS] = { "draw", "file" };
 
@@ -545,13 +614,20 @@ static void do_export(const char *ext)
         const char *name = strrchr(path, '/');
         name = name ? name + 1 : path;
         char msg[1100];
-        snprintf(msg, sizeof(msg), "Saved:\n%s", name);
-        gtk_label_set_text(GTK_LABEL(g_file_status), msg);
+        snprintf(msg, sizeof(msg), "Exported:\n%s", name);
+        if (g_file_status_label)
+            gtk_label_set_text(GTK_LABEL(g_file_status_label), msg);
     } else {
-        gtk_label_set_text(GTK_LABEL(g_file_status), "Save failed");
+        if (g_file_status_label)
+            gtk_label_set_text(GTK_LABEL(g_file_status_label), "Export failed");
     }
 }
 
+static void on_save_session(GtkButton *b, gpointer d)
+{
+    (void)b; (void)d;
+    if (g_app_ref) window_autosave(g_app_ref);
+}
 static void on_save_svg(GtkButton *b, gpointer d) { (void)b; (void)d; do_export("svg"); }
 static void on_save_png(GtkButton *b, gpointer d) { (void)b; (void)d; do_export("png"); }
 static void on_save_pdf(GtkButton *b, gpointer d) { (void)b; (void)d; do_export("pdf"); }
@@ -999,34 +1075,80 @@ static GtkWidget *build_file_tab(void)
     gtk_widget_set_margin_start(box, 4);
     gtk_widget_set_margin_end(box, 4);
 
-    GtkWidget *lbl = gtk_label_new("Save");
-    gtk_widget_set_name(lbl, "section-label");
-    gtk_box_append(GTK_BOX(box), lbl);
+    /* Session save */
+    GtkWidget *lbl1 = gtk_label_new("Session");
+    gtk_widget_set_name(lbl1, "section-label");
+    gtk_box_append(GTK_BOX(box), lbl1);
 
-    GtkWidget *svg_btn = make_btn("SVG", 60, 44);
+    GtkWidget *save_btn = make_btn("Save", -1, 44);
+    gtk_widget_set_hexpand(save_btn, TRUE);
+    g_signal_connect(save_btn, "clicked", G_CALLBACK(on_save_session), NULL);
+    gtk_box_append(GTK_BOX(box), save_btn);
+
+    gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
+
+    /* Legacy image exports */
+    GtkWidget *lbl2 = gtk_label_new("Export");
+    gtk_widget_set_name(lbl2, "section-label");
+    gtk_box_append(GTK_BOX(box), lbl2);
+
+    GtkWidget *exp_grid = make_grid2col();
+    GtkWidget *svg_btn = make_btn("SVG", -1, 38);
+    gtk_widget_set_hexpand(svg_btn, TRUE);
     g_signal_connect(svg_btn, "clicked", G_CALLBACK(on_save_svg), NULL);
-    gtk_box_append(GTK_BOX(box), svg_btn);
+    gtk_grid_attach(GTK_GRID(exp_grid), svg_btn, 0, 0, 1, 1);
 
-    GtkWidget *png_btn = make_btn("PNG", 60, 44);
+    GtkWidget *png_btn = make_btn("PNG", -1, 38);
+    gtk_widget_set_hexpand(png_btn, TRUE);
     g_signal_connect(png_btn, "clicked", G_CALLBACK(on_save_png), NULL);
-    gtk_box_append(GTK_BOX(box), png_btn);
+    gtk_grid_attach(GTK_GRID(exp_grid), png_btn, 1, 0, 1, 1);
 
-    GtkWidget *pdf_btn = make_btn("PDF", 60, 44);
+    GtkWidget *pdf_btn = make_btn("PDF", -1, 38);
+    gtk_widget_set_hexpand(pdf_btn, TRUE);
     g_signal_connect(pdf_btn, "clicked", G_CALLBACK(on_save_pdf), NULL);
-    gtk_box_append(GTK_BOX(box), pdf_btn);
+    gtk_grid_attach(GTK_GRID(exp_grid), pdf_btn, 0, 1, 2, 1);
+    gtk_box_append(GTK_BOX(box), exp_grid);
 
     GtkWidget *spacer = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_widget_set_vexpand(spacer, TRUE);
     gtk_box_append(GTK_BOX(box), spacer);
 
-    g_file_status = gtk_label_new("");
-    gtk_widget_set_name(g_file_status, "file-status");
-    gtk_label_set_wrap(GTK_LABEL(g_file_status), TRUE);
-    gtk_label_set_justify(GTK_LABEL(g_file_status), GTK_JUSTIFY_CENTER);
-    gtk_widget_set_margin_bottom(g_file_status, 6);
-    gtk_box_append(GTK_BOX(box), g_file_status);
+    g_file_status_label = gtk_label_new("");
+    gtk_widget_set_name(g_file_status_label, "file-status");
+    gtk_label_set_wrap(GTK_LABEL(g_file_status_label), TRUE);
+    gtk_label_set_justify(GTK_LABEL(g_file_status_label), GTK_JUSTIFY_CENTER);
+    gtk_widget_set_margin_bottom(g_file_status_label, 6);
+    gtk_box_append(GTK_BOX(box), g_file_status_label);
 
     return box;
+}
+
+/* ── Mode strip ──────────────────────────────────────────────────────────── */
+static GtkWidget *build_mode_strip(AppState *app)
+{
+    GtkWidget *strip = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
+    gtk_widget_set_name(strip, "mode-strip");
+    gtk_widget_set_margin_start(strip, 3);
+    gtk_widget_set_margin_end(strip, 3);
+    gtk_widget_set_margin_top(strip, 4);
+    gtk_widget_set_margin_bottom(strip, 2);
+
+    static const char *labels[APP_MODE_COUNT] = { "Sx", "Obj", "Rpt" };
+    static gpointer    pairs[APP_MODE_COUNT][2];
+
+    for (int i = 0; i < APP_MODE_COUNT; i++) {
+        GtkWidget *btn = gtk_button_new_with_label(labels[i]);
+        gtk_widget_set_name(btn,
+            (AppMode)i == app->current_mode ? "mode-btn-active" : "mode-btn");
+        gtk_widget_set_hexpand(btn, TRUE);
+        gtk_widget_set_size_request(btn, -1, 34);
+        pairs[i][0] = app;
+        pairs[i][1] = (gpointer)(gintptr)i;
+        g_signal_connect(btn, "clicked", G_CALLBACK(on_mode_clicked), pairs[i]);
+        g_mode_btns[i] = btn;
+        gtk_box_append(GTK_BOX(strip), btn);
+    }
+    return strip;
 }
 
 /* ── Build tabbed sidebar ────────────────────────────────────────────────── */
@@ -1034,8 +1156,12 @@ static GtkWidget *build_sidebar(AppState *app)
 {
     GtkWidget *outer = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_widget_set_name(outer, "sidebar");
-    gtk_widget_set_size_request(outer, 110, -1);
+    gtk_widget_set_size_request(outer, 150, -1);
     gtk_widget_set_hexpand(outer, FALSE);
+
+    /* Mode strip */
+    gtk_box_append(GTK_BOX(outer), build_mode_strip(app));
+    gtk_box_append(GTK_BOX(outer), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
 
     /* Tab bar */
     GtkWidget *tab_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
@@ -1082,7 +1208,231 @@ static GtkWidget *build_sidebar(AppState *app)
     return outer;
 }
 
+/* ── Launch dialog ───────────────────────────────────────────────────────── */
+
+typedef struct {
+    AppState       *app;
+    GtkApplication *gapp;
+    GtkWidget      *window;
+    GtkWidget      *id_entry;
+    GtkWidget      *label_entry;
+    GtkWidget      *open_btn;
+    char            selected_path[512];
+} LaunchData;
+
+static void launch_commit_new(GtkButton *btn, gpointer data)
+{
+    (void)btn;
+    LaunchData *ld = data;
+    const char *id  = gtk_editable_get_text(GTK_EDITABLE(ld->id_entry));
+    const char *lbl = gtk_editable_get_text(GTK_EDITABLE(ld->label_entry));
+    if (!id || id[0] == '\0') id = "XX";
+    persistence_build_paths(ld->app, id, lbl);
+    GtkWidget *launch_win = ld->window;
+    window_create(ld->app, ld->gapp);
+    gtk_window_destroy(GTK_WINDOW(launch_win));
+    g_free(ld);
+}
+
+static void launch_commit_open(GtkButton *btn, gpointer data)
+{
+    (void)btn;
+    LaunchData *ld = data;
+    if (!ld->selected_path[0]) return;
+    if (!persistence_load(ld->app, ld->selected_path)) return;
+    GtkWidget *launch_win = ld->window;
+    window_create(ld->app, ld->gapp);
+    gtk_window_destroy(GTK_WINDOW(launch_win));
+    g_free(ld);
+}
+
+static void on_recent_row_selected(GtkListBox *box, GtkListBoxRow *row, gpointer data)
+{
+    (void)box;
+    LaunchData *ld = data;
+    if (!row) {
+        ld->selected_path[0] = '\0';
+        gtk_widget_set_name(ld->open_btn, "launch-btn-dim");
+        return;
+    }
+    /* Retrieve stored path from row widget data */
+    const char *path = g_object_get_data(G_OBJECT(row), "session-path");
+    if (path) {
+        strncpy(ld->selected_path, path, sizeof(ld->selected_path) - 1);
+        gtk_widget_set_name(ld->open_btn, "launch-btn");
+
+        /* Pre-fill entries from row data */
+        const char *pid = g_object_get_data(G_OBJECT(row), "patient-id");
+        const char *lbl = g_object_get_data(G_OBJECT(row), "session-label");
+        if (pid) gtk_editable_set_text(GTK_EDITABLE(ld->id_entry),    pid);
+        if (lbl) gtk_editable_set_text(GTK_EDITABLE(ld->label_entry), lbl);
+    }
+}
+
+static void on_recent_row_activated(GtkListBox *box, GtkListBoxRow *row, gpointer data)
+{
+    (void)box;
+    /* Double-tap/click → select + open immediately */
+    on_recent_row_selected(box, row, data);
+    LaunchData *ld = data;
+    if (ld->selected_path[0])
+        launch_commit_open(NULL, ld);
+}
+
+void window_show_launch(AppState *app, GtkApplication *gapp)
+{
+    apply_css();
+
+    LaunchData *ld = g_new0(LaunchData, 1);
+    ld->app  = app;
+    ld->gapp = gapp;
+
+    ld->window = gtk_application_window_new(gapp);
+    gtk_widget_set_name(ld->window, "launch-win");
+    gtk_window_set_title(GTK_WINDOW(ld->window), "PhysioChart");
+    gtk_window_set_default_size(GTK_WINDOW(ld->window), 460, 560);
+    gtk_window_set_resizable(GTK_WINDOW(ld->window), FALSE);
+
+    GtkWidget *outer = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
+    gtk_widget_set_margin_top(outer, 20);
+    gtk_widget_set_margin_bottom(outer, 20);
+    gtk_widget_set_margin_start(outer, 24);
+    gtk_widget_set_margin_end(outer, 24);
+
+    /* Title */
+    GtkWidget *title = gtk_label_new("PhysioChart");
+    gtk_widget_set_name(title, "launch-title");
+    gtk_label_set_xalign(GTK_LABEL(title), 0.0);
+    gtk_box_append(GTK_BOX(outer), title);
+
+    /* Patient ID */
+    GtkWidget *id_lbl = gtk_label_new("Patient ID (initials or code)");
+    gtk_widget_set_name(id_lbl, "launch-label");
+    gtk_label_set_xalign(GTK_LABEL(id_lbl), 0.0);
+    gtk_box_append(GTK_BOX(outer), id_lbl);
+    ld->id_entry = gtk_entry_new();
+    gtk_widget_set_name(ld->id_entry, "launch-entry");
+    gtk_entry_set_max_length(GTK_ENTRY(ld->id_entry), 16);
+    gtk_entry_set_placeholder_text(GTK_ENTRY(ld->id_entry), "e.g. JB");
+    gtk_widget_set_hexpand(ld->id_entry, TRUE);
+    gtk_box_append(GTK_BOX(outer), ld->id_entry);
+
+    /* Session label */
+    GtkWidget *lbl_lbl = gtk_label_new("Session label (optional)");
+    gtk_widget_set_name(lbl_lbl, "launch-label");
+    gtk_label_set_xalign(GTK_LABEL(lbl_lbl), 0.0);
+    gtk_box_append(GTK_BOX(outer), lbl_lbl);
+    ld->label_entry = gtk_entry_new();
+    gtk_widget_set_name(ld->label_entry, "launch-entry");
+    gtk_entry_set_max_length(GTK_ENTRY(ld->label_entry), 60);
+    gtk_entry_set_placeholder_text(GTK_ENTRY(ld->label_entry),
+                                   "e.g. Initial assessment");
+    gtk_widget_set_hexpand(ld->label_entry, TRUE);
+    gtk_box_append(GTK_BOX(outer), ld->label_entry);
+
+    /* New session button */
+    GtkWidget *new_btn = gtk_button_new_with_label("New Session");
+    gtk_widget_set_name(new_btn, "launch-btn");
+    gtk_widget_set_size_request(new_btn, -1, 48);
+    g_signal_connect(new_btn, "clicked", G_CALLBACK(launch_commit_new), ld);
+    gtk_box_append(GTK_BOX(outer), new_btn);
+
+    gtk_box_append(GTK_BOX(outer), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
+
+    /* Recent sessions */
+    GtkWidget *rec_lbl = gtk_label_new("Recent sessions");
+    gtk_widget_set_name(rec_lbl, "launch-label");
+    gtk_label_set_xalign(GTK_LABEL(rec_lbl), 0.0);
+    gtk_box_append(GTK_BOX(outer), rec_lbl);
+
+    GtkWidget *scroll = gtk_scrolled_window_new();
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll),
+                                   GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+    gtk_widget_set_size_request(scroll, -1, 200);
+    gtk_widget_set_vexpand(scroll, TRUE);
+
+    GtkWidget *list = gtk_list_box_new();
+    gtk_list_box_set_selection_mode(GTK_LIST_BOX(list), GTK_SELECTION_SINGLE);
+    g_signal_connect(list, "row-selected",  G_CALLBACK(on_recent_row_selected),  ld);
+    g_signal_connect(list, "row-activated", G_CALLBACK(on_recent_row_activated), ld);
+
+    /* Populate recent sessions */
+    PersistRecent recents[PERSIST_RECENT_MAX];
+    int n_recent = persistence_scan_recent(recents, PERSIST_RECENT_MAX);
+    for (int i = 0; i < n_recent; i++) {
+        PersistRecent *r = &recents[i];
+
+        /* Format date */
+        char date_str[32] = "";
+        if (r->modified > 0) {
+            struct tm *t = localtime(&r->modified);
+            strftime(date_str, sizeof(date_str), "%d %b %Y %H:%M", t);
+        }
+
+        /* Row box */
+        GtkWidget *row_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+        gtk_widget_set_name(row_box, "launch-row");
+        gtk_widget_set_margin_top(row_box, 2);
+        gtk_widget_set_margin_bottom(row_box, 2);
+
+        /* Top line: ID + date */
+        GtkWidget *top = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+        GtkWidget *id_w = gtk_label_new(r->patient_id);
+        gtk_widget_set_name(id_w, "launch-row-id");
+        gtk_label_set_xalign(GTK_LABEL(id_w), 0.0);
+        GtkWidget *date_w = gtk_label_new(date_str);
+        gtk_widget_set_name(date_w, "launch-row-date");
+        gtk_label_set_xalign(GTK_LABEL(date_w), 1.0);
+        gtk_widget_set_hexpand(date_w, TRUE);
+        gtk_box_append(GTK_BOX(top), id_w);
+        gtk_box_append(GTK_BOX(top), date_w);
+        gtk_box_append(GTK_BOX(row_box), top);
+
+        /* Label line (if present) */
+        if (r->session_label[0]) {
+            GtkWidget *lbl_w = gtk_label_new(r->session_label);
+            gtk_widget_set_name(lbl_w, "launch-row-label");
+            gtk_label_set_xalign(GTK_LABEL(lbl_w), 0.0);
+            gtk_label_set_ellipsize(GTK_LABEL(lbl_w), PANGO_ELLIPSIZE_END);
+            gtk_box_append(GTK_BOX(row_box), lbl_w);
+        }
+
+        GtkWidget *list_row = gtk_list_box_row_new();
+        gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(list_row), row_box);
+
+        /* Store path + metadata on the row for retrieval on selection */
+        char *path_copy = g_strdup(r->path);
+        char *id_copy   = g_strdup(r->patient_id);
+        char *lbl_copy  = g_strdup(r->session_label);
+        g_object_set_data_full(G_OBJECT(list_row), "session-path", path_copy, g_free);
+        g_object_set_data_full(G_OBJECT(list_row), "patient-id",   id_copy,   g_free);
+        g_object_set_data_full(G_OBJECT(list_row), "session-label",lbl_copy,  g_free);
+
+        gtk_list_box_append(GTK_LIST_BOX(list), list_row);
+    }
+
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), list);
+    gtk_box_append(GTK_BOX(outer), scroll);
+
+    /* Open selected button */
+    ld->open_btn = gtk_button_new_with_label("Open Selected");
+    gtk_widget_set_name(ld->open_btn, "launch-btn-dim");
+    gtk_widget_set_size_request(ld->open_btn, -1, 48);
+    g_signal_connect(ld->open_btn, "clicked", G_CALLBACK(launch_commit_open), ld);
+    gtk_box_append(GTK_BOX(outer), ld->open_btn);
+
+    gtk_window_set_child(GTK_WINDOW(ld->window), outer);
+    gtk_window_present(GTK_WINDOW(ld->window));
+}
+
 /* ── Public: create main window ─────────────────────────────────────────── */
+static void on_main_window_close(GtkWidget *w, gpointer data)
+{
+    (void)w;
+    AppState *app = data;
+    window_autosave(app);
+}
+
 void window_create(AppState *app, GtkApplication *gtk_app)
 {
     g_app_ref = app;
@@ -1094,6 +1444,9 @@ void window_create(AppState *app, GtkApplication *gtk_app)
     gtk_window_set_title(GTK_WINDOW(app->window), "PhysioChart");
     gtk_window_set_default_size(GTK_WINDOW(app->window), 900, 700);
     gtk_window_maximize(GTK_WINDOW(app->window));
+
+    g_signal_connect(app->window, "destroy",
+                     G_CALLBACK(on_main_window_close), app);
 
     GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_window_set_child(GTK_WINDOW(app->window), hbox);
@@ -1107,6 +1460,17 @@ void window_create(AppState *app, GtkApplication *gtk_app)
     gtk_widget_add_controller(app->window, key_ctrl);
     g_signal_connect(key_ctrl, "key-pressed",
                      G_CALLBACK(on_key_pressed), app);
+
+    /* Show session info in window title */
+    if (app->patient_id[0]) {
+        char title[128];
+        if (app->session_label[0])
+            snprintf(title, sizeof(title), "PhysioChart — %s · %s",
+                     app->patient_id, app->session_label);
+        else
+            snprintf(title, sizeof(title), "PhysioChart — %s", app->patient_id);
+        gtk_window_set_title(GTK_WINDOW(app->window), title);
+    }
 
     update_toolbar_state(app);
     gtk_window_present(GTK_WINDOW(app->window));

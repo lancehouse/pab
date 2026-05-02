@@ -20,6 +20,7 @@ sources = files(
   'src/overlay_svg.c',
   'src/session.c',
   'src/settings.c',
+  'src/persistence.c',
   'src/overlay_data/dermatomes.c',
   'src/overlay_data/peripheral.c',
   'src/overlay_data/somatic.c',

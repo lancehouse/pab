@@ -1,0 +1,501 @@
+#include "persistence.h"
+#include "stroke.h"
+#include "window.h"
+#include <json-c/json.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/stat.h>
+#include <errno.h>
+
+/* ── Path helpers ─────────────────────────────────────────────────────────── */
+
+static void ensure_physio_root(char *buf, size_t len)
+{
+    snprintf(buf, len, "%s/PhysioChart", g_get_home_dir());
+    if (mkdir(buf, 0755) != 0 && errno != EEXIST) {
+        snprintf(buf, len, "%s", g_get_home_dir());
+    }
+}
+
+void persistence_build_paths(AppState *app, const char *patient_id,
+                               const char *session_label)
+{
+    /* Sanitise patient_id: keep only alphanumeric + hyphen, max 16 chars */
+    char safe_id[17] = {0};
+    int out = 0;
+    for (int i = 0; patient_id[i] && out < 16; i++) {
+        char c = patient_id[i];
+        if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+            (c >= '0' && c <= '9') || c == '-') {
+            safe_id[out++] = c;
+        }
+    }
+    if (out == 0) { safe_id[0] = 'X'; safe_id[1] = 'X'; out = 2; }
+
+    strncpy(app->patient_id, safe_id, sizeof(app->patient_id) - 1);
+    strncpy(app->session_label, session_label ? session_label : "",
+            sizeof(app->session_label) - 1);
+
+    time_t now = time(NULL);
+    struct tm *t = localtime(&now);
+    char ts[20];
+    strftime(ts, sizeof(ts), "%d_%m_%Y_%H%M", t);
+
+    snprintf(app->session_name, sizeof(app->session_name), "%s_%s", safe_id, ts);
+
+    char root[512];
+    ensure_physio_root(root, sizeof(root));
+    g_snprintf(app->session_dir,  sizeof(app->session_dir),
+               "%s/%s", root, app->session_name);
+    g_snprintf(app->session_file, sizeof(app->session_file),
+               "%s/%s_session.json", app->session_dir, app->session_name);
+
+    app->session_created = now;
+}
+
+/* ── JSON write helpers ───────────────────────────────────────────────────── */
+
+static json_object *strokes_to_json(StrokeList *sl)
+{
+    json_object *arr = json_object_new_array();
+    for (int i = 0; i < sl->n; i++) {
+        Stroke *sk = sl->strokes[i];
+        json_object *s = json_object_new_object();
+        json_object_object_add(s, "type", json_object_new_int(sk->type));
+        json_object_object_add(s, "view", json_object_new_int(sk->view));
+        json_object_object_add(s, "wide", json_object_new_boolean(sk->wide_mode));
+        json_object *pts = json_object_new_array();
+        for (size_t j = 0; j < sk->n_pts; j++) {
+            json_object *pt = json_object_new_array();
+            json_object_array_add(pt, json_object_new_double(sk->pts[j].x));
+            json_object_array_add(pt, json_object_new_double(sk->pts[j].y));
+            json_object_array_add(pt, json_object_new_double(sk->pts[j].pressure));
+            json_object_array_add(pts, pt);
+        }
+        json_object_object_add(s, "pts", pts);
+        json_object_array_add(arr, s);
+    }
+    return arr;
+}
+
+static json_object *notes_to_json(AppState *app)
+{
+    json_object *arr = json_object_new_array();
+    for (int i = 0; i < app->note_count; i++) {
+        NoteAnnotation *n = &app->notes[i];
+        json_object *o = json_object_new_object();
+        json_object_object_add(o, "view",    json_object_new_int(n->view));
+        json_object_object_add(o, "bx",      json_object_new_double(n->bx));
+        json_object_object_add(o, "by",      json_object_new_double(n->by));
+        json_object_object_add(o, "number",  json_object_new_int(n->number));
+        json_object_object_add(o, "temporal",json_object_new_int(n->temporal));
+        json_object_object_add(o, "depth",   json_object_new_int(n->depth));
+        json_object_object_add(o, "quality", json_object_new_int(n->quality));
+        json_object_object_add(o, "avg",     json_object_new_int(n->avg_intensity));
+        json_object_object_add(o, "worst",   json_object_new_int(n->worst_intensity));
+        json_object_array_add(arr, o);
+    }
+    return arr;
+}
+
+static json_object *arrows_to_json(AppState *app)
+{
+    json_object *arr = json_object_new_array();
+    for (int i = 0; i < app->arrow_count; i++) {
+        ArrowAnnotation *a = &app->arrows[i];
+        json_object *o = json_object_new_object();
+        json_object_object_add(o, "view", json_object_new_int(a->view));
+        json_object_object_add(o, "x1",   json_object_new_double(a->x1));
+        json_object_object_add(o, "y1",   json_object_new_double(a->y1));
+        json_object_object_add(o, "cx",   json_object_new_double(a->cx));
+        json_object_object_add(o, "cy",   json_object_new_double(a->cy));
+        json_object_object_add(o, "x2",   json_object_new_double(a->x2));
+        json_object_object_add(o, "y2",   json_object_new_double(a->y2));
+        json_object_array_add(arr, o);
+    }
+    return arr;
+}
+
+static json_object *link_relations_to_json(AppState *app)
+{
+    json_object *arr = json_object_new_array();
+    for (int i = 0; i < app->link_rel_count; i++) {
+        LinkRel *lr = &app->link_relations[i];
+        json_object *o = json_object_new_object();
+        json_object_object_add(o, "from",  json_object_new_int(lr->from));
+        json_object_object_add(o, "to",    json_object_new_int(lr->to));
+        json_object_object_add(o, "state", json_object_new_int(lr->state));
+        json_object_array_add(arr, o);
+    }
+    return arr;
+}
+
+static json_object *link_matrix_to_json(AppState *app)
+{
+    json_object *rows = json_object_new_array();
+    for (int i = 0; i < MAX_NOTES; i++) {
+        json_object *row = json_object_new_array();
+        for (int j = 0; j < MAX_NOTES; j++)
+            json_object_array_add(row, json_object_new_int(app->link_matrix[i][j]));
+        json_object_array_add(rows, row);
+    }
+    return rows;
+}
+
+/* ── Save ─────────────────────────────────────────────────────────────────── */
+
+gboolean persistence_save(AppState *app)
+{
+    if (!app->session_file[0]) return FALSE;
+
+    /* Ensure session directory exists */
+    if (mkdir(app->session_dir, 0755) != 0 && errno != EEXIST)
+        return FALSE;
+
+    json_object *root = json_object_new_object();
+
+    /* Metadata */
+    json_object_object_add(root, "version",       json_object_new_int(2));
+    json_object_object_add(root, "patient_id",    json_object_new_string(app->patient_id));
+    json_object_object_add(root, "session_label", json_object_new_string(app->session_label));
+    json_object_object_add(root, "session_name",  json_object_new_string(app->session_name));
+    json_object_object_add(root, "created",       json_object_new_int64((int64_t)app->session_created));
+    json_object_object_add(root, "modified",      json_object_new_int64((int64_t)time(NULL)));
+
+    /* UI state */
+    json_object *ui = json_object_new_object();
+    json_object_object_add(ui, "layout_mode", json_object_new_int((int)app->layout_mode));
+    json_object *rsv = json_object_new_array();
+    json_object_array_add(rsv, json_object_new_int((int)app->right_slot_views[0]));
+    json_object_array_add(rsv, json_object_new_int((int)app->right_slot_views[1]));
+    json_object_object_add(ui, "right_slot_views", rsv);
+    json_object_object_add(root, "ui", ui);
+
+    /* Subjective chart */
+    json_object *subj = json_object_new_object();
+    json_object_object_add(subj, "strokes",        strokes_to_json(app->strokes));
+    json_object_object_add(subj, "notes",          notes_to_json(app));
+    json_object_object_add(subj, "arrows",         arrows_to_json(app));
+    json_object_object_add(subj, "link_matrix",    link_matrix_to_json(app));
+    json_object_object_add(subj, "link_relations", link_relations_to_json(app));
+    json_object_object_add(subj, "link_summary_active",
+        json_object_new_boolean(app->link_summary_active));
+    json_object_object_add(subj, "link_summary_view",
+        json_object_new_int(app->link_summary_view));
+    json_object_object_add(subj, "link_summary_bx",
+        json_object_new_double(app->link_summary_bx));
+    json_object_object_add(subj, "link_summary_by",
+        json_object_new_double(app->link_summary_by));
+    json_object_object_add(root, "subjective", subj);
+
+    /* Objective / neuro / report — stubs for future phases */
+    json_object_object_add(root, "objective",
+        json_object_new_object());
+    json_object_object_add(root, "neuro",
+        json_object_new_object());
+    json_object *rpt = json_object_new_object();
+    json_object_object_add(rpt, "text", json_object_new_string(""));
+    json_object_object_add(root, "report", rpt);
+
+    /* Write to file */
+    const char *json_str = json_object_to_json_string_ext(root,
+        JSON_C_TO_STRING_PLAIN);
+    FILE *f = fopen(app->session_file, "w");
+    if (!f) {
+        json_object_put(root);
+        fprintf(stderr, "persistence_save: cannot open %s\n", app->session_file);
+        return FALSE;
+    }
+    fputs(json_str, f);
+    fclose(f);
+    json_object_put(root);
+    fprintf(stderr, "persistence_save: %s\n", app->session_file);
+    return TRUE;
+}
+
+/* ── JSON read helpers ────────────────────────────────────────────────────── */
+
+static int ji(json_object *o, const char *k, int def)
+{
+    json_object *v;
+    return json_object_object_get_ex(o, k, &v) ? json_object_get_int(v) : def;
+}
+
+static double jd(json_object *o, const char *k, double def)
+{
+    json_object *v;
+    return json_object_object_get_ex(o, k, &v) ? json_object_get_double(v) : def;
+}
+
+static gboolean jb(json_object *o, const char *k, gboolean def)
+{
+    json_object *v;
+    return json_object_object_get_ex(o, k, &v) ?
+        (gboolean)json_object_get_boolean(v) : def;
+}
+
+static const char *js(json_object *o, const char *k)
+{
+    json_object *v;
+    return json_object_object_get_ex(o, k, &v) ? json_object_get_string(v) : "";
+}
+
+/* Forward declaration for note text regeneration */
+extern const char *QUALITY_SHORT_EXTERN[];
+static void regen_note_text(NoteAnnotation *n, const char *const *qs)
+{
+    snprintf(n->text, sizeof(n->text), "(%d)%s %s %s %d/%d",
+             n->number,
+             n->temporal == 0 ? "Con" : "Int",
+             n->depth    == 0 ? "Sup" : "Dep",
+             qs[n->quality],
+             n->avg_intensity, n->worst_intensity);
+}
+
+/* ── Load ─────────────────────────────────────────────────────────────────── */
+
+gboolean persistence_load(AppState *app, const char *path)
+{
+    json_object *root = json_object_from_file(path);
+    if (!root) {
+        fprintf(stderr, "persistence_load: cannot parse %s\n", path);
+        return FALSE;
+    }
+
+    /* Clear existing drawing data */
+    stroke_list_clear(app->strokes);
+    app->note_count      = 0;
+    app->arrow_count     = 0;
+    app->arrow_drawing   = FALSE;
+    app->link_rel_count  = 0;
+    app->link_summary_active = FALSE;
+    app->undo_type_top   = 0;
+    memset(app->link_matrix, 0, sizeof(app->link_matrix));
+
+    /* Set paths from loaded file */
+    strncpy(app->session_file, path, sizeof(app->session_file) - 1);
+
+    /* Derive session_dir (parent directory) */
+    {
+        char tmp[512];
+        strncpy(tmp, path, sizeof(tmp) - 1);
+        char *slash = strrchr(tmp, '/');
+        if (slash) { *slash = '\0'; g_snprintf(app->session_dir, sizeof(app->session_dir), "%s", tmp); }
+    }
+
+    /* Derive session_name (filename without _session.json) */
+    {
+        const char *fname = strrchr(path, '/');
+        fname = fname ? fname + 1 : path;
+        size_t flen = strlen(fname);
+        const char *suf = "_session.json";
+        size_t slen = strlen(suf);
+        if (flen > slen && strcmp(fname + flen - slen, suf) == 0) {
+            size_t nlen = flen - slen;
+            if (nlen >= sizeof(app->session_name)) nlen = sizeof(app->session_name) - 1;
+            memcpy(app->session_name, fname, nlen);
+            app->session_name[nlen] = '\0';
+        }
+    }
+
+    /* Metadata */
+    strncpy(app->patient_id,    js(root, "patient_id"),    sizeof(app->patient_id)    - 1);
+    strncpy(app->session_label, js(root, "session_label"), sizeof(app->session_label) - 1);
+    {
+        json_object *v;
+        app->session_created = json_object_object_get_ex(root, "created", &v) ?
+            (time_t)json_object_get_int64(v) : time(NULL);
+    }
+
+    /* UI state */
+    json_object *ui;
+    if (json_object_object_get_ex(root, "ui", &ui)) {
+        int lm = ji(ui, "layout_mode", 0);
+        if (lm >= 0 && lm < LAYOUT_COUNT) app->layout_mode = (LayoutMode)lm;
+        json_object *rsv;
+        if (json_object_object_get_ex(ui, "right_slot_views", &rsv) &&
+            json_object_array_length(rsv) >= 2) {
+            int v0 = json_object_get_int(json_object_array_get_idx(rsv, 0));
+            int v1 = json_object_get_int(json_object_array_get_idx(rsv, 1));
+            if (v0 >= 0 && v0 < 4) app->right_slot_views[0] = (BodyView)v0;
+            if (v1 >= 0 && v1 < 4) app->right_slot_views[1] = (BodyView)v1;
+        }
+    }
+
+    /* Subjective */
+    json_object *subj;
+    if (!json_object_object_get_ex(root, "subjective", &subj)) {
+        json_object_put(root);
+        return TRUE;  /* empty but valid */
+    }
+
+    /* Strokes */
+    json_object *strokes_arr;
+    if (json_object_object_get_ex(subj, "strokes", &strokes_arr)) {
+        int n = (int)json_object_array_length(strokes_arr);
+        for (int i = 0; i < n; i++) {
+            json_object *s = json_object_array_get_idx(strokes_arr, i);
+            int type = ji(s, "type", 0);
+            int view = ji(s, "view", 0);
+            int wide = jb(s, "wide", FALSE);
+            if (type < 0 || type >= SYMPTOM_COUNT) continue;
+            Stroke *sk = stroke_new((SymptomType)type, view);
+            sk->wide_mode = wide;
+            json_object *pts;
+            if (json_object_object_get_ex(s, "pts", &pts)) {
+                int np = (int)json_object_array_length(pts);
+                for (int j = 0; j < np; j++) {
+                    json_object *pt = json_object_array_get_idx(pts, j);
+                    if (json_object_array_length(pt) < 3) continue;
+                    float x = (float)json_object_get_double(json_object_array_get_idx(pt, 0));
+                    float y = (float)json_object_get_double(json_object_array_get_idx(pt, 1));
+                    float p = (float)json_object_get_double(json_object_array_get_idx(pt, 2));
+                    stroke_add_point(sk, x, y, p);
+                }
+            }
+            if (sk->n_pts > 0)
+                stroke_list_push(app->strokes, sk);
+            else
+                stroke_free(sk);
+        }
+    }
+
+    /* Notes — need quality strings for text regeneration */
+    static const char *qs[14] = {
+        "Pain","Ache","Numb","Shrp","Dull","Hot","Cold",
+        "Itch","Craw","Elec","Shot","Buzz","Othr","P+N"
+    };
+    json_object *notes_arr;
+    if (json_object_object_get_ex(subj, "notes", &notes_arr)) {
+        int n = (int)json_object_array_length(notes_arr);
+        if (n > MAX_NOTES) n = MAX_NOTES;
+        for (int i = 0; i < n; i++) {
+            json_object *o = json_object_array_get_idx(notes_arr, i);
+            NoteAnnotation *na = &app->notes[app->note_count];
+            na->view            = ji(o, "view",    0);
+            na->bx              = jd(o, "bx",      0.0);
+            na->by              = jd(o, "by",      0.0);
+            na->number          = ji(o, "number",  i + 1);
+            na->temporal        = ji(o, "temporal",0);
+            na->depth           = ji(o, "depth",   0);
+            na->quality         = ji(o, "quality", 0);
+            na->avg_intensity   = ji(o, "avg",     0);
+            na->worst_intensity = ji(o, "worst",   0);
+            if (na->quality < 0 || na->quality >= 14) na->quality = 0;
+            regen_note_text(na, qs);
+            app->note_count++;
+        }
+    }
+
+    /* Arrows */
+    json_object *arrows_arr;
+    if (json_object_object_get_ex(subj, "arrows", &arrows_arr)) {
+        int n = (int)json_object_array_length(arrows_arr);
+        if (n > MAX_ARROWS) n = MAX_ARROWS;
+        for (int i = 0; i < n; i++) {
+            json_object *o = json_object_array_get_idx(arrows_arr, i);
+            ArrowAnnotation *a = &app->arrows[app->arrow_count];
+            a->view = ji(o, "view", 0);
+            a->x1   = jd(o, "x1",  0.0);
+            a->y1   = jd(o, "y1",  0.0);
+            a->cx   = jd(o, "cx",  0.0);
+            a->cy   = jd(o, "cy",  0.0);
+            a->x2   = jd(o, "x2",  0.0);
+            a->y2   = jd(o, "y2",  0.0);
+            app->arrow_count++;
+        }
+    }
+
+    /* Link matrix */
+    json_object *lm;
+    if (json_object_object_get_ex(subj, "link_matrix", &lm)) {
+        int rows = (int)json_object_array_length(lm);
+        if (rows > MAX_NOTES) rows = MAX_NOTES;
+        for (int i = 0; i < rows; i++) {
+            json_object *row = json_object_array_get_idx(lm, i);
+            int cols = (int)json_object_array_length(row);
+            if (cols > MAX_NOTES) cols = MAX_NOTES;
+            for (int j = 0; j < cols; j++)
+                app->link_matrix[i][j] =
+                    json_object_get_int(json_object_array_get_idx(row, j));
+        }
+    }
+
+    /* Link relations */
+    json_object *lr_arr;
+    if (json_object_object_get_ex(subj, "link_relations", &lr_arr)) {
+        int n = (int)json_object_array_length(lr_arr);
+        int max = MAX_NOTES * MAX_NOTES;
+        if (n > max) n = max;
+        for (int i = 0; i < n; i++) {
+            json_object *o = json_object_array_get_idx(lr_arr, i);
+            app->link_relations[app->link_rel_count].from  = ji(o, "from",  0);
+            app->link_relations[app->link_rel_count].to    = ji(o, "to",    0);
+            app->link_relations[app->link_rel_count].state = ji(o, "state", 0);
+            app->link_rel_count++;
+        }
+    }
+
+    /* Link summary position */
+    app->link_summary_active = jb(subj, "link_summary_active", FALSE);
+    app->link_summary_view   = ji(subj, "link_summary_view",   0);
+    app->link_summary_bx     = jd(subj, "link_summary_bx",    12.0);
+    app->link_summary_by     = jd(subj, "link_summary_by",   378.0);
+
+    json_object_put(root);
+    fprintf(stderr, "persistence_load: %s\n", path);
+    return TRUE;
+}
+
+/* ── Recent sessions ─────────────────────────────────────────────────────── */
+
+int persistence_scan_recent(PersistRecent *out, int max)
+{
+    char root[512];
+    ensure_physio_root(root, sizeof(root));
+
+    GDir *dir = g_dir_open(root, 0, NULL);
+    if (!dir) return 0;
+
+    int count = 0;
+    const gchar *entry;
+    while ((entry = g_dir_read_name(dir)) != NULL && count < max) {
+        char json_path[512];
+        g_snprintf(json_path, sizeof(json_path), "%s/%s/%s_session.json",
+                   root, entry, entry);
+        if (!g_file_test(json_path, G_FILE_TEST_IS_REGULAR)) continue;
+
+        json_object *meta = json_object_from_file(json_path);
+        if (!meta) continue;
+
+        PersistRecent *r = &out[count];
+        memset(r, 0, sizeof(*r));
+        g_snprintf(r->path, sizeof(r->path), "%s", json_path);
+        strncpy(r->patient_id,    js(meta, "patient_id"),    sizeof(r->patient_id)    - 1);
+        strncpy(r->session_label, js(meta, "session_label"), sizeof(r->session_label) - 1);
+        strncpy(r->session_name,  js(meta, "session_name"),  sizeof(r->session_name)  - 1);
+        {
+            json_object *v;
+            r->modified = json_object_object_get_ex(meta, "modified", &v) ?
+                (time_t)json_object_get_int64(v) : 0;
+        }
+        json_object_put(meta);
+        count++;
+    }
+    g_dir_close(dir);
+
+    /* Insertion sort: newest (largest modified) first */
+    for (int i = 1; i < count; i++) {
+        PersistRecent tmp = out[i];
+        int j = i - 1;
+        while (j >= 0 && out[j].modified < tmp.modified) {
+            out[j + 1] = out[j];
+            j--;
+        }
+        out[j + 1] = tmp;
+    }
+
+    return count;
+}

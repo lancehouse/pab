@@ -12,7 +12,7 @@
 static void on_activate(GtkApplication *app, gpointer user_data)
 {
     AppState *state = user_data;
-    window_create(state, app);
+    window_show_launch(state, app);
 }
 
 int main(int argc, char *argv[])

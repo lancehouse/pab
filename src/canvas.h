@@ -1,9 +1,17 @@
 #pragma once
 #include <gtk/gtk.h>
+#include <time.h>
 #include "stroke.h"
 #include "overlays.h"
 #include "body_outlines.h"
 #include "input.h"
+
+typedef enum {
+    APP_MODE_SUBJECTIVE = 0,
+    APP_MODE_OBJECTIVE,
+    APP_MODE_REPORT,
+    APP_MODE_COUNT
+} AppMode;
 
 typedef enum {
     LINK_NEITHER = 0,
@@ -152,6 +160,15 @@ struct _AppState {
 
     /* Note wizard callback — set by window.c */
     void (*show_note_wizard_cb)(AppState *, int view, double bx, double by);
+
+    /* ── Mode / session ──────────────────────────────────────────────────────── */
+    AppMode  current_mode;
+    char     patient_id[32];      /* short ID/initials, e.g. "JB" */
+    char     session_label[64];   /* human description, e.g. "Lower back follow-up" */
+    char     session_name[80];    /* derived filename base, e.g. "JB_01_05_2026_1430" */
+    char     session_dir[512];    /* ~/PhysioChart/JB_01_05_2026_1430 */
+    char     session_file[512];   /* full path to _session.json */
+    time_t   session_created;
 };
 
 GtkWidget  *canvas_new(AppState *app);

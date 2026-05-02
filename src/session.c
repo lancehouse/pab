@@ -11,20 +11,21 @@
 /* ── Export layout constants ─────────────────────────────────────────────── *
  * Quad: ant(EU×EU*2) | post(EU×EU*2) | right-top(EU/2×EU) + right-bot      *
  *       Total: 2.5EU × 2EU = 750×600 px  — tight 1:2 body ratio, no gaps.  *
- * Single: one view at SINGLE_W × SINGLE_H (1:2 tight).                      */
-#define EU        300.0
-#define EXPORT_W  (EU * 2.5)   /* 750: ant(300) + post(300) + right(150) */
-#define EXPORT_H  (EU * 2.0)   /* 600 */
-#define SINGLE_W  400.0
-#define SINGLE_H  800.0
+ * Single: one view at SINGLE_W × SINGLE_H (1:2 tight).                      *
+ * EXPORT_ZOOM < 1.0 adds margin so edge strokes are never clipped.           */
+#define EU           300.0
+#define EXPORT_W     (EU * 2.5)
+#define EXPORT_H     (EU * 2.0)
+#define SINGLE_W     400.0
+#define SINGLE_H     800.0
+#define EXPORT_ZOOM  0.92
 
 typedef struct {
     BodyView view;
     double   x, y, w, h;
-    int      col_idx;   /* which col_zoom/pan_x/pan_y array index to use */
+    int      col_idx;
 } ExportSlot;
 
-/* slot 0-3 → BodyView, matching AppState single_zoom/pan arrays */
 static const BodyView SINGLE_VIEWS[4] = {
     VIEW_ANTERIOR, VIEW_POSTERIOR, VIEW_LATERAL_L, VIEW_LATERAL_R
 };
@@ -35,7 +36,80 @@ static void export_dims(AppState *app, double *out_w, double *out_h)
     else                                 { *out_w = SINGLE_W; *out_h = SINGLE_H; }
 }
 
+/* ── Renderers ───────────────────────────────────────────────────────────── */
+
+/* Export render: fixed zoom=EXPORT_ZOOM, pan=0 → body centred with margin. */
+static void render_all_views_export(AppState *app, cairo_t *cr)
+{
+    cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
+    cairo_paint(cr);
+
+    if (app->layout_mode == LAYOUT_QUAD) {
+        ExportSlot slots[4] = {
+            { VIEW_ANTERIOR,              0,    0,    EU,   EU*2, 0 },
+            { VIEW_POSTERIOR,             EU,   0,    EU,   EU*2, 1 },
+            { app->right_slot_views[0],   EU*2, 0,    EU/2, EU,   2 },
+            { app->right_slot_views[1],   EU*2, EU,   EU/2, EU,   3 },
+        };
+        for (int i = 0; i < 4; i++) {
+            cairo_save(cr);
+            cairo_translate(cr, slots[i].x, slots[i].y);
+            cairo_rectangle(cr, 0, 0, slots[i].w, slots[i].h);
+            cairo_clip(cr);
+            canvas_render_view(app, cr, slots[i].view,
+                               slots[i].w, slots[i].h,
+                               EXPORT_ZOOM, 0.0, 0.0);
+            cairo_restore(cr);
+        }
+    } else {
+        int slot = (int)app->layout_mode - 1;
+        canvas_render_view(app, cr, SINGLE_VIEWS[slot],
+                           SINGLE_W, SINGLE_H, EXPORT_ZOOM, 0.0, 0.0);
+    }
+}
+
+/* Live render (uses current zoom/pan — kept for SVG export). */
+static void render_all_views_live(AppState *app, cairo_t *cr)
+{
+    cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
+    cairo_paint(cr);
+
+    if (app->layout_mode == LAYOUT_QUAD) {
+        ExportSlot slots[4] = {
+            { VIEW_ANTERIOR,              0,    0,    EU,   EU*2, 0 },
+            { VIEW_POSTERIOR,             EU,   0,    EU,   EU*2, 1 },
+            { app->right_slot_views[0],   EU*2, 0,    EU/2, EU,   2 },
+            { app->right_slot_views[1],   EU*2, EU,   EU/2, EU,   3 },
+        };
+        for (int i = 0; i < 4; i++) {
+            cairo_save(cr);
+            cairo_translate(cr, slots[i].x, slots[i].y);
+            cairo_rectangle(cr, 0, 0, slots[i].w, slots[i].h);
+            cairo_clip(cr);
+            canvas_render_view(app, cr, slots[i].view,
+                               slots[i].w, slots[i].h,
+                               app->col_zoom[slots[i].col_idx],
+                               app->col_pan_x[slots[i].col_idx],
+                               app->col_pan_y[slots[i].col_idx]);
+            cairo_restore(cr);
+        }
+    } else {
+        int slot = (int)app->layout_mode - 1;
+        canvas_render_view(app, cr, SINGLE_VIEWS[slot],
+                           SINGLE_W, SINGLE_H,
+                           app->single_zoom[slot],
+                           app->single_pan_x[slot],
+                           app->single_pan_y[slot]);
+    }
+}
+
 /* ── Path helpers ────────────────────────────────────────────────────────── */
+
+void session_build_path(AppState *app, const char *suffix, char *buf, size_t len)
+{
+    snprintf(buf, len, "%s/%s_%s", app->session_dir, app->session_name, suffix);
+}
+
 static void ensure_save_dir(char *buf, size_t len)
 {
     const char *home = g_get_home_dir();
@@ -55,68 +129,30 @@ void session_auto_path(char *buf, size_t len, const char *ext)
     snprintf(buf, len, "%s/BodyChart%s.%s", dir, ts, ext);
 }
 
-/* ── Render current view to any Cairo context, respecting live zoom/pan ──── */
-static void render_all_views(AppState *app, cairo_t *cr)
-{
-    cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
-    cairo_paint(cr);
-
-    if (app->layout_mode == LAYOUT_QUAD) {
-        /* Build slots dynamically so right column reflects cycled views */
-        ExportSlot slots[4] = {
-            { VIEW_ANTERIOR,               0,      0,         EU,    EU*2, 0 },
-            { VIEW_POSTERIOR,              EU,     0,         EU,    EU*2, 1 },
-            { app->right_slot_views[0],    EU*2,   0,         EU/2,  EU,   2 },
-            { app->right_slot_views[1],    EU*2,   EU,        EU/2,  EU,   3 },
-        };
-        for (int i = 0; i < 4; i++) {
-            cairo_save(cr);
-            cairo_translate(cr, slots[i].x, slots[i].y);
-            cairo_rectangle(cr, 0, 0, slots[i].w, slots[i].h);
-            cairo_clip(cr);
-            canvas_render_view(app, cr, slots[i].view,
-                               slots[i].w, slots[i].h,
-                               app->col_zoom[slots[i].col_idx],
-                               app->col_pan_x[slots[i].col_idx],
-                               app->col_pan_y[slots[i].col_idx]);
-            cairo_restore(cr);
-        }
-        /* No dividers — panels are flush */
-    } else {
-        int slot = (int)app->layout_mode - 1;  /* LAYOUT_ANTERIOR=1 → slot 0, etc. */
-        canvas_render_view(app, cr, SINGLE_VIEWS[slot],
-                           SINGLE_W, SINGLE_H,
-                           app->single_zoom[slot],
-                           app->single_pan_x[slot],
-                           app->single_pan_y[slot]);
-    }
-}
-
 /* ── Public API ──────────────────────────────────────────────────────────── */
 
-gboolean session_save(AppState *app, const char *path)
+gboolean session_export_subj_png(AppState *app)
 {
+    if (!app->session_dir[0] || !app->session_name[0]) return FALSE;
+    char path[1024];
+    session_build_path(app, "subj.png", path, sizeof(path));
+
     double w, h;
     export_dims(app, &w, &h);
-    cairo_surface_t *surf = cairo_svg_surface_create(path, w, h);
-    if (cairo_surface_status(surf) != CAIRO_STATUS_SUCCESS) {
-        fprintf(stderr, "session_save: cannot create SVG surface at %s\n", path);
-        cairo_surface_destroy(surf);
+    cairo_surface_t *surf = cairo_image_surface_create(
+        CAIRO_FORMAT_RGB24, (int)w, (int)h);
+    cairo_t *cr = cairo_create(surf);
+    render_all_views_export(app, cr);
+    cairo_destroy(cr);
+    cairo_status_t st = cairo_surface_write_to_png(surf, path);
+    cairo_surface_destroy(surf);
+    if (st != CAIRO_STATUS_SUCCESS) {
+        fprintf(stderr, "session_export_subj_png: failed: %s\n",
+                cairo_status_to_string(st));
         return FALSE;
     }
-    cairo_t *cr = cairo_create(surf);
-    render_all_views(app, cr);
-    cairo_destroy(cr);
-    cairo_surface_destroy(surf);
-    fprintf(stderr, "session_save: %s\n", path);
+    fprintf(stderr, "session_export_subj_png: %s\n", path);
     return TRUE;
-}
-
-gboolean session_load(AppState *app, const char *path)
-{
-    (void)app; (void)path;
-    fprintf(stderr, "session_load: not yet implemented\n");
-    return FALSE;
 }
 
 gboolean session_export_png(AppState *app, const char *path)
@@ -126,12 +162,12 @@ gboolean session_export_png(AppState *app, const char *path)
     cairo_surface_t *surf = cairo_image_surface_create(
         CAIRO_FORMAT_RGB24, (int)w, (int)h);
     cairo_t *cr = cairo_create(surf);
-    render_all_views(app, cr);
+    render_all_views_export(app, cr);
     cairo_destroy(cr);
     cairo_status_t st = cairo_surface_write_to_png(surf, path);
     cairo_surface_destroy(surf);
     if (st != CAIRO_STATUS_SUCCESS) {
-        fprintf(stderr, "session_export_png: write failed: %s\n",
+        fprintf(stderr, "session_export_png: failed: %s\n",
                 cairo_status_to_string(st));
         return FALSE;
     }
@@ -145,15 +181,38 @@ gboolean session_export_pdf(AppState *app, const char *path)
     export_dims(app, &w, &h);
     cairo_surface_t *surf = cairo_pdf_surface_create(path, w, h);
     if (cairo_surface_status(surf) != CAIRO_STATUS_SUCCESS) {
-        fprintf(stderr, "session_export_pdf: cannot create PDF surface at %s\n", path);
         cairo_surface_destroy(surf);
         return FALSE;
     }
     cairo_t *cr = cairo_create(surf);
-    render_all_views(app, cr);
+    render_all_views_export(app, cr);
     cairo_show_page(cr);
     cairo_destroy(cr);
     cairo_surface_destroy(surf);
     fprintf(stderr, "session_export_pdf: %s\n", path);
     return TRUE;
+}
+
+gboolean session_save(AppState *app, const char *path)
+{
+    double w, h;
+    export_dims(app, &w, &h);
+    cairo_surface_t *surf = cairo_svg_surface_create(path, w, h);
+    if (cairo_surface_status(surf) != CAIRO_STATUS_SUCCESS) {
+        cairo_surface_destroy(surf);
+        return FALSE;
+    }
+    cairo_t *cr = cairo_create(surf);
+    render_all_views_live(app, cr);
+    cairo_destroy(cr);
+    cairo_surface_destroy(surf);
+    fprintf(stderr, "session_save: %s\n", path);
+    return TRUE;
+}
+
+gboolean session_load(AppState *app, const char *path)
+{
+    (void)app; (void)path;
+    fprintf(stderr, "session_load: use persistence_load instead\n");
+    return FALSE;
 }
