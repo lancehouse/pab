@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <errno.h>
 
@@ -718,7 +719,8 @@ gboolean persistence_write_session_current(AppState *app)
 
     json_object *root = json_object_new_object();
 
-    json_object_object_add(root, "schema_version", json_object_new_int(2));
+    json_object_object_add(root, "schema_version", json_object_new_int(3));
+    json_object_object_add(root, "gtk_pid", json_object_new_int((int)getpid()));
 
     if (app->session_file[0])
         json_object_object_add(root, "session_file",

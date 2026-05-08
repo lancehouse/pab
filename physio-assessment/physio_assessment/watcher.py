@@ -2,8 +2,8 @@
 File watcher for GTK body chart session JSON integration.
 
 Monitors session_current.json for active-session changes and the active
-session_file for GTK content updates. Calls callbacks for session switches
-and chart updates.
+session_file for GTK content updates. Also polls for a .focus_tui signal
+file written by GTK when it wants to raise the TUI window.
 """
 
 import asyncio
@@ -13,24 +13,31 @@ from pathlib import Path
 from typing import Callable, Awaitable
 
 SESSION_CURRENT = Path.home() / ".local/share/physio-bodychart/session_current.json"
-POLL_INTERVAL = 1.0  # seconds
+POLL_INTERVAL   = 1.0    # seconds
+FOCUS_SIGNAL    = ".focus_tui"  # GTK writes this to request TUI window focus
 
 
 class BodyChartWatcher:
     """
     Watches session_current.json for active-session changes,
-    then watches the active session_file for GTK content updates.
+    watches the active session_file for GTK content updates,
+    and polls for a .focus_tui signal file written by GTK.
 
-    Calls on_session_switch(session_data) and on_chart_update(session_data).
+    Callbacks:
+      on_session_switch(session_data)  — called when GTK opens a different session
+      on_chart_update(session_data)    — called when GTK updates the body chart
+      on_focus_request()               — called when GTK writes .focus_tui
     """
 
     def __init__(
         self,
         on_session_switch: Callable[[dict], Awaitable[None]],
         on_chart_update: Callable[[dict], Awaitable[None]],
+        on_focus_request: Callable[[], Awaitable[None]] | None = None,
     ):
         self.on_session_switch = on_session_switch
-        self.on_chart_update = on_chart_update
+        self.on_chart_update   = on_chart_update
+        self.on_focus_request  = on_focus_request
         self._current_session_file: Path | None = None
         self._task: asyncio.Task | None = None
         self._last_mtime: dict[Path, float] = {}
@@ -49,7 +56,7 @@ class BodyChartWatcher:
             self._task = None
 
     async def _poll_loop(self):
-        """Main polling loop: check both files every POLL_INTERVAL seconds."""
+        """Main polling loop: check files every POLL_INTERVAL seconds."""
         while True:
             try:
                 await self._check(SESSION_CURRENT, self._handle_session_current)
@@ -57,6 +64,7 @@ class BodyChartWatcher:
                     await self._check(
                         self._current_session_file, self._handle_session_file
                     )
+                    await self._check_focus_signal()
             except asyncio.CancelledError:
                 break
             except Exception as e:
@@ -65,7 +73,7 @@ class BodyChartWatcher:
             await asyncio.sleep(POLL_INTERVAL)
 
     async def _check(self, path: Path, handler: Callable[[dict], Awaitable[None]]):
-        """Check if file has been modified and call handler if so."""
+        """Check if a JSON file has changed and call handler if so."""
         try:
             mtime = path.stat().st_mtime
             if self._last_mtime.get(path) != mtime:
@@ -77,12 +85,23 @@ class BodyChartWatcher:
         except json.JSONDecodeError as e:
             self.logger.error(f"Failed to parse JSON from {path}: {e}")
 
+    async def _check_focus_signal(self):
+        """Check for .focus_tui signal file; consume and fire callback if present."""
+        if not self._current_session_file or not self.on_focus_request:
+            return
+        signal = self._current_session_file.parent / FOCUS_SIGNAL
+        if signal.exists():
+            try:
+                signal.unlink()
+            except Exception:
+                pass
+            await self.on_focus_request()
+
     async def _handle_session_current(self, data: dict):
         """Handle session_current.json change: detect session switch."""
         session_file = data.get("session_file")
         if not session_file:
             return
-
         new_path = Path(session_file)
         if new_path != self._current_session_file:
             self._current_session_file = new_path

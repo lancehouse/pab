@@ -6,6 +6,7 @@
 #include "session.h"
 #include "persistence.h"
 #include "report.h"
+#include "integration.h"
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
@@ -23,6 +24,12 @@ static gboolean on_key_pressed(GtkEventControllerKey *ctrl,
 
     if ((mods & GDK_CONTROL_MASK) && (keyval == GDK_KEY_q || keyval == GDK_KEY_Q)) {
         gtk_window_destroy(GTK_WINDOW(app->window));
+        return TRUE;
+    }
+
+    /* Ctrl+A — focus the assessment TUI terminal */
+    if ((mods & GDK_CONTROL_MASK) && (keyval == GDK_KEY_a || keyval == GDK_KEY_A)) {
+        integration_focus_tui(app);
         return TRUE;
     }
 
@@ -1741,6 +1748,10 @@ static void launch_commit_new(GtkButton *btn, gpointer data)
     GtkWidget *launch_win = ld->window;
     window_create(ld->app, ld->gapp);
     gtk_window_destroy(GTK_WINDOW(launch_win));
+    /* Write gtk_pid, then spawn TUI and start watching for focus signals */
+    persistence_write_session_current(ld->app);
+    integration_focus_monitor_start(ld->app);
+    integration_spawn_tui(ld->app);
     g_free(ld);
 }
 
@@ -1754,6 +1765,10 @@ static void launch_commit_open(GtkButton *btn, gpointer data)
     GtkWidget *launch_win = ld->window;
     window_create(ld->app, ld->gapp);
     gtk_window_destroy(GTK_WINDOW(launch_win));
+    /* Write gtk_pid, then spawn TUI and start watching for focus signals */
+    persistence_write_session_current(ld->app);
+    integration_focus_monitor_start(ld->app);
+    integration_spawn_tui(ld->app);
     g_free(ld);
 }
 

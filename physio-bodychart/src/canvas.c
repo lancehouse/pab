@@ -1632,9 +1632,8 @@ static GtkWidget *make_drawing_area(AppState *app, ColData *cd,
     g_signal_connect(zoom, "begin",         G_CALLBACK(on_zoom_begin),   cd);
     g_signal_connect(zoom, "scale-changed", G_CALLBACK(on_zoom_changed), cd);
 
-    /* Stylus takes priority so it cancels drag on first touch */
-    gtk_gesture_group(stylus, drag);
-    gtk_gesture_single_set_exclusive(GTK_GESTURE_SINGLE(stylus), TRUE);
+    /* All input types (stylus, mouse, touch) work independently.
+     * Do NOT group or make exclusive — let all gesture recognizers work in parallel. */
 
     /* Scroll-wheel zoom */
     GtkEventController *scroll = gtk_event_controller_scroll_new(
