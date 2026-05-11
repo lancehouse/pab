@@ -346,7 +346,7 @@ class SubjectiveSection(BaseSection):
     def load(self, data: dict) -> None:
         self._loading = True
         try:
-            subjective = data.get("subjective", {}) if isinstance(data, dict) else {}
+            subjective = data if isinstance(data, dict) else {}
             for fid in self._TOGGLE_FIELDS:
                 if fid in subjective:
                     try:

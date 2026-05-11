@@ -206,7 +206,7 @@ class ConsentSection(BaseSection):
             # (not applicable here since we just created the section)
 
             # Load consent fields
-            consent = data.get("consent", {}) if isinstance(data, dict) else {}
+            consent = data if isinstance(data, dict) else {}
 
             # Consent checkboxes
             if "consent_to_proceed" in consent:
