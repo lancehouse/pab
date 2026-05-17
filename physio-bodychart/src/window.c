@@ -659,6 +659,14 @@ static void apply_css(void)
         "#wiz-qual-btn { font-size: 12px; min-height: 44px; min-width: 76px;"
         "  background: #2a4a70; color: #dde; border: 1px solid #4a6a90; }"
         "#wiz-qual-btn:hover { background: #3a5a80; color: #fff; }"
+        "#wiz-qual-btn-active { font-size: 12px; min-height: 44px; min-width: 76px;"
+        "  background: #1a7a40; color: #fff; border: 2px solid #3aaa60; }"
+        "#wiz-qual-next { font-size: 13px; min-height: 44px; margin-top: 8px;"
+        "  background: #2a5a30; color: #beb; border: 1px solid #4a8a50; }"
+        "#wiz-qual-next:hover { background: #3a7a40; color: #fff; }"
+        "#wiz-num-active { font-size: 14px; font-weight: bold; min-height: 52px;"
+        "  min-width: 40px; background: #1a7a40; color: #fff;"
+        "  border: 2px solid #3aaa60; }"
         "#wiz-window { background: #1a1a2e; }"
 
         /* ── Report view ── */
@@ -729,11 +737,10 @@ void window_do_export(const char *ext) { do_export(ext); }
 /* ── Note wizard ─────────────────────────────────────────────────────────── */
 
 typedef struct _WizardData WizardData;
-typedef struct {
-    WizardData *wd;
-    int         value;
-    int         step;   /* 0=temporal, 1=depth, 2=quality, 3=avg, 4=worst */
-} WBtnPair;
+
+typedef struct { WizardData *wd; int value; int step; } WBtnPair;
+typedef struct { WizardData *wd; int value; } WizQualBtn;
+typedef struct { WizardData *wd; int value; } WizIntBtn;
 
 struct _WizardData {
     AppState   *app;
@@ -741,16 +748,22 @@ struct _WizardData {
     double      bx, by;
     GtkWidget  *window;
     GtkWidget  *stack;
-    int         temporal;       /* 0=C 1=Im */
-    int         depth;          /* 0=S 1=D */
-    int         quality;        /* 0-12 index into QUALITY_SHORT */
-    int         avg_int;
-    int         worst_int;
+    int         temporal;
+    int         depth;
+    /* quality page */
+    int         qualities[3];
+    int         quality_count;
+    GtkWidget  *qual_btns[NOTE_QUALITY_COUNT];
+    GtkWidget  *qual_next_btn;
+    /* intensity page: low_int=-1 means nothing selected yet */
+    int         low_int;
+    int         high_int;
+    GtkWidget  *int_btns[11];
+    /* button callback data */
     WBtnPair    c_q1[2];
     WBtnPair    c_q2[2];
-    WBtnPair    c_q3[NOTE_QUALITY_COUNT];
-    WBtnPair    n_q4[11];
-    WBtnPair    n_q5[11];
+    WizQualBtn  q3_btns[NOTE_QUALITY_COUNT];
+    WizIntBtn   n_q4[11];
 };
 
 static gboolean g_wizard_open = FALSE;
@@ -763,18 +776,70 @@ static void on_wiz_answer(GtkButton *b, gpointer data)
     (void)b;
     WBtnPair   *p  = data;
     WizardData *wd = p->wd;
-    static const char *pages[] = { "q1", "q2", "q3", "q4", "q5" };
     switch (p->step) {
-        case 0: wd->temporal  = p->value;
-                gtk_stack_set_visible_child_name(GTK_STACK(wd->stack), pages[1]); break;
-        case 1: wd->depth     = p->value;
-                gtk_stack_set_visible_child_name(GTK_STACK(wd->stack), pages[2]); break;
-        case 2: wd->quality   = p->value;
-                gtk_stack_set_visible_child_name(GTK_STACK(wd->stack), pages[3]); break;
-        case 3: wd->avg_int   = p->value;
-                gtk_stack_set_visible_child_name(GTK_STACK(wd->stack), pages[4]); break;
-        case 4: wd->worst_int = p->value;
-                wizard_commit(wd); break;
+        case 0: wd->temporal = p->value;
+                gtk_stack_set_visible_child_name(GTK_STACK(wd->stack), "q2"); break;
+        case 1: wd->depth    = p->value;
+                gtk_stack_set_visible_child_name(GTK_STACK(wd->stack), "q3"); break;
+    }
+}
+
+static void on_wiz_qual_toggle(GtkButton *b, gpointer data)
+{
+    (void)b;
+    WizQualBtn *qb = data;
+    WizardData *wd = qb->wd;
+    int v = qb->value;
+
+    /* Check if already selected — deselect it */
+    for (int i = 0; i < wd->quality_count; i++) {
+        if (wd->qualities[i] == v) {
+            /* Remove by shifting */
+            for (int j = i; j < wd->quality_count - 1; j++)
+                wd->qualities[j] = wd->qualities[j + 1];
+            wd->quality_count--;
+            gtk_widget_set_name(wd->qual_btns[v], "wiz-qual-btn");
+            return;
+        }
+    }
+    /* Not selected — add if room */
+    if (wd->quality_count < 3) {
+        wd->qualities[wd->quality_count++] = v;
+        gtk_widget_set_name(wd->qual_btns[v], "wiz-qual-btn-active");
+        /* Auto-advance when 3 selected */
+        if (wd->quality_count == 3)
+            gtk_stack_set_visible_child_name(GTK_STACK(wd->stack), "q4");
+    }
+}
+
+static void on_wiz_qual_next(GtkButton *b, gpointer data)
+{
+    (void)b;
+    WizardData *wd = data;
+    if (wd->quality_count >= 1)
+        gtk_stack_set_visible_child_name(GTK_STACK(wd->stack), "q4");
+}
+
+static void on_wiz_int_click(GtkButton *b, gpointer data)
+{
+    (void)b;
+    WizIntBtn  *ib = data;
+    WizardData *wd = ib->wd;
+    int v = ib->value;
+
+    if (wd->low_int < 0) {
+        /* First click — record low, highlight it */
+        wd->low_int = v;
+        gtk_widget_set_name(wd->int_btns[v], "wiz-num-active");
+    } else {
+        /* Second click — record high, ensure order, commit */
+        wd->high_int = v;
+        if (wd->high_int < wd->low_int) {
+            int tmp     = wd->low_int;
+            wd->low_int = wd->high_int;
+            wd->high_int = tmp;
+        }
+        wizard_commit(wd);
     }
 }
 
@@ -796,21 +861,33 @@ static void wizard_commit(WizardData *wd)
     AppState *app = wd->app;
     if (app->note_count < MAX_NOTES) {
         NoteAnnotation *na = &app->notes[app->note_count];
-        na->view             = wd->view;
-        na->bx               = wd->bx;
-        na->by               = wd->by;
-        na->number           = app->note_count + 1;
-        na->temporal         = wd->temporal;
-        na->depth            = wd->depth;
-        na->quality          = wd->quality;
-        na->avg_intensity    = wd->avg_int;
-        na->worst_intensity  = wd->worst_int;
-        snprintf(na->text, sizeof(na->text), "(%d)%s %s %s %d/%d",
+        na->view          = wd->view;
+        na->bx            = wd->bx;
+        na->by            = wd->by;
+        na->number        = app->note_count + 1;
+        na->temporal      = wd->temporal;
+        na->depth         = wd->depth;
+        na->quality_count = wd->quality_count;
+        for (int i = 0; i < wd->quality_count; i++)
+            na->qualities[i] = wd->qualities[i];
+        na->low_intensity  = wd->low_int  >= 0 ? wd->low_int  : 0;
+        na->high_intensity = wd->high_int >= 0 ? wd->high_int : 0;
+
+        /* Build preformatted text */
+        char qual_buf[64] = {0};
+        for (int i = 0; i < na->quality_count; i++) {
+            if (i > 0) strncat(qual_buf, "+", sizeof(qual_buf) - strlen(qual_buf) - 1);
+            strncat(qual_buf, QUALITY_SHORT[na->qualities[i]],
+                    sizeof(qual_buf) - strlen(qual_buf) - 1);
+        }
+        if (na->quality_count == 0)
+            strncat(qual_buf, "?", sizeof(qual_buf) - strlen(qual_buf) - 1);
+        snprintf(na->text, sizeof(na->text), "(%d)%s %s %s %d-%d/10",
                  na->number,
                  na->temporal == 0 ? "Con" : "Int",
                  na->depth    == 0 ? "Sup" : "Dep",
-                 QUALITY_SHORT[na->quality],
-                 na->avg_intensity, na->worst_intensity);
+                 qual_buf,
+                 na->low_intensity, na->high_intensity);
         app->note_count++;
     }
     canvas_invalidate(app);
@@ -832,7 +909,61 @@ static GtkWidget *wiz_choice_row(WBtnPair pairs[2],
     return row;
 }
 
-static GtkWidget *wiz_number_row(WBtnPair pairs[11])
+/* Returns a vertical box containing the quality grid + Next button.
+   Stores button widget pointers in wd->qual_btns[]. */
+static GtkWidget *wiz_quality_grid(WizardData *wd)
+{
+    static const char *labels[NOTE_QUALITY_COUNT] = {
+        "Pain",     "Ache",     "Numb",    "Sharp",
+        "Dull",     "Hot",      "Cold",    "Itch",
+        "Crawl",    "Electric", "Shooting","Buzzing",
+        "Other",    "P+N"
+    };
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+    gtk_widget_set_halign(vbox, GTK_ALIGN_CENTER);
+
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 4);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 4);
+    gtk_widget_set_halign(grid, GTK_ALIGN_CENTER);
+
+    for (int i = 0; i < 12; i++) {
+        GtkWidget *btn = gtk_button_new_with_label(labels[i]);
+        gtk_widget_set_name(btn, "wiz-qual-btn");
+        wd->qual_btns[i] = btn;
+        g_signal_connect(btn, "clicked", G_CALLBACK(on_wiz_qual_toggle), &wd->q3_btns[i]);
+        gtk_grid_attach(GTK_GRID(grid), btn, i % 4, i / 4, 1, 1);
+    }
+    /* Row 3: Other (left 2 cols) + P+N (right 2 cols) */
+    GtkWidget *other = gtk_button_new_with_label(labels[12]);
+    gtk_widget_set_name(other, "wiz-qual-btn");
+    gtk_widget_set_hexpand(other, TRUE);
+    wd->qual_btns[12] = other;
+    g_signal_connect(other, "clicked", G_CALLBACK(on_wiz_qual_toggle), &wd->q3_btns[12]);
+    gtk_grid_attach(GTK_GRID(grid), other, 0, 3, 2, 1);
+
+    GtkWidget *pn = gtk_button_new_with_label(labels[13]);
+    gtk_widget_set_name(pn, "wiz-qual-btn");
+    gtk_widget_set_hexpand(pn, TRUE);
+    wd->qual_btns[13] = pn;
+    g_signal_connect(pn, "clicked", G_CALLBACK(on_wiz_qual_toggle), &wd->q3_btns[13]);
+    gtk_grid_attach(GTK_GRID(grid), pn, 2, 3, 2, 1);
+
+    gtk_box_append(GTK_BOX(vbox), grid);
+
+    GtkWidget *next = gtk_button_new_with_label("Next →");
+    gtk_widget_set_name(next, "wiz-qual-next");
+    gtk_widget_set_halign(next, GTK_ALIGN_CENTER);
+    wd->qual_next_btn = next;
+    g_signal_connect(next, "clicked", G_CALLBACK(on_wiz_qual_next), wd);
+    gtk_box_append(GTK_BOX(vbox), next);
+
+    return vbox;
+}
+
+/* Returns a row of 0-10 buttons for intensity.
+   First click highlights; second click commits. Stores widgets in wd->int_btns[]. */
+static GtkWidget *wiz_intensity_row(WizardData *wd)
 {
     GtkWidget *row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
     gtk_widget_set_halign(row, GTK_ALIGN_CENTER);
@@ -841,44 +972,11 @@ static GtkWidget *wiz_number_row(WBtnPair pairs[11])
         snprintf(buf, sizeof(buf), "%d", n);
         GtkWidget *btn = gtk_button_new_with_label(buf);
         gtk_widget_set_name(btn, "wiz-num");
-        g_signal_connect(btn, "clicked", G_CALLBACK(on_wiz_answer), &pairs[n]);
+        wd->int_btns[n] = btn;
+        g_signal_connect(btn, "clicked", G_CALLBACK(on_wiz_int_click), &wd->n_q4[n]);
         gtk_box_append(GTK_BOX(row), btn);
     }
     return row;
-}
-
-static GtkWidget *wiz_quality_grid(WBtnPair pairs[NOTE_QUALITY_COUNT])
-{
-    static const char *labels[NOTE_QUALITY_COUNT] = {
-        "Pain",     "Ache",     "Numb",    "Sharp",
-        "Dull",     "Hot",      "Cold",    "Itch",
-        "Crawl",    "Electric", "Shooting","Buzzing",
-        "Other",    "P+N"
-    };
-    GtkWidget *grid = gtk_grid_new();
-    gtk_grid_set_row_spacing(GTK_GRID(grid), 4);
-    gtk_grid_set_column_spacing(GTK_GRID(grid), 4);
-    gtk_widget_set_halign(grid, GTK_ALIGN_CENTER);
-    /* Items 0–11 in a 4-column × 3-row block */
-    for (int i = 0; i < 12; i++) {
-        GtkWidget *btn = gtk_button_new_with_label(labels[i]);
-        gtk_widget_set_name(btn, "wiz-qual-btn");
-        g_signal_connect(btn, "clicked", G_CALLBACK(on_wiz_answer), &pairs[i]);
-        gtk_grid_attach(GTK_GRID(grid), btn, i % 4, i / 4, 1, 1);
-    }
-    /* Row 3: Other (left 2 cols) + P+N (right 2 cols) */
-    GtkWidget *other = gtk_button_new_with_label(labels[12]);
-    gtk_widget_set_name(other, "wiz-qual-btn");
-    gtk_widget_set_hexpand(other, TRUE);
-    g_signal_connect(other, "clicked", G_CALLBACK(on_wiz_answer), &pairs[12]);
-    gtk_grid_attach(GTK_GRID(grid), other, 0, 3, 2, 1);
-
-    GtkWidget *pn = gtk_button_new_with_label(labels[13]);
-    gtk_widget_set_name(pn, "wiz-qual-btn");
-    gtk_widget_set_hexpand(pn, TRUE);
-    g_signal_connect(pn, "clicked", G_CALLBACK(on_wiz_answer), &pairs[13]);
-    gtk_grid_attach(GTK_GRID(grid), pn, 2, 3, 2, 1);
-    return grid;
 }
 
 static GtkWidget *wiz_page(const char *title, GtkWidget *buttons)
@@ -902,21 +1000,20 @@ static void show_note_wizard(AppState *app, int view, double bx, double by)
     g_wizard_open = TRUE;
 
     WizardData *wd = g_malloc0(sizeof(WizardData));
-    wd->app  = app;
-    wd->view = view;
-    wd->bx   = bx;
-    wd->by   = by;
+    wd->app     = app;
+    wd->view    = view;
+    wd->bx      = bx;
+    wd->by      = by;
+    wd->low_int = -1;  /* nothing selected yet */
 
     for (int i = 0; i < 2; i++) {
         wd->c_q1[i] = (WBtnPair){ wd, i, 0 };
         wd->c_q2[i] = (WBtnPair){ wd, i, 1 };
     }
     for (int i = 0; i < NOTE_QUALITY_COUNT; i++)
-        wd->c_q3[i] = (WBtnPair){ wd, i, 2 };
-    for (int i = 0; i <= 10; i++) {
-        wd->n_q4[i] = (WBtnPair){ wd, i, 3 };
-        wd->n_q5[i] = (WBtnPair){ wd, i, 4 };
-    }
+        wd->q3_btns[i] = (WizQualBtn){ wd, i };
+    for (int i = 0; i <= 10; i++)
+        wd->n_q4[i] = (WizIntBtn){ wd, i };
 
     wd->window = gtk_window_new();
     gtk_widget_set_name(wd->window, "wiz-window");
@@ -943,19 +1040,14 @@ static void show_note_wizard(AppState *app, int view, double bx, double by)
         "q2");
 
     gtk_stack_add_named(GTK_STACK(wd->stack),
-        wiz_page("Quality?",
-                 wiz_quality_grid(wd->c_q3)),
+        wiz_page("Quality?  (tap up to 3, then Next)",
+                 wiz_quality_grid(wd)),
         "q3");
 
     gtk_stack_add_named(GTK_STACK(wd->stack),
-        wiz_page("Average intensity /10",
-                 wiz_number_row(wd->n_q4)),
+        wiz_page("Intensity /10  (tap low, then high)",
+                 wiz_intensity_row(wd)),
         "q4");
-
-    gtk_stack_add_named(GTK_STACK(wd->stack),
-        wiz_page("Worst intensity /10",
-                 wiz_number_row(wd->n_q5)),
-        "q5");
 
     gtk_stack_set_visible_child_name(GTK_STACK(wd->stack), "q1");
     gtk_window_set_child(GTK_WINDOW(wd->window), wd->stack);

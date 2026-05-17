@@ -34,9 +34,10 @@ typedef struct {
     int    number;          /* sequential 1-10 */
     int    temporal;        /* 0=Constant, 1=Intermittent */
     int    depth;           /* 0=Superficial, 1=Deep */
-    int    quality;         /* 0=Pain … 12=Other; see NOTE_QUALITY_COUNT */
-    int    avg_intensity;   /* 0-10 */
-    int    worst_intensity; /* 0-10 */
+    int    qualities[3];    /* up to 3 quality indices; see NOTE_QUALITY_COUNT */
+    int    quality_count;   /* 1-3 */
+    int    low_intensity;   /* 0-10, first selected */
+    int    high_intensity;  /* 0-10, second selected */
     char   text[256];       /* longer text supporting 2+ lines of description */
 } NoteAnnotation;
 

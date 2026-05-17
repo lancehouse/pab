@@ -95,9 +95,12 @@ static json_object *notes_to_json(AppState *app)
         json_object_object_add(o, "number",  json_object_new_int(n->number));
         json_object_object_add(o, "temporal",json_object_new_int(n->temporal));
         json_object_object_add(o, "depth",   json_object_new_int(n->depth));
-        json_object_object_add(o, "quality", json_object_new_int(n->quality));
-        json_object_object_add(o, "avg",     json_object_new_int(n->avg_intensity));
-        json_object_object_add(o, "worst",   json_object_new_int(n->worst_intensity));
+        json_object *quals = json_object_new_array();
+        for (int q = 0; q < n->quality_count; q++)
+            json_object_array_add(quals, json_object_new_int(n->qualities[q]));
+        json_object_object_add(o, "qualities", quals);
+        json_object_object_add(o, "low",     json_object_new_int(n->low_intensity));
+        json_object_object_add(o, "high",    json_object_new_int(n->high_intensity));
         json_object_array_add(arr, o);
     }
     return arr;
@@ -377,12 +380,21 @@ static const char *js(json_object *o, const char *k)
 extern const char *QUALITY_SHORT_EXTERN[];
 static void regen_note_text(NoteAnnotation *n, const char *const *qs)
 {
-    snprintf(n->text, sizeof(n->text), "(%d)%s %s %s %d/%d",
+    /* Build joined quality string e.g. "Ach+Burn" */
+    char qual_buf[64] = {0};
+    for (int q = 0; q < n->quality_count; q++) {
+        if (q > 0) strncat(qual_buf, "+", sizeof(qual_buf) - strlen(qual_buf) - 1);
+        strncat(qual_buf, qs[n->qualities[q]], sizeof(qual_buf) - strlen(qual_buf) - 1);
+    }
+    if (n->quality_count == 0)
+        strncat(qual_buf, "?", sizeof(qual_buf) - strlen(qual_buf) - 1);
+
+    snprintf(n->text, sizeof(n->text), "(%d)%s %s %s %d-%d/10",
              n->number,
              n->temporal == 0 ? "Con" : "Int",
              n->depth    == 0 ? "Sup" : "Dep",
-             qs[n->quality],
-             n->avg_intensity, n->worst_intensity);
+             qual_buf,
+             n->low_intensity, n->high_intensity);
 }
 
 /* ── Load ─────────────────────────────────────────────────────────────────── */
@@ -566,10 +578,31 @@ gboolean persistence_load(AppState *app, const char *path)
             na->number          = ji(o, "number",  i + 1);
             na->temporal        = ji(o, "temporal",0);
             na->depth           = ji(o, "depth",   0);
-            na->quality         = ji(o, "quality", 0);
-            na->avg_intensity   = ji(o, "avg",     0);
-            na->worst_intensity = ji(o, "worst",   0);
-            if (na->quality < 0 || na->quality >= 14) na->quality = 0;
+            /* Load qualities — new array format; fall back to legacy "quality" int */
+            json_object *quals_j;
+            if (json_object_object_get_ex(o, "qualities", &quals_j)
+                    && json_object_get_type(quals_j) == json_type_array) {
+                int qc = (int)json_object_array_length(quals_j);
+                if (qc > 3) qc = 3;
+                na->quality_count = qc;
+                for (int q = 0; q < qc; q++) {
+                    int qv = (int)json_object_get_int(json_object_array_get_idx(quals_j, q));
+                    na->qualities[q] = (qv >= 0 && qv < 14) ? qv : 0;
+                }
+            } else {
+                /* legacy: single "quality" int */
+                int qv = ji(o, "quality", 0);
+                na->qualities[0]  = (qv >= 0 && qv < 14) ? qv : 0;
+                na->quality_count = 1;
+            }
+            /* Load intensity — new low/high format; fall back to legacy avg/worst */
+            if (json_object_object_get_ex(o, "low", NULL)) {
+                na->low_intensity  = ji(o, "low",   0);
+                na->high_intensity = ji(o, "high",  0);
+            } else {
+                na->low_intensity  = ji(o, "avg",   0);
+                na->high_intensity = ji(o, "worst", 0);
+            }
             regen_note_text(na, qs);
             app->note_count++;
         }

@@ -864,18 +864,25 @@ static void gen_buf(void)
     if (app->note_count > 0) {
         for (int ni = 0; ni < app->note_count; ni++) {
             NoteAnnotation *n = &app->notes[ni];
-            const char *q = (n->quality >= 0 && n->quality < NOTE_QUALITY_COUNT)
-                            ? QUALITY_LONG[n->quality] : "?";
+            /* Build quality string e.g. "Aching + Burning" */
+            char qbuf[128] = {0};
+            for (int q = 0; q < n->quality_count; q++) {
+                if (q > 0) strncat(qbuf, " + ", sizeof(qbuf) - strlen(qbuf) - 1);
+                int qi = n->qualities[q];
+                const char *ql = (qi >= 0 && qi < NOTE_QUALITY_COUNT) ? QUALITY_LONG[qi] : "?";
+                strncat(qbuf, ql, sizeof(qbuf) - strlen(qbuf) - 1);
+            }
+            if (n->quality_count == 0) strncat(qbuf, "?", sizeof(qbuf) - strlen(qbuf) - 1);
             const char *nrgn = body_region_name(n->view, (float)n->bx, (float)n->by);
 
-            char hdr[160];
+            char hdr[200];
             snprintf(hdr, sizeof(hdr),
-                     "  NOTE (%d)  %s · %s · %s · %s · %s · avg %d · worst %d\n",
+                     "  NOTE (%d)  %s · %s · %s · %s · %s · %d-%d/10\n",
                      n->number, nrgn,
                      canvas_view_name((BodyView)n->view),
                      n->temporal == 0 ? "Constant" : "Intermittent",
                      n->depth    == 0 ? "Superficial" : "Deep",
-                     q, n->avg_intensity, n->worst_intensity);
+                     qbuf, n->low_intensity, n->high_intensity);
             ins(&it, hdr, "heading");
 
             gboolean any_sym = FALSE;
@@ -1245,15 +1252,21 @@ void report_save_md(AppState *app)
 
     for (int ni = 0; ni < app->note_count; ni++) {
         NoteAnnotation *n = &app->notes[ni];
-        const char *q = (n->quality >= 0 && n->quality < NOTE_QUALITY_COUNT)
-                        ? QUALITY_LONG[n->quality] : "?";
-        fprintf(f, "### Note (%d) — %s · %s · %s · %s · %s · avg %d · worst %d\n\n",
+        char qbuf[128] = {0};
+        for (int q = 0; q < n->quality_count; q++) {
+            if (q > 0) strncat(qbuf, " + ", sizeof(qbuf) - strlen(qbuf) - 1);
+            int qi = n->qualities[q];
+            const char *ql = (qi >= 0 && qi < NOTE_QUALITY_COUNT) ? QUALITY_LONG[qi] : "?";
+            strncat(qbuf, ql, sizeof(qbuf) - strlen(qbuf) - 1);
+        }
+        if (n->quality_count == 0) strncat(qbuf, "?", sizeof(qbuf) - strlen(qbuf) - 1);
+        fprintf(f, "### Note (%d) — %s · %s · %s · %s · %s · %d-%d/10\n\n",
                 n->number,
                 body_region_name(n->view, (float)n->bx, (float)n->by),
                 canvas_view_name((BodyView)n->view),
                 n->temporal == 0 ? "Constant" : "Intermittent",
                 n->depth    == 0 ? "Superficial" : "Deep",
-                q, n->avg_intensity, n->worst_intensity);
+                qbuf, n->low_intensity, n->high_intensity);
         gboolean any = FALSE;
         char dist[256];
         for (int s = 0; s < SYMPTOM_COUNT; s++) {
