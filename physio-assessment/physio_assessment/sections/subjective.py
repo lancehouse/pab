@@ -8,8 +8,11 @@ from textual.widgets import Label, Input, TextArea, Button
 from textual.message import Message
 
 from .base import BaseSection
-from ..widgets import CheckButton, FlagButton
+from ..widgets import CheckButton, FlagButton, RadioGroup
 from ..mapping import build_prefill
+from ..yaml_subsection import YamlSubsection
+
+_SLEEP_YAML = Path(__file__).resolve().parent / "yaml" / "subj_sleep_pilot.yaml"
 
 # Must match GTK MAX_NOTES
 MAX_NOTE_SLOTS = 10
@@ -280,49 +283,8 @@ class SubjectiveSection(BaseSection):
                 yield Label("Current duties\n& restrictions:")
                 yield TextArea(id="current_duties", language="plain")
 
-            # ── Sleep ─────────────────────────────────────────────────
-            yield Label("— Sleep —", classes="subsection_header", id="subj_sleep")
-            with Horizontal(classes="field_row"):
-                yield Label("Bed & pillow\n(age / description):")
-                yield TextArea(id="bed_description", language="plain")
-            yield Label("Sleep problems:")
-            with Horizontal(classes="btn_row"):
-                yield FlagButton("Difficulty falling asleep", id="sleep_difficulty")
-                yield FlagButton("Night waking",             id="night_waking")
-                yield CheckButton("Daytime naps",            id="daytime_naps")
-            with Horizontal(classes="field_row"):
-                yield Label("Difficulty severity\n(0–10):")
-                yield Input(id="sleep_difficulty_severity", placeholder="0–10")
-            with Horizontal(classes="field_row"):
-                yield Label("Time to fall asleep\n(minutes):")
-                yield Input(id="sleep_onset_time", placeholder="minutes")
-            with Horizontal(classes="field_row"):
-                yield Label("Sleep position:")
-                yield TextArea(id="sleep_position", language="plain")
-            with Horizontal(classes="field_row"):
-                yield Label("Total sleep hours:")
-                yield Input(id="total_sleep_hours", placeholder="hours")
-            with Horizontal(classes="field_row"):
-                yield Label("Night waking\nfrequency:")
-                yield TextArea(id="night_waking_frequency", language="plain")
-            with Horizontal(classes="field_row"):
-                yield Label("Night waking\nreason:")
-                yield TextArea(id="night_waking_reason", language="plain")
-            with Horizontal(classes="field_row"):
-                yield Label("Times out of bed\nat night:")
-                yield Input(id="bed_exits_count", placeholder="number")
-            with Horizontal(classes="field_row"):
-                yield Label("Night waking\nseverity (0–10):")
-                yield Input(id="night_waking_severity", placeholder="0–10")
-            with Horizontal(classes="field_row"):
-                yield Label("Morning pain\n& stiffness:")
-                yield TextArea(id="morning_stiffness", language="plain")
-            with Horizontal(classes="field_row"):
-                yield Label("Nap frequency:")
-                yield TextArea(id="nap_frequency", language="plain")
-            with Horizontal(classes="field_row"):
-                yield Label("Nap duration\n(minutes):")
-                yield Input(id="nap_duration", placeholder="minutes")
+            # ── Sleep — YAML-driven pilot ──────────────────────────────
+            yield YamlSubsection.from_yaml(_SLEEP_YAML, id="ys_sleep")
             # ── 24Hr Pattern ──────────────────────────────────────────
             yield Label("— 24Hr Pattern —", classes="subsection_header",
                         id="subj_24hr")
@@ -523,7 +485,6 @@ class SubjectiveSection(BaseSection):
         "body_chart_completed",
         "course_improving", "course_worsening", "course_stable", "course_fluctuating",
         "flareup_rare", "flareup_occasional", "flareup_frequent",
-        "sleep_difficulty", "night_waking", "daytime_naps",
         "mood_influences", "self_harm_risk",
     ]
 
@@ -535,9 +496,6 @@ class SubjectiveSection(BaseSection):
         "exercise_type", "exercise_dose", "exercise_response",
         "pre_injury_role", "pre_injury_duties",
         "current_work_status", "current_duties",
-        "bed_description", "sleep_position",
-        "night_waking_frequency", "night_waking_reason", "morning_stiffness",
-        "nap_frequency",
         "hr24_am", "hr24_day", "hr24_pm", "hr24_nocte",
         "energy_levels", "daily_pattern_comments",
         "mood_text",
@@ -549,8 +507,6 @@ class SubjectiveSection(BaseSection):
     _INPUT_FIELDS = [
         "pain_control_score", "confidence_score",
         "pre_injury_hours", "current_hours",
-        "sleep_difficulty_severity", "sleep_onset_time", "total_sleep_hours",
-        "bed_exits_count", "night_waking_severity", "nap_duration",
     ]
 
     def collect(self) -> dict:
@@ -597,6 +553,8 @@ class SubjectiveSection(BaseSection):
                 data[fid] = self.query_one(f"#{fid}", Input).value
             except Exception:
                 data[fid] = ""
+
+        data.update(self.query_one("#ys_sleep", YamlSubsection).collect())
 
         return data
 
@@ -645,6 +603,8 @@ class SubjectiveSection(BaseSection):
                     except Exception:
                         pass
 
+            self.query_one("#ys_sleep", YamlSubsection).load(subjective)
+
         finally:
             self._loading = False
 
@@ -658,6 +618,7 @@ class SubjectiveSection(BaseSection):
     @on(CheckButton.Changed)
     @on(Input.Changed)
     @on(TextArea.Changed)
+    @on(RadioGroup.Changed)
     def _on_field_changed(self) -> None:
         if self._loading:
             return

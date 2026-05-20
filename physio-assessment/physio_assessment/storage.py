@@ -1127,21 +1127,22 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     txt("current_duties",      s)
 
     sub("Sleep")
-    txt("bed_description",          s)
-    f("sleep_difficulty",           s)
-    f("sleep_difficulty_severity",  s)
+    f("sleep_overall_rating",       s)
+    f("sleep_feels_rested",         s)
+    f("sleep_time_to_bed",          s)
+    f("sleep_time_attempt",         s)
     f("sleep_onset_time",           s)
-    txt("sleep_position",           s)
-    f("total_sleep_hours",          s)
-    f("night_waking",               s)
-    txt("night_waking_frequency",   s)
-    txt("night_waking_reason",      s)
-    f("bed_exits_count",            s)
-    f("night_waking_severity",      s)
-    txt("morning_stiffness",        s)
-    f("daytime_naps",               s)
-    txt("nap_frequency",            s)
-    f("nap_duration",               s)
+    f("sleep_waso_clock",           s)
+    f("sleep_waso_duration",        s)
+    f("sleep_awake_in_bed",         s)
+    f("sleep_awake_out_bed",        s)
+    f("sleep_final_wakeup",         s)
+    f("sleep_time_out_of_bed",      s)
+    f("sleep_efficiency",           s)
+    txt("sleep_postural_factors",   s)
+    txt("sleep_environment_quality",s)
+    f("sleep_daytime_naps",         s)
+    txt("sleep_overall_comments",   s)
     txt("energy_levels",            s)
 
     sub("Behaviour of Symptoms")
@@ -1765,9 +1766,8 @@ LABELS: dict[str, str] = {
     "flareup_rare":                     "Flare-ups: Rare",
     "flareup_occasional":               "Flare-ups: Occasional",
     "flareup_frequent":                 "Flare-ups: Frequent",
-    "sleep_difficulty":                 "Sleep difficulty",
-    "night_waking":                     "Night waking",
-    "daytime_naps":                     "Daytime naps",
+    "sleep_overall_rating":             "Sleep overall rating",
+    "sleep_feels_rested":               "Feels rested",
     "mood_influences":                  "Mood influences pain",
     "self_harm_risk":                   "Self-harm risk assessed",
     "symptom_location":                 "Symptom location",
@@ -1791,12 +1791,9 @@ LABELS: dict[str, str] = {
     "pre_injury_duties":                "Pre-injury duties",
     "current_work_status":              "Current work status",
     "current_duties":                   "Current duties",
-    "bed_description":                  "Bed description",
-    "sleep_position":                   "Sleep position",
-    "night_waking_frequency":           "Night waking frequency",
-    "night_waking_reason":              "Night waking reason",
-    "morning_stiffness":                "Morning stiffness",
-    "nap_frequency":                    "Nap frequency",
+    "sleep_postural_factors":           "Sleep postural factors",
+    "sleep_environment_quality":        "Sleep environment quality",
+    "sleep_overall_comments":           "Sleep overall comments",
     "energy_levels":                    "Energy levels",
     "aggravating_factors":              "Aggravating factors",
     "easing_factors":                   "Easing factors",
@@ -1814,12 +1811,17 @@ LABELS: dict[str, str] = {
     "confidence_score":                 "Confidence score (PSEQ-2)",
     "pre_injury_hours":                 "Pre-injury work hours/week",
     "current_hours":                    "Current work hours/week",
-    "sleep_difficulty_severity":        "Sleep difficulty severity",
-    "sleep_onset_time":                 "Sleep onset time (mins)",
-    "total_sleep_hours":                "Total sleep hours",
-    "bed_exits_count":                  "Bed exits per night",
-    "night_waking_severity":            "Night waking severity",
-    "nap_duration":                     "Nap duration (mins)",
+    "sleep_time_to_bed":                "Time to bed",
+    "sleep_time_attempt":               "Time to attempt sleep",
+    "sleep_onset_time":                 "Sleep onset time (clock)",
+    "sleep_waso_clock":                 "WASO — time (clock)",
+    "sleep_waso_duration":              "WASO — duration",
+    "sleep_awake_in_bed":               "Time awake in bed",
+    "sleep_awake_out_bed":              "Time awake out of bed",
+    "sleep_final_wakeup":               "Final wake up",
+    "sleep_time_out_of_bed":            "Time out of bed",
+    "sleep_efficiency":                 "Sleep efficiency (%)",
+    "sleep_daytime_naps":               "Daytime naps",
     # ── 03 Medical ──────────────────────────────────────────────────────────
     "no_previous_injuries":             "No previous injuries",
     "previous_injuries":                "Previous injuries (detail)",
@@ -2346,22 +2348,23 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     txt("current_duties",     s)
 
     sub("Sleep")
-    txt("bed_description",         s)
-    f("sleep_difficulty",          s)
-    f("sleep_difficulty_severity", s)
-    f("sleep_onset_time",          s)
-    txt("sleep_position",          s)
-    f("total_sleep_hours",         s)
-    f("night_waking",              s)
-    txt("night_waking_frequency",  s)
-    txt("night_waking_reason",     s)
-    f("bed_exits_count",           s)
-    f("night_waking_severity",     s)
-    txt("morning_stiffness",       s)
-    f("daytime_naps",              s)
-    txt("nap_frequency",           s)
-    f("nap_duration",              s)
-    txt("energy_levels",           s)
+    f("sleep_overall_rating",        s)
+    f("sleep_feels_rested",          s)
+    f("sleep_time_to_bed",           s)
+    f("sleep_time_attempt",          s)
+    f("sleep_onset_time",            s)
+    f("sleep_waso_clock",            s)
+    f("sleep_waso_duration",         s)
+    f("sleep_awake_in_bed",          s)
+    f("sleep_awake_out_bed",         s)
+    f("sleep_final_wakeup",          s)
+    f("sleep_time_out_of_bed",       s)
+    f("sleep_efficiency",            s)
+    txt("sleep_postural_factors",    s)
+    txt("sleep_environment_quality", s)
+    f("sleep_daytime_naps",          s)
+    txt("sleep_overall_comments",    s)
+    txt("energy_levels",             s)
 
     sub("Behaviour of Symptoms")
     txt("aggravating_factors",    s)

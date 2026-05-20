@@ -1,0 +1,208 @@
+# Sleep subsection pilot — 02 Subjective Examination
+#
+# This file is a pilot for the YAML-driven form editor (Phase 2B).
+# It defines the sleep subsection only; it will be merged into
+# 02_subjective.yaml when the full loader is built.
+#
+# FIELD ID CONTRACT: ids are permanent data keys. Never rename them.
+# Changing a label or type is fine; changing an id breaks stored JSON.
+#
+# CLEAN BREAK: all old sleep field ids (sleep_difficulty, night_waking,
+# bed_description, morning_stiffness, etc.) are intentionally dropped.
+# Existing sessions with old sleep data will silently discard those keys.
+
+section_id: 02_subjective            # parent section this subsection belongs to
+subsection_pilot: true               # flag: this is a standalone pilot, not a full section file
+
+subsections:
+  - id: subj_sleep
+    label: "Sleep"
+
+    fields:
+
+      # ── Overall ratings ───────────────────────────────────────────────────
+      - id: sleep_overall_rating
+        type: radio
+        label: "How would you rate your sleep overall?"
+        options:
+          - value: good
+            label: "Good"
+            variant: success
+          - value: tolerable
+            label: "Tolerable"
+            variant: warning
+          - value: poor
+            label: "Poor"
+            variant: error
+
+      - id: sleep_feels_rested
+        type: radio
+        label: "Do you feel rested?"
+        options:
+          - value: "yes"
+            label: "Yes"
+            variant: success
+          - value: "no"
+            label: "No"
+            variant: error
+          - value: "sometimes"
+            label: "Sometimes"
+            variant: warning
+
+      # ── Sleep diary times (all 24-hour hh:mm) ────────────────────────────
+      #
+      # time_kind: "clock"    → point in time (e.g. 22:30); validated as 00:00–23:59
+      # time_kind: "duration" → elapsed time (e.g. 00:45); validated as 00:00–23:59
+      #                         Displayed with a "dur" hint in the TUI.
+      #
+      # Abbreviation guide used in Sleep Efficiency formula:
+      #   TIB_start  = sleep_time_to_bed       (Time In Bed start)
+      #   TSA        = sleep_time_attempt       (Time Subject Attempted sleep)
+      #   SOL        = sleep_onset_time         (Sleep Onset Latency — when actually asleep)
+      #   WASO_clock = sleep_waso_clock         (clock time of night waking)
+      #   WASO_dur   = sleep_waso_duration      (total duration of wake periods after SOL)
+      #   WIBA       = sleep_awake_in_bed       (Time Awake In Bed after final wakeup)
+      #   WOOB       = sleep_awake_out_bed      (Time Awake Out Of Bed during night)
+      #   FWT        = sleep_final_wakeup       (Final Wake-up Time)
+      #   TOB        = sleep_time_out_of_bed    (Time Out of Bed — end of TIB)
+
+      - id: sleep_time_to_bed
+        type: input
+        label: "Time to bed"
+        placeholder: "hh:mm"
+        time_format: "24h"
+        time_kind: clock
+
+      - id: sleep_time_attempt
+        type: input
+        label: "Time to attempt sleep"
+        placeholder: "hh:mm"
+        time_format: "24h"
+        time_kind: clock
+
+      - id: sleep_onset_time
+        type: input
+        label: "Time to actual sleep (Sleep Onset Latency)"
+        placeholder: "hh:mm"
+        time_format: "24h"
+        time_kind: clock
+
+      - id: sleep_waso_clock
+        type: input
+        label: "Wake After Sleep Onset — time"
+        placeholder: "hh:mm"
+        time_format: "24h"
+        time_kind: clock
+        note: "Clock time of most significant night waking"
+
+      - id: sleep_waso_duration
+        type: input
+        label: "Wake After Sleep Onset — length"
+        placeholder: "hh:mm"
+        time_format: "24h"
+        time_kind: duration
+        note: "Total duration awake after sleep onset; used in SE formula"
+
+      - id: sleep_awake_in_bed
+        type: input
+        label: "Time awake in bed"
+        placeholder: "hh:mm"
+        time_format: "24h"
+        time_kind: duration
+
+      - id: sleep_awake_out_bed
+        type: input
+        label: "Time awake out of bed"
+        placeholder: "hh:mm"
+        time_format: "24h"
+        time_kind: duration
+
+      - id: sleep_final_wakeup
+        type: input
+        label: "Final wake up"
+        placeholder: "hh:mm"
+        time_format: "24h"
+        time_kind: clock
+
+      - id: sleep_time_out_of_bed
+        type: input
+        label: "Time out of bed"
+        placeholder: "hh:mm"
+        time_format: "24h"
+        time_kind: clock
+
+      # ── Calculated: Sleep Efficiency ──────────────────────────────────────
+      #
+      # Formula:
+      #   Total Sleep Time  TST = (FWT − SOL) − WASO_dur
+      #   Time In Bed       TIB = (TOB − TIB_start) − WOOB
+      #   Sleep Efficiency   SE = TST / TIB × 100  [%]
+      #
+      # IMPLEMENTATION NOTES for calc_sleep_efficiency() in logic.py:
+      #
+      # 1. LAZY TEXT PARSING
+      #    Extract the first run of digits (with optional colon) from any
+      #    free-text value before parsing. Examples:
+      #      "645 most days"  → "645"  → 06:45
+      #      "22:00 approx"   → "22:00"
+      #      "930"            → "9:30"
+      #    Rule: strip leading/trailing whitespace, take the first token that
+      #    matches /\d{1,4}:?\d{0,2}/, ignore the rest of the string.
+      #
+      # 2. TIME NORMALISATION (hh:mm or hhmm → minutes since midnight)
+      #    Accept: "645" "6:45" "0645" "06:45" — all → 6h 45m = 405 min.
+      #    Digit-only strings: ≤2 digits → hours only; 3 digits → h + mm
+      #    (e.g. "645" → 6h45m); 4 digits → hhmm.
+      #
+      # 3. MIDNIGHT CROSSING for clock times (time_kind: clock)
+      #    A sleep diary always spans one night. When TOB < TIB_start the
+      #    subject went to bed before midnight and rose after it.
+      #    Rule: if a clock time < TIB_start, add 1440 (24 h) to it so all
+      #    arithmetic is in a monotonically increasing minute space.
+      #    Example: TIB_start=2200 (1320 min), TOB=645 (405 min)
+      #      → TOB_adj = 405 + 1440 = 1845 min
+      #      → TIB = 1845 − 1320 − WOOB  ✓ (not 405 − 1320 = negative)
+      #    Apply the same adjustment to SOL, FWT, WASO_clock when < TIB_start.
+      #    Duration fields (time_kind: duration) are NEVER adjusted.
+      #
+      # 4. OUTPUT
+      #    Return "" if any of the six required inputs is blank/unparseable.
+      #    Otherwise return "NN%" (integer, rounded). Store as plain string
+      #    in JSON — the unit "%" is display-only in the TUI.
+      #
+      # The loader renders this as a read-only Input (greyed out) that
+      # recomputes whenever any field listed in `inputs` changes.
+
+      - id: sleep_efficiency
+        type: calculated
+        label: "Calculated Sleep Efficiency"
+        readonly: true
+        unit: "%"
+        formula_fn: calc_sleep_efficiency
+        inputs:
+          - sleep_onset_time       # SOL
+          - sleep_waso_duration    # WASO_dur
+          - sleep_final_wakeup     # FWT
+          - sleep_time_to_bed      # TIB_start
+          - sleep_awake_out_bed    # WOOB
+          - sleep_time_out_of_bed  # TOB
+
+      # ── Contextual / qualitative ──────────────────────────────────────────
+      - id: sleep_postural_factors
+        type: text_area
+        label: "Postural factors"
+
+      - id: sleep_environment_quality
+        type: text_area
+        label: "Environment quality"
+
+      - id: sleep_daytime_naps
+        type: input
+        label: "Daytime naps"
+        placeholder: "hh:mm"
+        time_format: "24h"
+        time_kind: duration
+
+      - id: sleep_overall_comments
+        type: text_area
+        label: "Overall comments"
