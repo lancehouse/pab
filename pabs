@@ -1,0 +1,4 @@
+#!/bin/bash
+# PAB stable launcher — bodychart (GTK) stable build + assessment (TUI) main branch
+# NOTE: stable binary is named physio-bodychart until yaml-form-editor merges to main
+exec ~/Projects/pab/pab-stable/bodychart/build-stable/physio-bodychart "$@"

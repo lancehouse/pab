@@ -1,0 +1,3 @@
+#!/bin/bash
+# PAB dev launcher — bodychart (GTK) dev build + assessment (TUI) dev branch
+exec ~/Projects/pab/bodychart/build/bodychart "$@"
