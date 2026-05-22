@@ -777,8 +777,8 @@ void canvas_render_view(AppState *app, cairo_t *cr, BodyView view,
                              (lby - 200.0) * s + cy);
         }
 
-        /* Link summary shown in all views */
-        if (app->link_summary_active)
+        /* Link summary shown on anterior view only */
+        if (app->link_summary_active && view == VIEW_ANTERIOR)
             draw_link_summary_screen(cr, app,
                                       (app->link_summary_bx - 100.0) * s + cx,
                                       (app->link_summary_by - 200.0) * s + cy);
@@ -931,7 +931,7 @@ static void on_col_draw(GtkDrawingArea *da, cairo_t *cr,
                              (lbx - 100.0) * s + cx,
                              (lby - 200.0) * s + cy);
         }
-        if (app->link_summary_active)
+        if (app->link_summary_active && cd->view == VIEW_ANTERIOR)
             draw_link_summary_screen(cr, app,
                                       (app->link_summary_bx - 100.0) * s + cx,
                                       (app->link_summary_by - 200.0) * s + cy);
