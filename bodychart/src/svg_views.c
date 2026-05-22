@@ -38,14 +38,14 @@ void svg_views_init(void)
     char buf[1024];
     const char *home = g_get_home_dir();
 
-    snprintf(buf, sizeof(buf), "%s/.local/share/physio-bodychart/views", home);
+    snprintf(buf, sizeof(buf), "%s/.local/share/pab/views", home);
     try_dir(buf);
 
-    try_dir("/usr/local/share/physio-bodychart/views");
-    try_dir("/usr/share/physio-bodychart/views");
+    try_dir("/usr/local/share/pab/views");
+    try_dir("/usr/share/pab/views");
 
     /* Dev: SVGs saved directly in the source tree */
-    snprintf(buf, sizeof(buf), "%s/Projects/physio-bodychart/physio-bodychart/views", home);
+    snprintf(buf, sizeof(buf), "%s/Projects/pab/bodychart/views", home);
     try_dir(buf);
 
     try_dir("data/views");   /* fallback when running from build/ in dev */

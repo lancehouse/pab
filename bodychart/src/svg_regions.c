@@ -444,16 +444,16 @@ void svg_regions_load(SvgRegions *sr)
 
     static const char *SEARCH_DIRS[] = {
         NULL,   /* filled from home below */
-        "/usr/local/share/physio-bodychart/views",
-        "/usr/share/physio-bodychart/views",
+        "/usr/local/share/pab/views",
+        "/usr/share/pab/views",
         NULL,   /* filled from home below */
         "data/views",
     };
     char home_user[512], home_dev[512];
     snprintf(home_user, sizeof(home_user),
-             "%s/.local/share/physio-bodychart/views", home);
+             "%s/.local/share/pab/views", home);
     snprintf(home_dev,  sizeof(home_dev),
-             "%s/Projects/physio-bodychart/physio-bodychart/views", home);
+             "%s/Projects/pab/bodychart/views", home);
     SEARCH_DIRS[0] = home_user;
     SEARCH_DIRS[3] = home_dev;
 

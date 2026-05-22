@@ -443,8 +443,8 @@ static void load_subj_template(void)
 
     const char *cfg = g_get_user_config_dir();
     char dir[512], path[512];
-    snprintf(dir,  sizeof(dir),  "%s/physio-bodychart", cfg);
-    snprintf(path, sizeof(path), "%s/physio-bodychart/subjective_prompts.md", cfg);
+    snprintf(dir,  sizeof(dir),  "%s/pab", cfg);
+    snprintf(path, sizeof(path), "%s/pab/subjective_prompts.md", cfg);
 
     g_mkdir_with_parents(dir, 0755);
 

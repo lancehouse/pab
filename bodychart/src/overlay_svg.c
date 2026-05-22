@@ -43,11 +43,11 @@ void overlay_svg_init(void)
     char buf[1024];
     const char *home = g_get_home_dir();
 
-    snprintf(buf, sizeof(buf), "%s/.local/share/physio-bodychart/views", home);
+    snprintf(buf, sizeof(buf), "%s/.local/share/pab/views", home);
     load_svgs_from_dir(buf);
-    load_svgs_from_dir("/usr/local/share/physio-bodychart/views");
-    load_svgs_from_dir("/usr/share/physio-bodychart/views");
-    snprintf(buf, sizeof(buf), "%s/Projects/physio-bodychart/physio-bodychart/views", home);
+    load_svgs_from_dir("/usr/local/share/pab/views");
+    load_svgs_from_dir("/usr/share/pab/views");
+    snprintf(buf, sizeof(buf), "%s/Projects/pab/bodychart/views", home);
     load_svgs_from_dir(buf);
     load_svgs_from_dir("data/views");
 }
