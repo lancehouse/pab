@@ -20,7 +20,7 @@ This document defines the JSON schema that synchronizes the GTK body chart and P
 
 ### session_current.json
 **Purpose:** Active session pointer (Python discovers which session to work on)
-**Location:** `~/.local/share/physio-bodychart/session_current.json`
+**Location:** `~/.local/share/pab/session_current.json`
 **Owner:** GTK
 **Update Frequency:** Every significant change (stroke commit, overlay change, etc.)
 **Schema Version:** 2
@@ -28,7 +28,7 @@ This document defines the JSON schema that synchronizes the GTK body chart and P
 ```json
 {
   "schema_version": 2,
-  "session_file": "/home/user/Physio-Bodychart/JB_07_05_2026_1430/JB_07_05_2026_1430_session.json",
+  "session_file": "/home/user/PAB/JB_07_05_2026_1430/JB_07_05_2026_1430_session.json",
   "session_id": "JB",
   "session_label": "Lower back assessment",
   "date": "2026-05-07T14:30:00Z",
@@ -54,7 +54,7 @@ This document defines the JSON schema that synchronizes the GTK body chart and P
 
 ### Full Session JSON
 **Purpose:** Complete session data (all clinical information)
-**Location:** `~/.local/share/physio-bodychart/Physio-Bodychart/[session_name]/[session_name]_session.json`
+**Location:** `~/PAB/[session_name]/[session_name]_session.json`
 **Owner:** GTK (writes), Python (reads/writes assessment block)
 **Update Frequency:** After every stroke, note, objective item, or assessment edit
 **Schema Version:** 2
@@ -321,7 +321,7 @@ See `docs/SESSION_SUMMARY_20260508.md` for full testing checklist.
 
 ## References
 
-- GTK persistence code: `physio-bodychart/src/persistence.c`
-- Python storage code: `physio-assessment/storage.py`
-- File watcher: `physio-assessment/watcher.py`
+- GTK persistence code: `bodychart/src/persistence.c`
+- Python storage code: `assessment/pab_assessment/storage.py`
+- File watcher: `assessment/pab_assessment/watcher.py`
 - Full architecture: `docs/ARCHITECTURE_20260508.md`

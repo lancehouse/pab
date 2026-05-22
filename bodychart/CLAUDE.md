@@ -1,4 +1,4 @@
-# PhysioBodyChart — GTK4/C App
+# bodychart — GTK4/C App
 
 See `../CLAUDE.md` for the full two-app architecture and shared file format.
 

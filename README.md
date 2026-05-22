@@ -11,16 +11,16 @@ Both apps synchronize through shared session JSON files, enabling seamless clini
 ## Project Structure
 
 ```
-physio-bodychart/               ← GTK4/C desktop stylus app
+bodychart/                      ← GTK4/C desktop stylus app
 ├── src/                        ← C source code
 ├── build/                      ← Compiled output (ninja)
 ├── meson.build                 ← Meson build config
 └── ...
 
-physio-assessment/              ← Python Textual TUI app
-├── physio_assessment/          ← Python package
+assessment/                     ← Python Textual TUI app
+├── pab_assessment/             ← Python package
 ├── pyproject.toml              ← Python dependencies
-├── .venv/                       ← Virtual environment (Python 3.12)
+├── .venv/                      ← Virtual environment (Python 3.12)
 └── ...
 
 docs/                           ← Shared documentation
@@ -40,19 +40,19 @@ SESSION_JSON_SCHEMA.md          ← Data contract between apps (THIS FILE)
 ### GTK Body Chart App
 
 ```bash
-cd physio-bodychart
+cd bodychart
 ninja -C build
-./build/physio-bodychart
+./build/bodychart
 ```
 
 ### Python Assessment TUI
 
 ```bash
-cd physio-assessment
+cd assessment
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -e .
-python -m textual run physio_assessment.tui:PhysioAssessmentTUI
+assessment
 ```
 
 ---
@@ -63,12 +63,12 @@ Both apps share patient session data through JSON files:
 
 **Active Session Pointer:**
 ```
-~/.local/share/physio-bodychart/session_current.json
+~/.local/share/pab/session_current.json
 ```
 
 **Full Session Data:**
 ```
-~/.local/share/physio-bodychart/Physio-Bodychart/[patient_id]_[timestamp]/
+~/PAB/[patient_id]_[timestamp]/
 └── [session_name]_session.json
 ```
 
@@ -87,9 +87,9 @@ See `SESSION_JSON_SCHEMA.md` for the complete data contract.
 ### GTK App
 
 ```bash
-cd physio-bodychart
+cd bodychart
 ninja -C build              # Build
-./build/physio-bodychart    # Run
+./build/bodychart           # Run
 ```
 
 Verify compilation:
@@ -100,7 +100,7 @@ ninja -C build 2>&1 | tail -5
 ### Python TUI
 
 ```bash
-cd physio_assessment
+cd assessment/pab_assessment
 python3 -m py_compile watcher.py storage.py tui.py
 ```
 

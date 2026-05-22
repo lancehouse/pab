@@ -6,16 +6,16 @@ Primary input in body-chart mode is pressure-sensitive stylus/touchscreen. Keybo
 ## Two-app architecture
 
 ```
-physio-bodychart/          GTK4 / C
+bodychart/                 GTK4 / C
   Stylus body chart app
-  Writes → ~/Physio-Bodychart/<session>/_session.json
-  Writes → ~/.local/share/physio-bodychart/session_current.json  (active session pointer)
+  Writes → ~/PAB/<session>/_session.json
+  Writes → ~/.local/share/pab/session_current.json  (active session pointer)
 
-physio-assessment/         Python 3.12 / Textual TUI
+assessment/                Python 3.12 / Textual TUI
   Structured clinical assessment + report generation
   Reads  ← session_current.json  (to know which session is active)
-  Reads/writes → ~/Physio-Bodychart/<session>/_assessment.json
-  Reads/writes → ~/Physio-Bodychart/<session>/_objective.json
+  Reads/writes → ~/PAB/<session>/_assessment.json
+  Reads/writes → ~/PAB/<session>/_objective.json
 ```
 
 The two apps are **independent**. Changes to one do not require changes to the other unless the
@@ -23,10 +23,10 @@ shared session JSON schema changes. Schema changes require a version bump in bot
 
 ## Session file layout
 
-Every session lives in its own directory under `~/Physio-Bodychart/`:
+Every session lives in its own directory under `~/PAB/`:
 
 ```
-~/Physio-Bodychart/<session-name>/
+~/PAB/<session-name>/
   <name>_session.json       GTK-owned: body chart strokes, overlays, regions, patient identity
   <name>_assessment.json    TUI-owned: assessment sections 01–07 (consent → barriers)
   <name>_objective.json     TUI-owned: objective examination sections 01–07
@@ -48,8 +48,8 @@ introduce binary formats or database files. Files are used individually for vari
 ## Environment
 
 - Fedora 43, GNOME, kitty terminal (GPU-accelerated; enables remote-control focus switching)
-- GTK app: build with `ninja -C build` inside `physio-bodychart/`
-- TUI: Python 3.12 venv inside `physio-assessment/`; activate before running
+- GTK app: build with `ninja -C build` inside `bodychart/`
+- TUI: Python 3.12 venv inside `assessment/`; activate before running
 
 ## Overarching rules
 

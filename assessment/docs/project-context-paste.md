@@ -1,20 +1,20 @@
-# PhysioBodyChart — Project Context (paste into new Claude chat)
+# PAB — Project Context (paste into new Claude chat)
 
 ## What this project is
 
 A physiotherapy assessment tool consisting of two integrated apps:
 
-1. **physio-bodychart** (GTK4/C) — a stylus body chart app for marking symptoms on a human outline. Runs on a ThinkPad 11e touchscreen. Saves strokes, notes, arrows, and objective markers to JSON.
+1. **bodychart** (GTK4/C) — a stylus body chart app for marking symptoms on a human outline. Runs on a Lenovo Yoga touchscreen. Saves strokes, notes, arrows, and objective markers to JSON.
 
-2. **physio-assessment** (Python/Textual) — a TUI assessment form with 7 sections covering the full physiotherapy assessment workflow. Auto-saves to the same session JSON.
+2. **assessment** (Python/Textual) — a TUI assessment form with 7 sections covering the full physiotherapy assessment workflow. Auto-saves to the same session JSON.
 
 The two apps run side by side: GTK spawns the TUI in ptyxis (terminal). Ctrl+B (TUI) switches to the GTK body chart. Ctrl+A (GTK) switches back to the TUI (kitty only). They communicate via file-based IPC (session_current.json + signal files) — Wayland-safe.
 
 ## Repository layout
 
 ```
-physio-bodychart/
-  physio-bodychart/        ← GTK4/C app
+pab/
+  bodychart/               ← GTK4/C app
     src/
       canvas.c/.h          ← AppState struct, drawing pipeline
       integration.c/.h     ← terminal spawn, focus IPC
@@ -22,8 +22,8 @@ physio-bodychart/
       window.c             ← sidebar UI, Ctrl+A handler
       obj_chart.c          ← objective zone/point rendering
     meson.build
-  physio-assessment/       ← Python/Textual TUI
-    physio_assessment/
+  assessment/              ← Python/Textual TUI
+    pab_assessment/
       main.py              ← entry point, --session arg
       tui.py               ← PhysioAssessmentTUI, Ctrl+B/E/S bindings, session list
       assessment_view.py   ← mounts all 7 sections, save/load routing
@@ -68,22 +68,22 @@ All assessment sections are built, wired to storage, and cross-referencing each 
 
 ```bash
 # Build GTK:
-ninja -C ~/Projects/physio-bodychart/physio-bodychart/build
+ninja -C ~/Projects/pab/bodychart/build
 
 # Launch GTK (auto-spawns TUI):
-cd ~/Projects/physio-bodychart/physio-bodychart && ./build/physio-bodychart
+cd ~/Projects/pab/bodychart && ./build/bodychart
 
 # Launch TUI standalone:
-physio-assessment
+assessment
 
-# Install symlink for PATH access (already done):
-ln -s ~/Projects/physio-bodychart/physio-assessment/.venv/bin/physio-assessment ~/.local/bin/physio-assessment
+# Install symlink for PATH access:
+ln -s ~/Projects/pab/assessment/.venv/bin/assessment ~/.local/bin/assessment
 ```
 
 ## Important rules / gotchas
 
 - Widget IDs must be globally unique across all mounted sections
 - Use `YesNoField` from consent.py, `CycleField` from outcome_measures.py, `LikelihoodField` from medical.py — don't redefine them
-- Always import-test a section after editing: `.venv/bin/python3 -c "from physio_assessment.sections.X import Y; print('OK')"`
+- Always import-test a section after editing: `.venv/bin/python3 -c "from pab_assessment.sections.X import Y; print('OK')"`
 - Use Sonnet 4.6 or Opus — Haiku 4.5 struggles with complex Textual UI
 - `scroll_to_widget(target, top=True)` is the correct Textual 8.x API for jump-to-section

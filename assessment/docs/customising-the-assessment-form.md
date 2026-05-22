@@ -293,6 +293,6 @@ def is_complete(self) -> bool:
 ## Quick Reference: Test Before Launch
 
 ```bash
-cd ~/Projects/physio-bodychart/physio-assessment
-.venv/bin/python3 -c "from physio_assessment.sections.medical import MedicalSection; print('OK')"
+cd ~/Projects/pab/assessment
+.venv/bin/python3 -c "from pab_assessment.sections.medical import MedicalSection; print('OK')"
 ```
