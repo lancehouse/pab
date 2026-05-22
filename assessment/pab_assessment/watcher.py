@@ -12,7 +12,7 @@ import logging
 from pathlib import Path
 from typing import Callable, Awaitable
 
-SESSION_CURRENT = Path.home() / ".local/share/physio-bodychart/session_current.json"
+SESSION_CURRENT = Path.home() / ".local/share/pab/session_current.json"
 POLL_INTERVAL   = 1.0    # seconds
 
 

@@ -78,7 +78,7 @@ def load_session_current() -> Optional[dict]:
 
     Returns None if file doesn't exist or can't be parsed.
     """
-    session_current = Path.home() / ".local/share/physio-bodychart/session_current.json"
+    session_current = Path.home() / ".local/share/pab/session_current.json"
 
     if not session_current.exists():
         return None
@@ -149,7 +149,7 @@ def save_objective(
 
 def write_objective_pid(pid: int) -> None:
     """Write the Objective TUI process PID into session_current.json."""
-    path = Path.home() / ".local/share/physio-bodychart/session_current.json"
+    path = Path.home() / ".local/share/pab/session_current.json"
     try:
         data = json.loads(path.read_text()) if path.exists() else {}
         data["objective_pid"] = pid
@@ -162,7 +162,7 @@ def write_objective_pid(pid: int) -> None:
 
 def read_objective_pid() -> int | None:
     """Read the Objective TUI PID from session_current.json."""
-    path = Path.home() / ".local/share/physio-bodychart/session_current.json"
+    path = Path.home() / ".local/share/pab/session_current.json"
     try:
         data = json.loads(path.read_text())
         pid = data.get("objective_pid")
@@ -252,7 +252,7 @@ def list_sessions() -> list[dict]:
 
 def write_tui_pid(pid: int) -> None:
     """Write the TUI process PID into session_current.json."""
-    path = Path.home() / ".local/share/physio-bodychart/session_current.json"
+    path = Path.home() / ".local/share/pab/session_current.json"
     try:
         data = json.loads(path.read_text()) if path.exists() else {}
         data["tui_pid"] = pid
@@ -265,7 +265,7 @@ def write_tui_pid(pid: int) -> None:
 
 def read_gtk_pid() -> int | None:
     """Read the GTK process PID from session_current.json. Returns None if absent."""
-    path = Path.home() / ".local/share/physio-bodychart/session_current.json"
+    path = Path.home() / ".local/share/pab/session_current.json"
     try:
         data = json.loads(path.read_text())
         pid = data.get("gtk_pid")
@@ -276,7 +276,7 @@ def read_gtk_pid() -> int | None:
 
 def read_tui_socket() -> str | None:
     """Read the kitty remote-control socket path from session_current.json."""
-    path = Path.home() / ".local/share/physio-bodychart/session_current.json"
+    path = Path.home() / ".local/share/pab/session_current.json"
     try:
         data = json.loads(path.read_text())
         return data.get("tui_socket") or None
