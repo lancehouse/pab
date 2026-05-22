@@ -250,7 +250,7 @@ class AssessmentView(Container):
             self._save_task.cancel()
         if self.session_file:
             threading.Thread(
-                target=save_docx_report, args=(self.session_file,), daemon=False
+                target=save_docx_report, args=(self.session_file,), daemon=True
             ).start()
 
     def load_session(self, session_file: str, data: dict) -> None:

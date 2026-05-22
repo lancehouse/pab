@@ -9,7 +9,7 @@ from textual.widgets import Header, Footer
 from textual.containers import Container
 from .tui import PhysioAssessmentTUI, SessionListScreen
 from .assessment_view import AssessmentView
-from .storage import load_assessment, load_session_current
+from .storage import load_assessment, load_session_current, clear_tui_pid
 
 
 class PhysioAssessment(App):
@@ -87,6 +87,9 @@ class PhysioAssessment(App):
         assessment = PhysioAssessmentTUI(session_path=self.current_session_path)
         self.assessment_screen = assessment
         main.mount(assessment)
+
+    def on_unmount(self) -> None:
+        clear_tui_pid()
 
     async def action_show_session_list(self) -> None:
         if self.assessment_screen:

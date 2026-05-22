@@ -263,6 +263,19 @@ def write_tui_pid(pid: int) -> None:
         logger.warning(f"write_tui_pid: {e}")
 
 
+def clear_tui_pid() -> None:
+    """Remove tui_pid from session_current.json on clean TUI exit."""
+    path = Path.home() / ".local/share/pab/session_current.json"
+    try:
+        data = json.loads(path.read_text()) if path.exists() else {}
+        data.pop("tui_pid", None)
+        tmp = path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(data, indent=2))
+        tmp.replace(path)
+    except Exception as e:
+        logger.warning(f"clear_tui_pid: {e}")
+
+
 def read_gtk_pid() -> int | None:
     """Read the GTK process PID from session_current.json. Returns None if absent."""
     path = Path.home() / ".local/share/pab/session_current.json"
