@@ -25,22 +25,22 @@ typedef struct {
 static const TerminalDef TERMINALS[] = {
     {
         "ptyxis",
-        "bash -l -c 'ptyxis -- physio-assessment --session %s'",
+        "bash -l -c 'ptyxis -- assessment --session %s'",
         FALSE,
     },
     {
         "kitty",
-        "bash -l -c 'kitty --listen-on %s physio-assessment --session %s'",
+        "bash -l -c 'kitty --listen-on %s assessment --session %s'",
         TRUE,
     },
     {
         "gnome-terminal",
-        "bash -l -c 'gnome-terminal -- physio-assessment --session %s'",
+        "bash -l -c 'gnome-terminal -- assessment --session %s'",
         FALSE,
     },
     {
         "xterm",
-        "bash -l -c 'xterm -e physio-assessment --session %s'",
+        "bash -l -c 'xterm -e assessment --session %s'",
         FALSE,
     },
     { NULL, NULL, FALSE },
@@ -73,7 +73,7 @@ static void write_tui_socket(const char *socket_path)
     const char *home = g_get_home_dir();
     char path[512];
     snprintf(path, sizeof(path),
-             "%s/.local/share/physio-bodychart/session_current.json", home);
+             "%s/.local/share/pab/session_current.json", home);
 
     json_object *root = NULL;
     {
@@ -113,7 +113,7 @@ static char *read_session_current_field(const char *field)
     const char *home = g_get_home_dir();
     char path[512];
     snprintf(path, sizeof(path),
-             "%s/.local/share/physio-bodychart/session_current.json", home);
+             "%s/.local/share/pab/session_current.json", home);
     FILE *f = fopen(path, "r");
     if (!f) return NULL;
     fseek(f, 0, SEEK_END);

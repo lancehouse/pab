@@ -1,4 +1,4 @@
-project('physio-bodychart', 'c',
+project('bodychart', 'c',
   version : '0.1.0',
   default_options : ['warning_level=2', 'c_std=c11'])
 
@@ -30,10 +30,10 @@ sources = files(
   'src/overlay_data/somatic.c',
 )
 
-executable('physio-bodychart',
+executable('bodychart',
   sources,
   dependencies : [gtk4_dep, cairo_dep, rsvg_dep, jsonc_dep, m_dep],
   install : true)
 
-install_data('data/com.physio.bodychart.desktop',
+install_data('data/com.pab.bodychart.desktop',
   install_dir : get_option('datadir') / 'applications')

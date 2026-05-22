@@ -1075,7 +1075,7 @@ static gboolean ensure_share_dir(void)
     snprintf(path, sizeof(path), "%s/.local/share", home);
     if (mkdir(path, 0755) != 0 && errno != EEXIST) return FALSE;
 
-    snprintf(path, sizeof(path), "%s/.local/share/physio-bodychart", home);
+    snprintf(path, sizeof(path), "%s/.local/share/pab", home);
     if (mkdir(path, 0755) != 0 && errno != EEXIST) return FALSE;
 
     return TRUE;
@@ -1086,7 +1086,7 @@ gboolean persistence_write_session_current(AppState *app)
     if (!ensure_share_dir()) return FALSE;
 
     char path[512];
-    snprintf(path, sizeof(path), "%s/.local/share/physio-bodychart/session_current.json",
+    snprintf(path, sizeof(path), "%s/.local/share/pab/session_current.json",
              g_get_home_dir());
 
     json_object *root = json_object_new_object();
