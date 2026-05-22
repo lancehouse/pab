@@ -140,6 +140,12 @@ struct _AppState {
     double           link_drag_bx_off;
     double           link_drag_by_off;
 
+    /* Stroke legend position (body-space bottom-left anchor) */
+    double           legend_bx, legend_by;
+    gboolean         legend_drag_active;
+    double           legend_drag_bx_off;
+    double           legend_drag_by_off;
+
     /* Link relationships */
     int              link_matrix[MAX_NOTES][MAX_NOTES];  /* LinkState */
     gboolean         link_summary_active;

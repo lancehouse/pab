@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <math.h>
 
-/* ── Zone appearance table ───────────────────────────────────────────────── */
+/* ── Appearance tables ───────────────────────────────────────────────────── */
 const ObjZoneDef OBJ_ZONE_DEFS[OBJ_ZONE_COUNT] = {
     { 0.96f, 0.82f, 0.00f, "Allodynia",    "Allodynia"    },
     { 0.94f, 0.47f, 0.13f, "Hyperalgesia", "Hyperalgesia" },
@@ -15,6 +15,12 @@ const ObjZoneDef OBJ_ZONE_DEFS[OBJ_ZONE_COUNT] = {
     { 0.69f, 0.69f, 0.75f, "Numb",         "Numb"         },
     { 0.60f, 0.31f, 0.75f, "Oedema",       "Oedema"       },
     { 0.70f, 0.44f, 0.19f, "Trophic",      "Trophic"      },
+};
+
+const ObjPointDef OBJ_POINT_DEFS[OBJ_POINT_COUNT] = {
+    { 0.15f, 0.40f, 0.80f, "PPT"           },   /* OBJ_POINT_PPT            */
+    { 0.55f, 0.15f, 0.65f, "Temporal Sum"  },   /* OBJ_POINT_TEMPORAL_SUM   */
+    { 0.20f, 0.65f, 0.45f, "Monofilament"  },   /* OBJ_POINT_MONOFILAMENT   */
 };
 
 /* ── ObjZone lifecycle ───────────────────────────────────────────────────── */

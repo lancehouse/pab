@@ -510,7 +510,277 @@ static void draw_link_summary_screen(cairo_t *cr, AppState *app,
     cairo_restore(cr);
 }
 
-/* ── Legend rendering (screen-space, shows zone and point types) ───────── */
+/* ── Stroke legend (screen-space, posterior views only) ─────────────────── */
+static int legend_count_used(const AppState *app, gboolean used[SYMPTOM_COUNT])
+{
+    for (int t = 0; t < SYMPTOM_COUNT; t++) used[t] = FALSE;
+    for (int i = 0; i < app->strokes->n; i++)
+        used[app->strokes->strokes[i]->type] = TRUE;
+    int n = 0;
+    for (int t = 0; t < SYMPTOM_COUNT; t++) if (used[t]) n++;
+    return n;
+}
+
+static gboolean legend_hit_screen(AppState *app, ColData *cd,
+                                   double sx, double sy)
+{
+    gboolean used[SYMPTOM_COUNT];
+    int n = legend_count_used(app, used);
+    if (n == 0) return FALSE;
+    const double pad = 5.0, row_h = 18.0, bw = 122.0;
+    double bh = n * row_h + 2.0 * pad;
+    double w  = (double)gtk_widget_get_width(cd->da);
+    double h  = (double)gtk_widget_get_height(cd->da);
+    double s  = col_base_scale(w, h) * (*cd->p_zoom);
+    double cx = w / 2.0 + (*cd->p_pan_x);
+    double cy = h / 2.0 + (*cd->p_pan_y);
+    double lsx = (app->legend_bx - 100.0) * s + cx;
+    double lsy = (app->legend_by - 200.0) * s + cy;
+    return (sx >= lsx && sx <= lsx + bw &&
+            sy >= lsy - bh && sy <= lsy);
+}
+
+static void draw_stroke_legend(cairo_t *cr, AppState *app,
+                                double sx, double sy)
+{
+    gboolean used[SYMPTOM_COUNT];
+    int n = legend_count_used(app, used);
+    if (n == 0) return;
+
+    const double pad   = 5.0;
+    const double row_h = 18.0;
+    const double sw_w  = 28.0;
+    const double gap   = 5.0;
+    const double fsz   = 10.5;
+    const double bw    = 122.0;
+    double bh = n * row_h + 2.0 * pad;
+
+    cairo_save(cr);
+
+    /* Background box — bottom-left anchored at (sx, sy) */
+    cairo_set_source_rgba(cr, 0.95, 0.95, 0.82, 0.94);
+    cairo_rectangle(cr, sx, sy - bh, bw, bh);
+    cairo_fill(cr);
+    cairo_set_source_rgba(cr, 0.25, 0.25, 0.25, 0.85);
+    cairo_set_line_width(cr, 0.8);
+    cairo_rectangle(cr, sx, sy - bh, bw, bh);
+    cairo_stroke(cr);
+
+    cairo_select_font_face(cr, "Sans",
+                           CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+    cairo_set_font_size(cr, fsz);
+
+    int row = 0;
+    for (int t = 0; t < SYMPTOM_COUNT; t++) {
+        if (!used[t]) continue;
+        const SymptomDef *sd = &SYMPTOM_DEFS[t];
+        double ry_top = sy - bh + pad + row * row_h;
+        double ry_mid = ry_top + row_h * 0.5;
+        double rx     = sx + pad;
+        double sw_y   = ry_top + (row_h - 10.0) * 0.5;
+        double sw_cy  = sw_y + 5.0;
+        double sw_cx  = rx + sw_w * 0.5;
+
+        cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+        cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+        cairo_set_dash(cr, NULL, 0, 0);
+        cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 0.9);
+
+        switch (sd->pattern) {
+        case FILL_SOLID:
+            cairo_set_line_width(cr, 3.5);
+            cairo_move_to(cr, rx,          sw_cy);
+            cairo_line_to(cr, rx + sw_w,   sw_cy);
+            cairo_stroke(cr);
+            break;
+        case FILL_DASHED: {
+            double dashes[2] = { 5.0, 3.0 };
+            cairo_set_dash(cr, dashes, 2, 0);
+            cairo_set_line_width(cr, 2.0);
+            cairo_move_to(cr, rx,          sw_cy);
+            cairo_line_to(cr, rx + sw_w,   sw_cy);
+            cairo_stroke(cr);
+            cairo_set_dash(cr, NULL, 0, 0);
+            break;
+        }
+        case FILL_DOTS_SPACED:
+            for (int d = 0; d < 4; d++) {
+                cairo_new_sub_path(cr);
+                cairo_arc(cr, rx + 3.5 + d * 7.0, sw_cy, 2.5, 0, 2*M_PI);
+            }
+            cairo_fill(cr);
+            break;
+        case FILL_H_STROKES:
+            cairo_set_line_width(cr, 1.5);
+            for (int d = 0; d < 4; d++) {
+                double dx = rx + 4.0 + d * 6.0;
+                cairo_move_to(cr, dx - 2.5, sw_cy - 2.0);
+                cairo_line_to(cr, dx + 2.5, sw_cy - 2.0);
+                cairo_move_to(cr, dx - 2.5, sw_cy + 2.0);
+                cairo_line_to(cr, dx + 2.5, sw_cy + 2.0);
+            }
+            cairo_stroke(cr);
+            break;
+        case FILL_XMARKS:
+            cairo_set_line_width(cr, 1.5);
+            for (int d = 0; d < 3; d++) {
+                double dx = rx + 5.0 + d * 9.0;
+                cairo_move_to(cr, dx - 3.0, sw_cy - 3.0);
+                cairo_line_to(cr, dx + 3.0, sw_cy + 3.0);
+                cairo_move_to(cr, dx + 3.0, sw_cy - 3.0);
+                cairo_line_to(cr, dx - 3.0, sw_cy + 3.0);
+            }
+            cairo_stroke(cr);
+            break;
+        case FILL_TICK:
+            cairo_set_line_width(cr, 1.5);
+            cairo_move_to(cr, sw_cx - 4.0, sw_cy);
+            cairo_line_to(cr, sw_cx - 1.0, sw_cy + 3.0);
+            cairo_line_to(cr, sw_cx + 5.0, sw_cy - 3.5);
+            cairo_stroke(cr);
+            break;
+        }
+
+        /* Label */
+        cairo_set_source_rgba(cr, 0.1, 0.1, 0.1, 1.0);
+        cairo_move_to(cr, rx + sw_w + gap, ry_mid + 4.0);
+        cairo_show_text(cr, sd->label);
+
+        row++;
+    }
+
+    cairo_restore(cr);
+}
+
+/* ── Objective legend (screen-space, posterior + obj mode only) ──────────── */
+static int obj_legend_count_used(const AppState *app,
+                                  gboolean zone_used[OBJ_ZONE_COUNT],
+                                  gboolean point_used[OBJ_POINT_COUNT])
+{
+    for (int t = 0; t < OBJ_ZONE_COUNT;  t++) zone_used[t]  = FALSE;
+    for (int t = 0; t < OBJ_POINT_COUNT; t++) point_used[t] = FALSE;
+    for (int i = 0; i < app->obj_zone_count;  i++) {
+        const ObjZone *z = app->obj_zones[i];
+        if (z) zone_used[z->type] = TRUE;
+    }
+    for (int i = 0; i < app->obj_point_count; i++)
+        point_used[app->obj_points[i].type] = TRUE;
+    int n = 0;
+    for (int t = 0; t < OBJ_ZONE_COUNT;  t++) if (zone_used[t])  n++;
+    for (int t = 0; t < OBJ_POINT_COUNT; t++) if (point_used[t]) n++;
+    return n;
+}
+
+static gboolean obj_legend_hit_screen(AppState *app, ColData *cd,
+                                       double sx, double sy)
+{
+    gboolean zu[OBJ_ZONE_COUNT], pu[OBJ_POINT_COUNT];
+    int n = obj_legend_count_used(app, zu, pu);
+    if (n == 0) return FALSE;
+    const double pad = 5.0, row_h = 18.0, bw = 122.0;
+    double bh = n * row_h + 2.0 * pad;
+    double w  = (double)gtk_widget_get_width(cd->da);
+    double h  = (double)gtk_widget_get_height(cd->da);
+    double s  = col_base_scale(w, h) * (*cd->p_zoom);
+    double cx = w / 2.0 + (*cd->p_pan_x);
+    double cy = h / 2.0 + (*cd->p_pan_y);
+    double lsx = (app->legend_bx - 100.0) * s + cx;
+    double lsy = (app->legend_by - 200.0) * s + cy;
+    return (sx >= lsx && sx <= lsx + bw &&
+            sy >= lsy - bh && sy <= lsy);
+}
+
+static void draw_obj_legend(cairo_t *cr, AppState *app,
+                             double sx, double sy)
+{
+    gboolean zone_used[OBJ_ZONE_COUNT], point_used[OBJ_POINT_COUNT];
+    int n = obj_legend_count_used(app, zone_used, point_used);
+    if (n == 0) return;
+
+    const double pad   = 5.0;
+    const double row_h = 18.0;
+    const double sw_w  = 20.0;   /* swatch width */
+    const double gap   = 5.0;
+    const double fsz   = 10.5;
+    const double bw    = 122.0;
+    double bh = n * row_h + 2.0 * pad;
+
+    cairo_save(cr);
+
+    /* Background box — bottom-left anchored at (sx, sy) */
+    cairo_set_source_rgba(cr, 0.08, 0.08, 0.15, 0.92);
+    cairo_rectangle(cr, sx, sy - bh, bw, bh);
+    cairo_fill(cr);
+    cairo_set_source_rgba(cr, 0.50, 0.50, 0.65, 0.85);
+    cairo_set_line_width(cr, 0.8);
+    cairo_rectangle(cr, sx, sy - bh, bw, bh);
+    cairo_stroke(cr);
+
+    cairo_select_font_face(cr, "Sans",
+                           CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+    cairo_set_font_size(cr, fsz);
+
+    int row = 0;
+
+    /* Zones */
+    for (int t = 0; t < OBJ_ZONE_COUNT; t++) {
+        if (!zone_used[t]) continue;
+        const ObjZoneDef *d = &OBJ_ZONE_DEFS[t];
+        double ry_top = sy - bh + pad + row * row_h;
+        double ry_mid = ry_top + row_h * 0.5;
+        double rx     = sx + pad;
+        double sw_y   = ry_top + (row_h - 10.0) * 0.5;
+
+        cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+        cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+
+        /* Filled rect swatch — matches zone render style */
+        cairo_set_source_rgba(cr, d->r, d->g, d->b, 0.35);
+        cairo_rectangle(cr, rx, sw_y, sw_w, 10.0);
+        cairo_fill(cr);
+        cairo_set_source_rgba(cr, d->r, d->g, d->b, 0.80);
+        cairo_set_line_width(cr, 1.0);
+        cairo_rectangle(cr, rx, sw_y, sw_w, 10.0);
+        cairo_stroke(cr);
+
+        /* Label */
+        cairo_set_source_rgba(cr, 0.88, 0.88, 0.95, 1.0);
+        cairo_move_to(cr, rx + sw_w + gap, ry_mid + 4.0);
+        cairo_show_text(cr, d->name);
+        row++;
+    }
+
+    /* Points */
+    for (int t = 0; t < OBJ_POINT_COUNT; t++) {
+        if (!point_used[t]) continue;
+        const ObjPointDef *d = &OBJ_POINT_DEFS[t];
+        double ry_top = sy - bh + pad + row * row_h;
+        double ry_mid = ry_top + row_h * 0.5;
+        double rx     = sx + pad;
+
+        cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+
+        /* Dot swatch — circle matching point dot style */
+        cairo_new_sub_path(cr);
+        cairo_arc(cr, rx + sw_w * 0.5, ry_mid, 4.5, 0, 2*M_PI);
+        cairo_set_source_rgba(cr, d->r, d->g, d->b, 0.90);
+        cairo_fill(cr);
+        cairo_new_sub_path(cr);
+        cairo_arc(cr, rx + sw_w * 0.5, ry_mid, 4.5, 0, 2*M_PI);
+        cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 0.55);
+        cairo_set_line_width(cr, 1.2);
+        cairo_stroke(cr);
+
+        /* Label */
+        cairo_set_source_rgba(cr, 0.88, 0.88, 0.95, 1.0);
+        cairo_move_to(cr, rx + sw_w + gap, ry_mid + 4.0);
+        cairo_show_text(cr, d->name);
+        row++;
+    }
+
+    cairo_restore(cr);
+}
+
 /* ── Note annotation rendering (screen-space, fixed pixel size) ─────────── */
 /* Resolve label position: default offset from spot when not user-placed */
 static void label_anchor_resolve(const NoteAnnotation *na,
@@ -783,6 +1053,16 @@ void canvas_render_view(AppState *app, cairo_t *cr, BodyView view,
                                       (app->link_summary_bx - 100.0) * s + cx,
                                       (app->link_summary_by - 200.0) * s + cy);
     }
+
+    /* Mode-specific legend on posterior view */
+    if (view == VIEW_POSTERIOR) {
+        double lsx = (app->legend_bx - 100.0) * s + cx;
+        double lsy = (app->legend_by - 200.0) * s + cy;
+        if (app->current_mode == APP_MODE_SUBJECTIVE)
+            draw_stroke_legend(cr, app, lsx, lsy);
+        else
+            draw_obj_legend(cr, app, lsx, lsy);
+    }
 }
 
 /* ── Committed-stroke cache management ────────────────────────────────────── *
@@ -938,6 +1218,16 @@ static void on_col_draw(GtkDrawingArea *da, cairo_t *cr,
     } else if (app->current_mode == APP_MODE_OBJECTIVE) {
         obj_chart_render_screen(app, cr, (int)cd->view, s, cx, cy);
     }
+
+    /* Mode-specific legend on posterior view */
+    if (cd->view == VIEW_POSTERIOR) {
+        double lsx = (app->legend_bx - 100.0) * s + cx;
+        double lsy = (app->legend_by - 200.0) * s + cy;
+        if (app->current_mode == APP_MODE_SUBJECTIVE)
+            draw_stroke_legend(cr, app, lsx, lsy);
+        else
+            draw_obj_legend(cr, app, lsx, lsy);
+    }
 }
 
 /* ── Objective chart hit-testing (body-space) ────────────────────────────── */
@@ -1063,7 +1353,22 @@ static void on_stylus_down(GtkGestureStylus *gs, double x, double y,
         return;
     }
 
-    /* ── Any tool (Sx mode): drag existing notes/link-summary/legend if hit ── */
+    /* ── Legend drag (posterior only, mode-specific hit test) ── */
+    if (cd->view == VIEW_POSTERIOR) {
+        gboolean leg_hit = (app->current_mode == APP_MODE_SUBJECTIVE)
+                           ? legend_hit_screen(app, cd, x, y)
+                           : obj_legend_hit_screen(app, cd, x, y);
+        if (leg_hit) {
+            double bx, by;
+            screen_to_body(cd, x, y, &bx, &by);
+            app->legend_drag_active = TRUE;
+            app->legend_drag_bx_off = app->legend_bx - bx;
+            app->legend_drag_by_off = app->legend_by - by;
+            return;
+        }
+    }
+
+    /* ── Any tool (Sx mode): drag existing notes/link-summary if hit ── */
     if (app->current_mode == APP_MODE_SUBJECTIVE) {
         double bx, by;
         screen_to_body(cd, x, y, &bx, &by);
@@ -1190,6 +1495,16 @@ static void on_stylus_motion(GtkGestureStylus *gs, double x, double y,
     AppState *app = cd->app;
     app->last_stylus_us = g_get_monotonic_time();
 
+    /* Legend drag (any mode) */
+    if (app->legend_drag_active) {
+        double bx, by;
+        screen_to_body(cd, x, y, &bx, &by);
+        app->legend_bx = bx + app->legend_drag_bx_off;
+        app->legend_by = by + app->legend_drag_by_off;
+        canvas_invalidate(app);
+        return;
+    }
+
     /* Note label drag / link drag (any tool) */
     if (app->note_drag_idx >= 0) {
         double bx, by;
@@ -1256,7 +1571,12 @@ static void on_stylus_up(GtkGestureStylus *gs, double x, double y,
     (void)gs; (void)x; (void)y;
     app->last_stylus_us = g_get_monotonic_time();
 
-    /* Clear note/link drag (any tool) */
+    /* Clear legend / note / link drag (any tool) */
+    if (app->legend_drag_active) {
+        app->legend_drag_active = FALSE;
+        gtk_widget_queue_draw(cd->da);
+        return;
+    }
     if (app->note_drag_idx >= 0 || app->link_drag_active) {
         app->note_drag_idx      = -1;
         app->link_drag_active   = FALSE;
@@ -1316,6 +1636,21 @@ static void on_drag_begin(GtkGestureDrag *gd, double x, double y, gpointer d)
     ColData  *cd  = d;
     AppState *app = cd->app;
     (void)gd;
+
+    /* Legend drag (posterior only, mode-specific hit test) */
+    if (cd->view == VIEW_POSTERIOR) {
+        gboolean leg_hit = (app->current_mode == APP_MODE_SUBJECTIVE)
+                           ? legend_hit_screen(app, cd, x, y)
+                           : obj_legend_hit_screen(app, cd, x, y);
+        if (leg_hit) {
+            double bx_hit, by_hit;
+            screen_to_body(cd, x, y, &bx_hit, &by_hit);
+            app->legend_drag_active = TRUE;
+            app->legend_drag_bx_off = app->legend_bx - bx_hit;
+            app->legend_drag_by_off = app->legend_by - by_hit;
+            return;
+        }
+    }
 
     /* Any tool (Sx mode): drag existing note/link-summary if hit */
     if (app->current_mode == APP_MODE_SUBJECTIVE) {
@@ -1435,6 +1770,14 @@ static void on_drag_update(GtkGestureDrag *gd, double dx, double dy,
     double bx, by;
     screen_to_body(cd, sx + dx, sy + dy, &bx, &by);
 
+    /* Legend drag (any mode) */
+    if (app->legend_drag_active) {
+        app->legend_bx = bx + app->legend_drag_bx_off;
+        app->legend_by = by + app->legend_drag_by_off;
+        canvas_invalidate(app);
+        return;
+    }
+
     /* Note label drag / link drag (any tool) */
     if (app->note_drag_idx >= 0) {
         NoteAnnotation *na = &app->notes[app->note_drag_idx];
@@ -1486,7 +1829,12 @@ static void on_drag_end(GtkGestureDrag *gd, double dx, double dy, gpointer d)
     ColData  *cd  = d;
     AppState *app = cd->app;
 
-    /* Clear note/link drag (any tool) */
+    /* Clear legend / note / link drag (any tool) */
+    if (app->legend_drag_active) {
+        app->legend_drag_active = FALSE;
+        gtk_widget_queue_draw(cd->da);
+        return;
+    }
     if (app->note_drag_idx >= 0 || app->link_drag_active) {
         app->note_drag_idx      = -1;
         app->link_drag_active   = FALSE;
@@ -1566,6 +1914,7 @@ static void on_zoom_begin(GtkGestureZoom *gz, GdkEventSequence *seq,
     input_cancel(cd->app);
     cd->app->note_drag_idx      = -1;
     cd->app->link_drag_active   = FALSE;
+    cd->app->legend_drag_active = FALSE;
     cd->app->obj_point_drag_idx = -1;
     gtk_widget_queue_draw(cd->da);
 }
@@ -1800,7 +2149,12 @@ GtkWidget *canvas_new(AppState *app)
 {
     app->note_drag_idx        = -1;
     app->link_drag_active     = FALSE;
+    app->legend_drag_active   = FALSE;
     app->obj_point_drag_idx   = -1;
+    if (app->legend_bx == 0.0 && app->legend_by == 0.0) {
+        app->legend_bx = 135.0;
+        app->legend_by = 378.0;
+    }
 
     /* Initialise right slot views (can be overridden by settings before canvas_new) */
     if (app->right_slot_views[0] == 0 && app->right_slot_views[1] == 0) {

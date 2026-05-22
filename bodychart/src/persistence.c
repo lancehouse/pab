@@ -511,6 +511,10 @@ gboolean persistence_save(AppState *app)
         json_object_new_double(app->link_summary_bx));
     json_object_object_add(subj, "link_summary_by",
         json_object_new_double(app->link_summary_by));
+    json_object_object_add(subj, "legend_bx",
+        json_object_new_double(app->legend_bx));
+    json_object_object_add(subj, "legend_by",
+        json_object_new_double(app->legend_by));
     json_object_object_add(root, "subjective", subj);
 
     /* Objective chart */
@@ -955,6 +959,8 @@ gboolean persistence_load(AppState *app, const char *path)
     app->link_summary_view   = ji(subj, "link_summary_view",   0);
     app->link_summary_bx     = jd(subj, "link_summary_bx",    12.0);
     app->link_summary_by     = jd(subj, "link_summary_by",   378.0);
+    app->legend_bx           = jd(subj, "legend_bx",         135.0);
+    app->legend_by           = jd(subj, "legend_by",         378.0);
 
     /* Objective chart */
     json_object *obj_j;

@@ -49,7 +49,13 @@ typedef struct {
     const char  *short_name;     /* for sidebar button */
 } ObjZoneDef;
 
-extern const ObjZoneDef OBJ_ZONE_DEFS[OBJ_ZONE_COUNT];
+typedef struct {
+    float        r, g, b;       /* dot / connector colour */
+    const char  *name;
+} ObjPointDef;
+
+extern const ObjZoneDef  OBJ_ZONE_DEFS[OBJ_ZONE_COUNT];
+extern const ObjPointDef OBJ_POINT_DEFS[OBJ_POINT_COUNT];
 
 ObjZone *obj_zone_new(ObjZoneType type, int view);
 void     obj_zone_add_pt(ObjZone *z, float bx, float by);
