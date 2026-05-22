@@ -1,25 +1,156 @@
-"""Objective TUI: sidebar navigation + section content area."""
+"""Objective TUI: region topbar + sidebar navigation + section content area."""
 
 import asyncio
 import logging
 
 from textual.app import ComposeResult, on
-from textual.containers import Container, Vertical, ScrollableContainer
+from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
 from textual.message import Message
 from textual.widgets import Button, Static
 
 from .sections.general import GeneralSection
-from .sections.active_movement import ActiveMovementSection
-from .sections.passive_movement import PassiveMovementSection
 from .sections.neurological import NeurologicalSection
 from .sections.sensory import SensorySection
-from .sections.muscle import MuscleSection
 from .sections.functional import FunctionalSection
+from .sections.region_section import RegionTabContent
 from ..storage import objective_path, save_objective, write_focus_signal, save_raw_report, export_session_report
 
 
 logger = logging.getLogger(__name__)
 
+# All available regions (topbar order). Phase 3A: only lumbar is shown.
+_ALL_REGIONS: list[tuple[str, str]] = [
+    ("lumbar",    "Lumbar"),
+    ("cervical",  "Cervical"),
+    ("shoulder",  "Shoulder"),
+    ("thoracic",  "Thoracic"),
+    ("hip",       "Hip"),
+    ("knee",      "Knee"),
+    ("elbow",     "Elbow"),
+    ("ankle",     "Ankle"),
+]
+
+# Tabs that show per-region stacked blocks
+_VARIABLE_TABS: list[tuple[str, str, str]] = [
+    # (section_id,   section_key, display_label)
+    ("02_active",  "active",  "02 Active Movement"),
+    ("03_passive", "passive", "03 Passive / OP"),
+    ("06_muscle",  "muscle",  "06 Muscle Testing"),
+    ("08_special", "special", "08 Special Tests"),
+]
+
+# Generic fixed-content tabs
+_GENERIC_TABS: list[tuple[str, str]] = [
+    # (section_id, json_key)
+    ("01_general",      "general"),
+    ("04_neurological", "neurological"),
+    ("05_sensory",      "sensory"),
+    ("07_functional",   "functional"),
+]
+
+
+def _migrate_objective(old: dict) -> dict:
+    """Migrate flat objective schema → region-based schema (lumbar auto-detected)."""
+    new: dict = {}
+    for key in ("general", "neurological", "sensory", "functional"):
+        if key in old:
+            new[key] = old[key]
+    lumbar: dict = {}
+    for old_key, new_key in (("active", "active"), ("passive", "passive"), ("muscle", "muscle")):
+        if old_key in old:
+            lumbar[new_key] = old[old_key]
+    new["active_regions"] = ["lumbar"]
+    new["lumbar"] = lumbar
+    logger.info("Migrated flat objective schema → region schema (lumbar)")
+    return new
+
+
+# ── Region topbar ─────────────────────────────────────────────────────────────
+
+class RegionTopbar(Static):
+    """Horizontal strip of region toggle buttons above the objective content area."""
+
+    class RegionToggled(Message):
+        def __init__(self, region_id: str, active: bool) -> None:
+            super().__init__()
+            self.region_id = region_id
+            self.active = active
+
+    DEFAULT_CSS = """
+    RegionTopbar {
+        height: 3;
+        width: 100%;
+        layout: horizontal;
+        align: left middle;
+        padding: 0 1;
+        border-bottom: solid $border;
+        background: $panel-darken-1;
+    }
+    RegionTopbar .region_label {
+        width: auto;
+        height: 1;
+        margin-right: 1;
+        color: $text-muted;
+    }
+    RegionTopbar Button {
+        width: auto;
+        height: 1;
+        min-width: 0;
+        border: none;
+        margin: 0 1 0 0;
+        padding: 0 1;
+        background: $panel;
+        color: $text-muted;
+    }
+    RegionTopbar Button.active-region {
+        background: #2a5080;
+        color: $text;
+        text-style: bold;
+    }
+    RegionTopbar Button:hover { background: $boost; color: $text; }
+    """
+
+    def __init__(self, active_regions: list[str], **kwargs) -> None:
+        super().__init__(**kwargs)
+        self._active_regions = list(active_regions)
+
+    def compose(self) -> ComposeResult:
+        yield Static("Regions:", classes="region_label")
+        for region_id, label in _ALL_REGIONS:
+            btn = Button(label, id=f"rgn_{region_id}")
+            if region_id in self._active_regions:
+                btn.add_class("active-region")
+            yield btn
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        bid = event.button.id or ""
+        if not bid.startswith("rgn_"):
+            return
+        region_id = bid[4:]
+        active = "active-region" in event.button.classes
+        if active:
+            event.button.remove_class("active-region")
+            self._active_regions = [r for r in self._active_regions if r != region_id]
+        else:
+            event.button.add_class("active-region")
+            self._active_regions.append(region_id)
+        self.post_message(self.RegionToggled(region_id, not active))
+        event.stop()
+
+    def set_active_regions(self, regions: list[str]) -> None:
+        self._active_regions = list(regions)
+        for region_id, _ in _ALL_REGIONS:
+            try:
+                btn = self.query_one(f"#rgn_{region_id}", Button)
+                if region_id in regions:
+                    btn.add_class("active-region")
+                else:
+                    btn.remove_class("active-region")
+            except Exception:
+                pass
+
+
+# ── Sidebar ───────────────────────────────────────────────────────────────────
 
 class ObjectiveSidebar(Static):
     """Left sidebar navigation for Objective TUI."""
@@ -59,6 +190,7 @@ class ObjectiveSidebar(Static):
         "05_sensory":      "05 Sensory",
         "06_muscle":       "06 Muscle Test",
         "07_functional":   "07 Functional",
+        "08_special":      "08 Special Tests",
     }
 
     def __init__(self, on_section_selected: callable, on_back: callable, **kwargs):
@@ -94,13 +226,20 @@ class ObjectiveSidebar(Static):
             pass
 
 
+# ── Main view ─────────────────────────────────────────────────────────────────
+
 class ObjectiveAssessmentView(Container):
-    """Main content area for Objective TUI: sidebar + section panels."""
+    """Main content area for Objective TUI: region topbar + sidebar + section panels."""
 
     DEFAULT_CSS = """
     ObjectiveAssessmentView {
         width: 100%;
         height: 100%;
+        layout: vertical;
+    }
+    #obj_main_area {
+        width: 100%;
+        height: 1fr;
         layout: horizontal;
     }
     #obj_section_content {
@@ -123,36 +262,51 @@ class ObjectiveAssessmentView(Container):
         self.session_file = session_file
         self.sections: dict = {}
         self.active_section_id = "01_general"
+        self._active_regions: list[str] = ["lumbar"]
         self._save_task: asyncio.Task | None = None
         self._mounted = False
         self._pending_load: dict | None = None
 
     def compose(self) -> ComposeResult:
-        yield ObjectiveSidebar(
-            on_section_selected=self._show_section,
-            on_back=self._go_back,
-            id="obj_sidebar",
-        )
-        yield ScrollableContainer(
-            Vertical(id="obj_section_content_inner"),
-            id="obj_section_content",
-        )
+        yield RegionTopbar(self._active_regions, id="obj_region_topbar")
+        with Container(id="obj_main_area"):
+            yield ObjectiveSidebar(
+                on_section_selected=self._show_section,
+                on_back=self._go_back,
+                id="obj_sidebar",
+            )
+            yield ScrollableContainer(
+                Vertical(id="obj_section_content_inner"),
+                id="obj_section_content",
+            )
 
     def on_mount(self) -> None:
-        self.sections = {
+        # Build generic sections
+        generic_instances = {
             "01_general":      GeneralSection(id="obj_section_01_general"),
-            "02_active":       ActiveMovementSection(id="obj_section_02_active"),
-            "03_passive":      PassiveMovementSection(id="obj_section_03_passive"),
             "04_neurological": NeurologicalSection(id="obj_section_04_neurological"),
             "05_sensory":      SensorySection(id="obj_section_05_sensory"),
-            "06_muscle":       MuscleSection(id="obj_section_06_muscle"),
             "07_functional":   FunctionalSection(id="obj_section_07_functional"),
         }
+        # Build variable (region-based) tab containers
+        variable_instances = {
+            section_id: RegionTabContent(
+                section_key, tab_label,
+                id=f"obj_section_{section_id}",
+            )
+            for section_id, section_key, tab_label in _VARIABLE_TABS
+        }
+        self.sections = {**generic_instances, **variable_instances}
+
         content = self.query_one("#obj_section_content_inner", Vertical)
         for section_id, section in self.sections.items():
             if section_id != self.active_section_id:
                 section.display = False
             content.mount(section)
+
+        # Pre-activate default regions into variable tabs
+        for region_id in self._active_regions:
+            self._mount_region(region_id)
 
         self._mounted = True
         if self._pending_load is not None:
@@ -164,6 +318,49 @@ class ObjectiveAssessmentView(Container):
         if self._save_task and not self._save_task.done():
             self._save_task.cancel()
 
+    # ── Region management ─────────────────────────────────────────────────────
+
+    def _mount_region(self, region_id: str) -> None:
+        """Mount a region into all variable tabs."""
+        for section_id, _, _ in _VARIABLE_TABS:
+            tab = self.sections.get(section_id)
+            if isinstance(tab, RegionTabContent):
+                tab.mount_region(region_id)
+
+    def _unmount_region(self, region_id: str) -> None:
+        """Remove a region from all variable tabs."""
+        for section_id, _, _ in _VARIABLE_TABS:
+            tab = self.sections.get(section_id)
+            if isinstance(tab, RegionTabContent):
+                tab.unmount_region(region_id)
+
+    def _sync_active_regions(self, regions: list[str]) -> None:
+        """Sync variable tabs and topbar to match regions list."""
+        current = set(self._active_regions)
+        target = set(regions)
+        for rid in current - target:
+            self._unmount_region(rid)
+        for rid in target - current:
+            self._mount_region(rid)
+        self._active_regions = list(regions)
+        try:
+            self.query_one("#obj_region_topbar", RegionTopbar).set_active_regions(regions)
+        except Exception:
+            pass
+
+    @on(RegionTopbar.RegionToggled)
+    def _on_region_toggled(self, event: RegionTopbar.RegionToggled) -> None:
+        if event.active:
+            if event.region_id not in self._active_regions:
+                self._active_regions.append(event.region_id)
+                self._mount_region(event.region_id)
+        else:
+            self._active_regions = [r for r in self._active_regions if r != event.region_id]
+            self._unmount_region(event.region_id)
+        self._schedule_save()
+
+    # ── Session load ──────────────────────────────────────────────────────────
+
     def load_session(self, session_file: str, data: dict) -> None:
         if not self._mounted:
             self._pending_load = data
@@ -173,23 +370,36 @@ class ObjectiveAssessmentView(Container):
         self.session_file = session_file
         assessment = data.get("assessment", {})
 
-        _SEC_KEYS = [
-            ("01_general",      "general"),
-            ("02_active",       "active"),
-            ("03_passive",      "passive"),
-            ("04_neurological", "neurological"),
-            ("05_sensory",      "sensory"),
-            ("06_muscle",       "muscle"),
-            ("07_functional",   "functional"),
-        ]
-        for section_id, json_key in _SEC_KEYS:
+        # Migrate old flat schema if needed
+        if "active_regions" not in assessment and any(
+            k in assessment for k in ("active", "passive", "muscle")
+        ):
+            assessment = _migrate_objective(assessment)
+
+        # Sync regions
+        regions = assessment.get("active_regions", ["lumbar"])
+        self._sync_active_regions(regions)
+
+        # Load generic sections
+        for section_id, json_key in _GENERIC_TABS:
             section = self.sections.get(section_id)
             if section is None:
                 continue
             section.session_file = session_file
-            section_data = assessment.get(json_key, {})
-            if isinstance(section_data, dict):
-                section.load(section_data)
+            section.load(assessment.get(json_key, {}))
+
+        # Load per-region data into variable tabs
+        for region_id in self._active_regions:
+            region_data = assessment.get(region_id, {})
+            for section_id, section_key, _ in _VARIABLE_TABS:
+                tab = self.sections.get(section_id)
+                if not isinstance(tab, RegionTabContent):
+                    continue
+                container = tab.get_container(region_id)
+                if container:
+                    container.load(region_data.get(section_key, {}))
+
+    # ── Section visibility ────────────────────────────────────────────────────
 
     def _show_section(self, section_id: str) -> None:
         if section_id == self.active_section_id:
@@ -202,23 +412,21 @@ class ObjectiveAssessmentView(Container):
             new.display = True
             self.active_section_id = section_id
         try:
-            sidebar = self.query_one("#obj_sidebar", ObjectiveSidebar)
-            sidebar.set_active(section_id)
+            self.query_one("#obj_sidebar", ObjectiveSidebar).set_active(section_id)
         except Exception:
             pass
 
     def _go_back(self) -> None:
-        """Write .focus_tui signal — Subjective TUI watcher raises its window."""
         if self.session_file:
             write_focus_signal(self.session_file, "tui")
 
+    # ── Autosave ──────────────────────────────────────────────────────────────
+
     @on(GeneralSection.FieldChanged)
-    @on(ActiveMovementSection.FieldChanged)
-    @on(PassiveMovementSection.FieldChanged)
     @on(NeurologicalSection.FieldChanged)
     @on(SensorySection.FieldChanged)
-    @on(MuscleSection.FieldChanged)
     @on(FunctionalSection.FieldChanged)
+    @on(RegionTabContent.FieldChanged)
     def _on_section_field_changed(self) -> None:
         self._schedule_save()
 
@@ -238,24 +446,32 @@ class ObjectiveAssessmentView(Container):
             return
         self.post_message(self.SaveStateChanged("saving"))
 
-        _SEC_KEYS = [
-            ("01_general",      "general"),
-            ("02_active",       "active"),
-            ("03_passive",      "passive"),
-            ("04_neurological", "neurological"),
-            ("05_sensory",      "sensory"),
-            ("06_muscle",       "muscle"),
-            ("07_functional",   "functional"),
-        ]
         assessment_data: dict = {}
         sections_complete: dict[str, bool] = {}
 
-        for section_id, json_key in _SEC_KEYS:
+        # Generic sections
+        for section_id, json_key in _GENERIC_TABS:
             section = self.sections.get(section_id)
             if section is None:
                 continue
             assessment_data[json_key] = section.collect()
             sections_complete[section_id] = section.is_complete()
+
+        # Active regions list
+        assessment_data["active_regions"] = list(self._active_regions)
+
+        # Per-region data from variable tabs
+        for region_id in self._active_regions:
+            region_data: dict = {}
+            for section_id, section_key, _ in _VARIABLE_TABS:
+                tab = self.sections.get(section_id)
+                if not isinstance(tab, RegionTabContent):
+                    continue
+                container = tab.get_container(region_id)
+                if container:
+                    region_data[section_key] = container.collect()
+                sections_complete[section_id] = tab.is_complete()
+            assessment_data[region_id] = region_data
 
         save_objective(self.session_file, assessment_data, sections_complete)
         save_raw_report(self.session_file)

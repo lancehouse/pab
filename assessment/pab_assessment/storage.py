@@ -371,12 +371,23 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
     lines: list = []
 
     gen  = obj.get("general",      {}) or {}
-    act  = obj.get("active",       {}) or {}
-    pas  = obj.get("passive",      {}) or {}
     neu  = obj.get("neurological", {}) or {}
     sen  = obj.get("sensory",      {}) or {}
-    mus  = obj.get("muscle",       {}) or {}
     func = obj.get("functional",   {}) or {}
+
+    # Support both old flat schema and new region-based schema
+    active_regions = obj.get("active_regions")
+    if active_regions is not None:
+        act = {}; pas = {}; mus = {}
+        for _rid in active_regions:
+            _rdata = obj.get(_rid, {}) or {}
+            act.update(_rdata.get("active",  {}) or {})
+            pas.update(_rdata.get("passive", {}) or {})
+            mus.update(_rdata.get("muscle",  {}) or {})
+    else:
+        act  = obj.get("active",  {}) or {}
+        pas  = obj.get("passive", {}) or {}
+        mus  = obj.get("muscle",  {}) or {}
 
     if not any([gen, act, pas, neu, sen, mus, func]):
         return []
@@ -642,12 +653,23 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
     clean=True: omit sections/tables/rows with no real data.
     """
     gen  = obj.get("general",      {}) or {}
-    act  = obj.get("active",       {}) or {}
-    pas  = obj.get("passive",      {}) or {}
     neu  = obj.get("neurological", {}) or {}
     sen  = obj.get("sensory",      {}) or {}
-    mus  = obj.get("muscle",       {}) or {}
     func = obj.get("functional",   {}) or {}
+
+    # Support both old flat schema and new region-based schema
+    active_regions = obj.get("active_regions")
+    if active_regions is not None:
+        act = {}; pas = {}; mus = {}
+        for _rid in active_regions:
+            _rdata = obj.get(_rid, {}) or {}
+            act.update(_rdata.get("active",  {}) or {})
+            pas.update(_rdata.get("passive", {}) or {})
+            mus.update(_rdata.get("muscle",  {}) or {})
+    else:
+        act  = obj.get("active",  {}) or {}
+        pas  = obj.get("passive", {}) or {}
+        mus  = obj.get("muscle",  {}) or {}
 
     if not any([gen, act, pas, neu, sen, mus, func]):
         return

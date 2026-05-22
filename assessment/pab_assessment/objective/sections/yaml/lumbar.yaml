@@ -1,0 +1,64 @@
+region: lumbar
+label: Lumbar
+
+# ── 02 Active Movement ──────────────────────────────────────────────────────
+active_movement:
+  groups:
+    - label: "Lumbar ROM"
+      notes_id: am_lx_notes
+      rows:
+        - {id: lx_flex, label: "Flexion",   bilateral: true}
+        - {id: lx_ext,  label: "Extension", bilateral: true}
+        - {id: lx_lf,   label: "Lat Flex",  bilateral: false}
+        - {id: lx_rot,  label: "Rotation",  bilateral: false}
+    - label: "Thoracic ROM"
+      notes_id: am_tx_notes
+      rows:
+        - {id: tx_flex, label: "Flexion",   bilateral: true}
+        - {id: tx_ext,  label: "Extension", bilateral: true}
+        - {id: tx_rot,  label: "Rotation",  bilateral: false}
+
+# ── 06 Muscle Testing ────────────────────────────────────────────────────────
+# groups with type: bilateral   → L/R RadioGroup per row
+#             type: unilateral  → single RadioGroup per row
+#             type: numeric     → GridInput per row (trunk strength)
+# Python tables (hip strength, SIJ provocation) handled by LumbarMuscleTables.
+muscle_testing:
+  groups:
+    - label: "Muscle Length"
+      type: bilateral
+      options: ["Norm", "↓Mild", "↓Mod", "↓Mrkd"]
+      rows:
+        - {id: ml_ql,     label: "QL (side sit)"}
+        - {id: ml_thomas, label: "Thomas test"}
+        - {id: ml_ham,    label: "Hamstrings SLR"}
+    - label: "Muscle Activation"
+      type: unilateral
+      options: ["Norm", "Fair", "Poor", "Ovact"]
+      rows:
+        - {id: ma_tx_es, label: "Tx erector spinae"}
+        - {id: ma_tva,   label: "Transversus abd"}
+        - {id: ma_lmf,   label: "Lumbar multifidus"}
+    - label: "Trunk Strength"
+      type: numeric
+      rows:
+        - {id: st_flex, label: "Flexion (crook)",  placeholder: "reps / min"}
+        - {id: st_ext,  label: "Extension (ball)", placeholder: "raises / min"}
+  notes_id: mu_notes
+
+# ── 08 Special Tests ─────────────────────────────────────────────────────────
+# Each row: id (data key), label, options list.
+# Variant colouring is inferred: index 0 = success, last = error, rest = warning.
+special_tests:
+  notes_id: st_lx_notes
+  rows:
+    - {id: slr_l,       label: "SLR Left",         options: ["Negative", "Positive", "Positive+P"]}
+    - {id: slr_r,       label: "SLR Right",         options: ["Negative", "Positive", "Positive+P"]}
+    - {id: slump,       label: "Slump",             options: ["Negative", "Positive", "Positive+P"]}
+    - {id: femoral,     label: "Femoral Stretch",   options: ["Negative", "Positive", "Positive+P"]}
+    - {id: faber_l,     label: "FABER Left",        options: ["Negative", "Positive"]}
+    - {id: faber_r,     label: "FABER Right",       options: ["Negative", "Positive"]}
+    - {id: fadir_l,     label: "FADIR Left",        options: ["Negative", "Positive"]}
+    - {id: fadir_r,     label: "FADIR Right",       options: ["Negative", "Positive"]}
+    - {id: prone_inst,  label: "Prone Instability", options: ["Negative", "Positive"]}
+    - {id: crossed_slr, label: "Crossed SLR",       options: ["Negative", "Positive"]}
