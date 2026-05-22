@@ -68,7 +68,7 @@ static void draw_stroke(cairo_t *cr, const Stroke *s, const SymptomDef *sd,
         double p_cur = s->pts[0].pressure;
         double w_cur = s->wide_mode ? (1.5 + p_cur * 8.0) : (0.5 + p_cur * 5.5);
         cairo_set_line_width(cr, w_cur);
-        cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 1.0);
+        cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 0.8);
         cairo_move_to(cr, s->pts[0].x, s->pts[0].y);
         for (size_t i = 1; i < n; i++) {
             double p = (s->pts[i-1].pressure + s->pts[i].pressure) * 0.5;
@@ -77,7 +77,7 @@ static void draw_stroke(cairo_t *cr, const Stroke *s, const SymptomDef *sd,
                 cairo_stroke(cr);
                 w_cur = w;
                 cairo_set_line_width(cr, w_cur);
-                cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 1.0);
+                cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 0.8);
                 cairo_move_to(cr, s->pts[i-1].x, s->pts[i-1].y);
             }
             /* Catmull-Rom control points for segment pts[i-1] → pts[i] */
@@ -103,7 +103,7 @@ static void draw_stroke(cairo_t *cr, const Stroke *s, const SymptomDef *sd,
         for (size_t i = 0; i < n; i++) avg_p += s->pts[i].pressure;
         avg_p /= (double)n;
         cairo_set_line_width(cr, s->wide_mode ? (0.8 + avg_p * 5.0) : (0.3 + avg_p * 2.8));
-        cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 1.0);
+        cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 0.8);
         double dashes[2] = { 6.0, 4.0 };
         cairo_set_dash(cr, dashes, 2, 0);
         cairo_move_to(cr, s->pts[0].x, s->pts[0].y);
@@ -130,7 +130,7 @@ static void draw_stroke(cairo_t *cr, const Stroke *s, const SymptomDef *sd,
         double dot_r   = (double)app->pen_dot_radius;
         double spacing = (double)app->pen_dot_spacing;
         double dot_gap = dot_r * 2.5;  /* centre-to-centre perpendicular gap */
-        cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 1.0);
+        cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 0.8);
 
         /* Stamp helper macro — places cnt dots perpendicular to (nx, ny) */
         #define STAMP_DOTS(px_, py_, nx_, ny_, cnt_) do { \
@@ -187,7 +187,7 @@ static void draw_stroke(cairo_t *cr, const Stroke *s, const SymptomDef *sd,
         double spacing  = (double)app->pen_dash_spacing;
         double lw       = (double)app->pen_dash_width;
         double dash_gap = dash_len * 0.9 + lw;  /* vertical gap between stacked dashes */
-        cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 1.0);
+        cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 0.8);
         cairo_set_line_width(cr, lw);
 
         #define STAMP_DASHES(px_, py_, p_) do { \
@@ -232,7 +232,7 @@ static void draw_stroke(cairo_t *cr, const Stroke *s, const SymptomDef *sd,
         double spacing = (double)app->pen_x_spacing;
         double lw      = (double)app->pen_x_width;
         double x_gap   = arm * 2.6;  /* centre-to-centre perpendicular gap */
-        cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 1.0);
+        cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 0.8);
         cairo_set_line_width(cr, lw);
 
         #define STAMP_XS(px_, py_, nx_, ny_, cnt_) do { \
@@ -279,7 +279,7 @@ static void draw_stroke(cairo_t *cr, const Stroke *s, const SymptomDef *sd,
         double avg_p = 0.0;
         for (size_t i = 0; i < s->n_pts; i++) avg_p += s->pts[i].pressure;
         if (s->n_pts > 0) avg_p /= (double)s->n_pts;
-        cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 1.0);
+        cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 0.8);
         cairo_set_line_width(cr, 1.0 + avg_p * 1.4);
         cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
         cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
