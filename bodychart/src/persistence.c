@@ -16,7 +16,7 @@
 
 static void ensure_physio_root(char *buf, size_t len)
 {
-    snprintf(buf, len, "%s/Physio-Bodychart", g_get_home_dir());
+    snprintf(buf, len, "%s/PAB", g_get_home_dir());
     if (mkdir(buf, 0755) != 0 && errno != EEXIST) {
         snprintf(buf, len, "%s", g_get_home_dir());
     }
