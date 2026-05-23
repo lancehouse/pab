@@ -13,7 +13,7 @@ from .sections.neurological import NeurologicalSection
 from .sections.sensory import SensorySection
 from .sections.functional import FunctionalSection
 from .sections.region_section import RegionTabContent
-from ..storage import objective_path, save_objective, write_focus_signal, save_raw_report, export_session_report
+from ..storage import objective_path, save_objective, save_raw_report, export_session_report
 
 
 logger = logging.getLogger(__name__)
@@ -257,6 +257,9 @@ class ObjectiveAssessmentView(Container):
             super().__init__()
             self.state = state
 
+    class ExitRequested(Message):
+        """Posted when the ← back button is pressed."""
+
     def __init__(self, session_file: str = "", **kwargs):
         super().__init__(**kwargs)
         self.session_file = session_file
@@ -417,8 +420,7 @@ class ObjectiveAssessmentView(Container):
             pass
 
     def _go_back(self) -> None:
-        if self.session_file:
-            write_focus_signal(self.session_file, "tui")
+        self.post_message(self.ExitRequested())
 
     # ── Autosave ──────────────────────────────────────────────────────────────
 

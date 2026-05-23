@@ -20,14 +20,7 @@ from .sections.diagnosis import DiagnosisSection
 from .sections.barriers import BarriersSection
 from .sections.rx_plan import RxPlanSection
 from .sections.scratchpad import ScratchpadSection
-from .objective.sections.general import GeneralSection
-from .objective.sections.active_movement import ActiveMovementSection
-from .objective.sections.passive_movement import PassiveMovementSection
-from .objective.sections.neurological import NeurologicalSection
-from .objective.sections.sensory import SensorySection
-from .objective.sections.muscle import MuscleSection
-from .objective.sections.functional import FunctionalSection
-from .objective.objective_view import ObjectiveSidebar
+from .objective.objective_view import ObjectiveAssessmentView
 from .storage import (
     save_all_sections,
     save_raw_report,
@@ -35,7 +28,6 @@ from .storage import (
     save_clean_reports,
     save_docx_report,
     assessment_path,
-    save_objective,
     load_objective,
 )
 
@@ -178,12 +170,12 @@ class AssessmentView(Container):
         width: 100%;
         height: auto;
     }
-    """
 
-    _OBJECTIVE_IDS = frozenset([
-        "01_general", "02_active", "03_passive", "04_neurological",
-        "05_sensory", "06_muscle", "07_functional",
-    ])
+    #obj_view {
+        width: 1fr;
+        height: 100%;
+    }
+    """
 
     def __init__(self, session_file: str = "", **kwargs):
         super().__init__(**kwargs)
@@ -195,22 +187,17 @@ class AssessmentView(Container):
         self._pending_load: dict | None = None
         self._in_objective_mode = False
         self._last_assessment_section_id = "01_consent"
-        self._last_objective_section_id = "01_general"
+        self._obj_view: ObjectiveAssessmentView | None = None
 
     def compose(self) -> ComposeResult:
         """Create sidebar nav + content area."""
         yield SectionNav(on_section_selected=self._show_section, id="section_nav")
-        yield ObjectiveSidebar(
-            on_section_selected=self._show_section,
-            on_back=self._exit_objective_mode,
-            id="obj_sidebar",
-        )
         yield ScrollableContainer(Vertical(id="section_content_inner"), id="section_content")
+        yield ObjectiveAssessmentView(id="obj_view")
 
     def on_mount(self) -> None:
         """Initialize after mounting."""
         self.sections = {
-            # Assessment sections
             "01_consent":             ConsentSection(id="section_01_consent"),
             "02_subjective":          SubjectiveSection(id="section_02_subjective"),
             "03_medical":             MedicalSection(id="section_03_medical"),
@@ -220,14 +207,6 @@ class AssessmentView(Container):
             "07_barriers":            BarriersSection(id="section_07_barriers"),
             "08_rx_plan":             RxPlanSection(id="section_08_rx_plan"),
             "scratchpad":             ScratchpadSection(id="section_scratchpad"),
-            # Objective sections (hidden until objective mode is entered)
-            "01_general":      GeneralSection(id="section_01_general"),
-            "02_active":       ActiveMovementSection(id="section_02_active"),
-            "03_passive":      PassiveMovementSection(id="section_03_passive"),
-            "04_neurological": NeurologicalSection(id="section_04_neurological"),
-            "05_sensory":      SensorySection(id="section_05_sensory"),
-            "06_muscle":       MuscleSection(id="section_06_muscle"),
-            "07_functional":   FunctionalSection(id="section_07_functional"),
         }
 
         content = self.query_one("#section_content_inner", Vertical)
@@ -236,8 +215,9 @@ class AssessmentView(Container):
                 section.display = False
             content.mount(section)
 
-        # Objective sidebar hidden until objective mode is entered
-        self.query_one("#obj_sidebar", ObjectiveSidebar).display = False
+        # Objective view — hidden until entering objective mode
+        self._obj_view = self.query_one("#obj_view", ObjectiveAssessmentView)
+        self._obj_view.display = False
 
         self._mounted = True
         if self._pending_load:
@@ -345,61 +325,33 @@ class AssessmentView(Container):
             if isinstance(sp_data, dict):
                 sp_section.load(sp_data)
 
-        # Load objective sections from _objective.json
+        # Load objective sections via ObjectiveAssessmentView
         obj_file_data = load_objective(session_file)
-        obj_assessment = obj_file_data.get("assessment", {})
-        _OBJ_KEYS = [
-            ("01_general",      "general"),
-            ("02_active",       "active"),
-            ("03_passive",      "passive"),
-            ("04_neurological", "neurological"),
-            ("05_sensory",      "sensory"),
-            ("06_muscle",       "muscle"),
-            ("07_functional",   "functional"),
-        ]
-        for section_id, json_key in _OBJ_KEYS:
-            section = self.sections.get(section_id)
-            if section is None:
-                continue
-            section.session_file = session_file
-            obj_data = obj_assessment.get(json_key, {})
-            if isinstance(obj_data, dict):
-                section.load(obj_data)
+        if self._obj_view is not None:
+            self._obj_view.load_session(session_file, obj_file_data)
 
         # Update nav indicators and medical tab color
         self._refresh_nav_indicators(nav_data)
         self._update_medical_tab_color()
 
     def _show_section(self, section_id: str) -> None:
-        """Switch to a section; handles assessment↔objective mode transitions."""
-        # "04 Objective →" button enters objective mode instead of showing a panel
+        """Switch to an assessment section; exits objective mode if needed."""
         if section_id == "04_objective":
             self._enter_objective_mode()
             return
 
-        # Pressing an assessment F-key while in objective mode auto-exits
-        if self._in_objective_mode and section_id not in self._OBJECTIVE_IDS:
-            self._in_objective_mode = False
-            try:
-                self.query_one("#obj_sidebar", ObjectiveSidebar).display = False
-                self.query_one("#section_nav", SectionNav).display = True
-            except Exception:
-                pass
+        # Any assessment F-key while in objective mode exits it first
+        if self._in_objective_mode:
+            self._exit_objective_mode_silent()
 
-        # Track last-visited in each mode for return navigation
-        if section_id in self._OBJECTIVE_IDS:
-            self._last_objective_section_id = section_id
-        else:
-            self._last_assessment_section_id = section_id
+        self._last_assessment_section_id = section_id
 
         if section_id == self.active_section_id:
             return
 
-        # Capture medical tab status when leaving
         if self.active_section_id == "03_medical":
             self._update_medical_tab_color()
 
-        # Hide current section, show new
         current = self.sections.get(self.active_section_id)
         if current:
             current.display = False
@@ -408,17 +360,10 @@ class AssessmentView(Container):
             new.display = True
             self.active_section_id = section_id
 
-        # Highlight the correct sidebar
-        if self._in_objective_mode:
-            try:
-                self.query_one("#obj_sidebar", ObjectiveSidebar).set_active(section_id)
-            except Exception:
-                pass
-        else:
-            try:
-                self.query_one("#section_nav", SectionNav).set_active(section_id)
-            except Exception:
-                pass
+        try:
+            self.query_one("#section_nav", SectionNav).set_active(section_id)
+        except Exception:
+            pass
 
         # Cross-reference refresh (assessment sections only)
         if section_id == "04_pain_classification":
@@ -435,10 +380,10 @@ class AssessmentView(Container):
             if s: s.update_cross_refs()
 
         # Subsection nav bar: only for certain assessment sections
-        has_subnav = (not self._in_objective_mode and section_id in (
+        has_subnav = section_id in (
             "02_subjective", "03_medical", "04_pain_classification",
             "05_outcome_measures", "06_diagnosis", "07_barriers", "08_rx_plan",
-        ))
+        )
         try:
             nav_bar = self.app.query_one("#subsection_nav_bar")
             nav_bar.display = has_subnav
@@ -448,18 +393,19 @@ class AssessmentView(Container):
             pass
 
     def _enter_objective_mode(self) -> None:
-        """Swap to objective sidebar and show last-active objective section."""
+        """Show ObjectiveAssessmentView, hide assessment content."""
         if self._in_objective_mode:
-            # Already in objective mode — navigate to last objective section if needed
-            target = self._last_objective_section_id or "01_general"
-            if target != self.active_section_id:
-                self._show_section(target)
             return
 
         self._in_objective_mode = True
+
+        # Hide assessment sidebar + content
+        current = self.sections.get(self.active_section_id)
+        if current:
+            current.display = False
         try:
             self.query_one("#section_nav", SectionNav).display = False
-            self.query_one("#obj_sidebar", ObjectiveSidebar).display = True
+            self.query_one("#section_content", ScrollableContainer).display = False
         except Exception:
             pass
         try:
@@ -467,7 +413,25 @@ class AssessmentView(Container):
         except Exception:
             pass
 
-        target = self._last_objective_section_id or "01_general"
+        # Show objective view
+        if self._obj_view is not None:
+            self._obj_view.display = True
+
+    def _exit_objective_mode_silent(self) -> None:
+        """Exit objective mode without triggering _show_section recursion."""
+        self._in_objective_mode = False
+        if self._obj_view is not None:
+            self._obj_view.display = False
+        try:
+            self.query_one("#section_nav", SectionNav).display = True
+            self.query_one("#section_content", ScrollableContainer).display = True
+        except Exception:
+            pass
+
+    def _exit_objective_mode(self) -> None:
+        """Return to assessment mode — called by ← back in objective view."""
+        self._exit_objective_mode_silent()
+        target = self._last_assessment_section_id or "01_consent"
         current = self.sections.get(self.active_section_id)
         if current:
             current.display = False
@@ -476,14 +440,9 @@ class AssessmentView(Container):
             new.display = True
             self.active_section_id = target
         try:
-            self.query_one("#obj_sidebar", ObjectiveSidebar).set_active(target)
+            self.query_one("#section_nav", SectionNav).set_active(target)
         except Exception:
             pass
-
-    def _exit_objective_mode(self) -> None:
-        """Return to assessment mode, called by '← Assessment' button."""
-        target = self._last_assessment_section_id or "01_consent"
-        self._show_section(target)
 
     def _update_medical_tab_color(self) -> None:
         """Update the 03 Medical nav button to orange/green/red based on urgent red flag review."""
@@ -547,26 +506,7 @@ class AssessmentView(Container):
                 sections_complete[section_id] = section.is_complete()
 
         save_all_sections(self.session_file, assessment_data, sections_complete)
-
-        # Save objective sections to _objective.json
-        _OBJ_KEYS = [
-            ("01_general",      "general"),
-            ("02_active",       "active"),
-            ("03_passive",      "passive"),
-            ("04_neurological", "neurological"),
-            ("05_sensory",      "sensory"),
-            ("06_muscle",       "muscle"),
-            ("07_functional",   "functional"),
-        ]
-        obj_assessment_data: dict = {}
-        obj_sections_complete: dict[str, bool] = {}
-        for section_id, json_key in _OBJ_KEYS:
-            section = self.sections.get(section_id)
-            if section is None:
-                continue
-            obj_assessment_data[json_key] = section.collect()
-            obj_sections_complete[section_id] = section.is_complete()
-        save_objective(self.session_file, obj_assessment_data, obj_sections_complete)
+        # Objective sections save themselves via ObjectiveAssessmentView autosave.
 
         # Update nav indicators directly from the in-memory dict — no round-trip read
         self._refresh_nav_indicators({"sections_complete": sections_complete})
@@ -581,6 +521,14 @@ class AssessmentView(Container):
         )
 
         self.post_message(self.SaveStateChanged("saved"))
+
+    @on(ObjectiveAssessmentView.ExitRequested)
+    def _on_obj_exit_requested(self) -> None:
+        self._exit_objective_mode()
+
+    @on(ObjectiveAssessmentView.SaveStateChanged)
+    def _on_obj_save_state(self, event: ObjectiveAssessmentView.SaveStateChanged) -> None:
+        self.post_message(self.SaveStateChanged(event.state))
 
     class SaveStateChanged(Message):
         """Posted when save state changes: 'pending', 'saving', or 'saved'."""
