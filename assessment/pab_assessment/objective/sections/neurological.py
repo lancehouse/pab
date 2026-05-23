@@ -14,23 +14,49 @@ from ...widgets import CheckButton, RadioGroup
 # Gang option sets
 # ---------------------------------------------------------------------------
 
-_REFLEX  = [("Norm", "success"), ("Redu",  "warning"), ("Absnt", "error"),
-            ("Brisk","warning"), ("Hyper",  "error")]        # 5 × 6 = 30 cols
+_REFLEX  = [("0 Absnt", "error"),   ("1+ Redu", "warning"), ("2+ Norm", "success"),
+            ("3+ Hypr", "warning"), ("4+Clons",  "error")]   # 5 × 8 = 40 cols
 
 _PLANTAR = [("Flexr","success"), ("Extnr",  "error")]        # 2 × 6 = 12 cols
 
-_MYOTOME = [("5/5", "success"), ("4/5",   "warning"), ("3/5", "error"),
-            ("2/5", "error"),   ("0/5",   "error")]          # 5 × 6 = 30 cols
+_MYOTOME = [("5/5", "success"), ("4/5", "warning"), ("3/5", "warning"),
+            ("2/5", "error"),   ("1/5", "error"),   ("0/5", "error")]  # 6 × 6 = 36 cols
 
-_DERM    = [("Norm", "success"), ("↓Hypo", "warning"), ("Absnt", "error"),
-            ("↑Hypr","error")]                               # 4 × 6 = 24 cols
-
-_ND_RESP = [("Neg",  "success"), ("Lumbar","warning"), ("Leg",   "error"),
-            ("Cntrl","error"),   ("Sensd", "warning")]        # 5 × 6 = 30 cols
+_DERM    = [("Absent", "error"), ("↓Hypo",  "warning"),
+            ("Normal", "success"), ("↑Hyper", "error")]      # 4 × 6 = 24 cols
 
 
 # ---------------------------------------------------------------------------
-# Row definitions
+# Row definitions — Upper Limb
+# ---------------------------------------------------------------------------
+
+_UL_REFLEX_ROWS: list[tuple[str, str, list]] = [
+    ("Biceps   C5/6",  "nr_biceps",  _REFLEX),
+    ("Brachiorad  C6", "nr_brad",    _REFLEX),
+    ("Triceps  C7",    "nr_triceps", _REFLEX),
+]
+_UL_MYOTOME_ROWS: list[tuple[str, str, list]] = [
+    ("C5  Shldr abd",  "nr_c5", _MYOTOME),
+    ("C6  Wrist ext",  "nr_c6", _MYOTOME),
+    ("C7  Elbow ext",  "nr_c7", _MYOTOME),
+    ("C8  Finger flx", "nr_c8", _MYOTOME),
+    ("T1  Finger abd", "nr_t1", _MYOTOME),
+]
+_UL_DERM_ROWS: list[tuple[str, str]] = [
+    ("C5  Lat arm/delt",  "sn_c5"),
+    ("C6  Thumb & index", "sn_c6"),
+    ("C7  Middle finger", "sn_c7"),
+    ("C8  Little/ulnar",  "sn_c8"),
+    ("T1  Med forearm",   "sn_t1"),
+]
+_UL_ND_ROWS: list[tuple[str, str, bool]] = [
+    ("ULNT1",  "nr_ulnt1",  False),
+    ("ULNT2a", "nr_ulnt2a", False),
+    ("ULNT3",  "nr_ulnt3",  False),
+]
+
+# ---------------------------------------------------------------------------
+# Row definitions — Lower Limb
 # ---------------------------------------------------------------------------
 
 _REFLEX_ROWS: list[tuple[str, str, list]] = [
@@ -47,17 +73,17 @@ _MYOTOME_ROWS: list[tuple[str, str, list]] = [
     ("S2  Ham / KF",   "nr_s2", _MYOTOME),
 ]
 _DERM_ROWS: list[tuple[str, str]] = [
-    ("L2  Ant thigh",  "sn_l2"),
-    ("L3  Med knee",   "sn_l3"),
-    ("L4  Med leg",    "sn_l4"),
-    ("L5  Lat leg/GT", "sn_l5"),
-    ("S1  Lat foot",   "sn_s1"),
-    ("S2  Post thigh", "sn_s2"),
+    ("L2  Ant thigh",    "sn_l2"),
+    ("L3  Med knee",     "sn_l3"),
+    ("L4  Med ankle",    "sn_l4"),
+    ("L5  Lat leg/GT",   "sn_l5"),
+    ("S1  Lat foot/heel","sn_s1"),
+    ("S2  Post thigh",   "sn_s2"),
 ]
-_ND_ROWS: list[tuple[str, str]] = [
-    ("SLR",   "nr_slr"),
-    ("Slump", "nr_slump"),
-    ("PKF",   "nr_pkf"),
+_ND_ROWS: list[tuple[str, str, bool]] = [
+    ("SLR",   "nr_slr",   True),
+    ("Slump", "nr_slump", False),
+    ("PKF",   "nr_pkf",   True),
 ]
 _UMN_ITEMS: list[tuple[str, str]] = [
     ("Hyperreflexia",  "nr_umn_hyper"),
@@ -114,6 +140,11 @@ class NeurologicalSection(BaseSection):
     NeurologicalSection .nd_lbl      { width: 8;  height: 3; content-align: left middle; }
     NeurologicalSection .nd_deg      { width: 6;  height: 3; padding: 0 1; }
     NeurologicalSection .nd_gap      { width: 2;  height: 3; }
+    NeurologicalSection .nd_resp     { width: 1fr; height: 3; padding: 0 1; }
+    NeurologicalSection .nd_hdr_col  { width: 1fr; text-align: center; }
+
+    /* Width-8 buttons for reflex gangs */
+    NeurologicalSection .rg-w8 _RadioButton { width: 8; min-width: 8; max-width: 8; }
 
     /* UMN — CheckButtons fill equally across the row */
     NeurologicalSection .umn_row { layout: horizontal; height: 3; width: 100%; }
@@ -138,8 +169,70 @@ class NeurologicalSection(BaseSection):
     def compose(self) -> ComposeResult:
         yield Label("04 Neurological", classes="section_title")
 
-        # ── Reflexes ──────────────────────────────────────────────────────────
-        yield Label("Reflexes", classes="subsection_header", id="nr_reflexes")
+        # ── Upper Limb — Reflexes ─────────────────────────────────────────────
+        yield Label("Upper Limb — Reflexes", classes="subsection_header", id="nr_ul_reflexes")
+        with Horizontal(classes="rm_hdr"):
+            yield Static("",      classes="rm_hdr_lbl")
+            yield Static("Left",  classes="rm_hdr_col")
+            yield Static("",      classes="rm_hdr_gap")
+            yield Static("Right", classes="rm_hdr_col")
+        for label, prefix, states in _UL_REFLEX_ROWS:
+            with Horizontal(classes="rm_row"):
+                yield Static(label, classes="rm_lbl")
+                yield RadioGroup(states, id=f"{prefix}_l", classes="rg-w8")
+                yield Static("",    classes="rm_gap")
+                yield RadioGroup(states, id=f"{prefix}_r", classes="rg-w8")
+
+        # ── Upper Limb — Myotomes ─────────────────────────────────────────────
+        yield Label("Upper Limb — Myotomes", classes="subsection_header", id="nr_ul_myotomes")
+        with Horizontal(classes="rm_hdr"):
+            yield Static("",      classes="rm_hdr_lbl")
+            yield Static("Left",  classes="rm_hdr_col")
+            yield Static("",      classes="rm_hdr_gap")
+            yield Static("Right", classes="rm_hdr_col")
+        for label, prefix, states in _UL_MYOTOME_ROWS:
+            with Horizontal(classes="rm_row"):
+                yield Static(label, classes="rm_lbl")
+                yield RadioGroup(states, id=f"{prefix}_l")
+                yield Static("",    classes="rm_gap")
+                yield RadioGroup(states, id=f"{prefix}_r")
+
+        # ── Upper Limb — Dermatomes ───────────────────────────────────────────
+        yield Label("Upper Limb — Dermatomes", classes="subsection_header", id="nr_ul_dermatomes")
+        with Horizontal(classes="rm_hdr"):
+            yield Static("",      classes="rm_hdr_lbl")
+            yield Static("Left",  classes="rm_hdr_col")
+            yield Static("",      classes="rm_hdr_gap")
+            yield Static("Right", classes="rm_hdr_col")
+        for label, prefix in _UL_DERM_ROWS:
+            with Horizontal(classes="rm_row"):
+                yield Static(label, classes="rm_lbl")
+                yield RadioGroup(_DERM, id=f"{prefix}_l")
+                yield Static("",       classes="rm_gap")
+                yield RadioGroup(_DERM, id=f"{prefix}_r")
+
+        # ── Upper Limb — Neurodynamics ────────────────────────────────────────
+        yield Label("Upper Limb — Neurodynamics", classes="subsection_header", id="nr_ul_neurodynamics")
+        with Horizontal(classes="nd_hdr"):
+            yield Static("",      classes="nd_hdr_lbl")
+            yield Static("Left",  classes="nd_hdr_col")
+            yield Static("",      classes="nd_hdr_gap")
+            yield Static("Right", classes="nd_hdr_col")
+        for label, prefix, has_deg in _UL_ND_ROWS:
+            with Horizontal(classes="nd_row"):
+                yield Static(label, classes="nd_lbl")
+                if has_deg:
+                    yield Input(placeholder="°", id=f"{prefix}_l_deg", classes="nd_deg")
+                    yield Static("", classes="nd_gap")
+                yield Input(placeholder="Response", id=f"{prefix}_l_resp", classes="nd_resp")
+                yield Static("", classes="nd_gap")
+                if has_deg:
+                    yield Input(placeholder="°", id=f"{prefix}_r_deg", classes="nd_deg")
+                    yield Static("", classes="nd_gap")
+                yield Input(placeholder="Response", id=f"{prefix}_r_resp", classes="nd_resp")
+
+        # ── Lower Limb — Reflexes ─────────────────────────────────────────────
+        yield Label("Lower Limb — Reflexes", classes="subsection_header", id="nr_reflexes")
         with Horizontal(classes="rm_hdr"):
             yield Static("",      classes="rm_hdr_lbl")
             yield Static("Left",  classes="rm_hdr_col")
@@ -148,12 +241,12 @@ class NeurologicalSection(BaseSection):
         for label, prefix, states in _REFLEX_ROWS:
             with Horizontal(classes="rm_row"):
                 yield Static(label, classes="rm_lbl")
-                yield RadioGroup(states, id=f"{prefix}_l")
+                yield RadioGroup(states, id=f"{prefix}_l", classes="rg-w8")
                 yield Static("",    classes="rm_gap")
-                yield RadioGroup(states, id=f"{prefix}_r")
+                yield RadioGroup(states, id=f"{prefix}_r", classes="rg-w8")
 
-        # ── Myotomes ──────────────────────────────────────────────────────────
-        yield Label("Myotomes", classes="subsection_header", id="nr_myotomes")
+        # ── Lower Limb — Myotomes ─────────────────────────────────────────────
+        yield Label("Lower Limb — Myotomes", classes="subsection_header", id="nr_myotomes")
         with Horizontal(classes="rm_hdr"):
             yield Static("",      classes="rm_hdr_lbl")
             yield Static("Left",  classes="rm_hdr_col")
@@ -166,8 +259,8 @@ class NeurologicalSection(BaseSection):
                 yield Static("",    classes="rm_gap")
                 yield RadioGroup(states, id=f"{prefix}_r")
 
-        # ── Dermatomes ────────────────────────────────────────────────────────
-        yield Label("Dermatomes", classes="subsection_header", id="nr_dermatomes")
+        # ── Lower Limb — Dermatomes ───────────────────────────────────────────
+        yield Label("Lower Limb — Dermatomes", classes="subsection_header", id="nr_dermatomes")
         with Horizontal(classes="rm_hdr"):
             yield Static("",      classes="rm_hdr_lbl")
             yield Static("Left",  classes="rm_hdr_col")
@@ -180,32 +273,25 @@ class NeurologicalSection(BaseSection):
                 yield Static("",       classes="rm_gap")
                 yield RadioGroup(_DERM, id=f"{prefix}_r")
 
-        # ── Neurodynamics ─────────────────────────────────────────────────────
-        yield Label("Neurodynamics", classes="subsection_header", id="nr_neurodynamics")
+        # ── Lower Limb — Neurodynamics ────────────────────────────────────────
+        yield Label("Lower Limb — Neurodynamics", classes="subsection_header", id="nr_neurodynamics")
         with Horizontal(classes="nd_hdr"):
             yield Static("",      classes="nd_hdr_lbl")
-            yield Static("Left",  classes="nd_hdr_grp")
+            yield Static("Left",  classes="nd_hdr_col")
             yield Static("",      classes="nd_hdr_gap")
-            yield Static("Right", classes="nd_hdr_grp")
-        with Horizontal(classes="nd_sub"):
-            yield Static("",         classes="nd_sub_lbl")
-            yield Static("Deg",      classes="nd_sub_deg")
-            yield Static("",         classes="nd_sub_gap")
-            yield Static("Response", classes="nd_sub_resp")
-            yield Static("",         classes="nd_sub_gap")
-            yield Static("Deg",      classes="nd_sub_deg")
-            yield Static("",         classes="nd_sub_gap")
-            yield Static("Response", classes="nd_sub_resp")
-        for label, prefix in _ND_ROWS:
+            yield Static("Right", classes="nd_hdr_col")
+        for label, prefix, has_deg in _ND_ROWS:
             with Horizontal(classes="nd_row"):
-                yield Static(label,  classes="nd_lbl")
-                yield Input(placeholder="°", id=f"{prefix}_l_deg", classes="nd_deg")
-                yield Static("",             classes="nd_gap")
-                yield RadioGroup(_ND_RESP,   id=f"{prefix}_l_resp")
-                yield Static("",             classes="nd_gap")
-                yield Input(placeholder="°", id=f"{prefix}_r_deg", classes="nd_deg")
-                yield Static("",             classes="nd_gap")
-                yield RadioGroup(_ND_RESP,   id=f"{prefix}_r_resp")
+                yield Static(label, classes="nd_lbl")
+                if has_deg:
+                    yield Input(placeholder="°", id=f"{prefix}_l_deg", classes="nd_deg")
+                    yield Static("", classes="nd_gap")
+                yield Input(placeholder="Response", id=f"{prefix}_l_resp", classes="nd_resp")
+                yield Static("", classes="nd_gap")
+                if has_deg:
+                    yield Input(placeholder="°", id=f"{prefix}_r_deg", classes="nd_deg")
+                    yield Static("", classes="nd_gap")
+                yield Input(placeholder="Response", id=f"{prefix}_r_resp", classes="nd_resp")
 
         # ── UMN Signs ─────────────────────────────────────────────────────────
         yield Label("UMN Signs", classes="subsection_header", id="nr_umn")
@@ -222,14 +308,28 @@ class NeurologicalSection(BaseSection):
     # ------------------------------------------------------------------
 
     def on_mount(self) -> None:
-        # 3-tuple rows (reflex + myotome)
+        # Upper limb — reflexes + myotomes (3-tuple)
+        for _, prefix, _ in _UL_REFLEX_ROWS + _UL_MYOTOME_ROWS:
+            row_idx = len(self._grid)
+            row = [f"{prefix}_l", f"{prefix}_r"]
+            self._grid.append(row)
+            for col_idx, rg_id in enumerate(row):
+                self._grid_pos[rg_id] = (row_idx, col_idx)
+        # Upper limb — dermatomes (2-tuple)
+        for _, prefix in _UL_DERM_ROWS:
+            row_idx = len(self._grid)
+            row = [f"{prefix}_l", f"{prefix}_r"]
+            self._grid.append(row)
+            for col_idx, rg_id in enumerate(row):
+                self._grid_pos[rg_id] = (row_idx, col_idx)
+        # Lower limb — reflexes + myotomes (3-tuple)
         for _, prefix, _ in _REFLEX_ROWS + _MYOTOME_ROWS:
             row_idx = len(self._grid)
             row = [f"{prefix}_l", f"{prefix}_r"]
             self._grid.append(row)
             for col_idx, rg_id in enumerate(row):
                 self._grid_pos[rg_id] = (row_idx, col_idx)
-        # 2-tuple rows (dermatome)
+        # Lower limb — dermatomes (2-tuple)
         for _, prefix in _DERM_ROWS:
             row_idx = len(self._grid)
             row = [f"{prefix}_l", f"{prefix}_r"]
@@ -280,9 +380,15 @@ class NeurologicalSection(BaseSection):
                 data[uid] = self.query_one(f"#{uid}", CheckButton).value
             except Exception:
                 data[uid] = None
-        for _, prefix in _ND_ROWS:
+        for _, prefix, has_deg in _UL_ND_ROWS + _ND_ROWS:
             for side in ("l", "r"):
-                fid = f"{prefix}_{side}_deg"
+                if has_deg:
+                    fid = f"{prefix}_{side}_deg"
+                    try:
+                        data[fid] = self.query_one(f"#{fid}", Input).value.strip()
+                    except Exception:
+                        data[fid] = ""
+                fid = f"{prefix}_{side}_resp"
                 try:
                     data[fid] = self.query_one(f"#{fid}", Input).value.strip()
                 except Exception:
@@ -303,9 +409,15 @@ class NeurologicalSection(BaseSection):
                     self.query_one(f"#{uid}", CheckButton).set_value(data.get(uid))
                 except Exception:
                     pass
-            for _, prefix in _ND_ROWS:
+            for _, prefix, has_deg in _UL_ND_ROWS + _ND_ROWS:
                 for side in ("l", "r"):
-                    fid = f"{prefix}_{side}_deg"
+                    if has_deg:
+                        fid = f"{prefix}_{side}_deg"
+                        try:
+                            self.query_one(f"#{fid}", Input).value = data.get(fid, "")
+                        except Exception:
+                            pass
+                    fid = f"{prefix}_{side}_resp"
                     try:
                         self.query_one(f"#{fid}", Input).value = data.get(fid, "")
                     except Exception:

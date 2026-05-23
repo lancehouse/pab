@@ -996,6 +996,61 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         _flush_section("08 Special Tests", sl)
 
 
+# ---------------------------------------------------------------------------
+# YAML subsection report registry
+#
+# Maps section JSON key → list of YAML subsection file paths.
+# Any YAML subsection registered here is auto-rendered in both the full
+# and clean reports, immediately after its parent section's hand-coded block.
+#
+# Usage: to add a new YAML form to (e.g.) the subjective section:
+#
+#   _YAML_SUBS["subjective"].append(
+#       Path(__file__).parent / "sections/yaml/02_new_form.yaml"
+#   )
+#
+# The sleep pilot is deliberately NOT registered here — it is already
+# hand-coded in the subjective block of export_session_report.
+# ---------------------------------------------------------------------------
+
+from pathlib import Path as _Path
+from collections import defaultdict as _defaultdict
+
+_YAML_SUBS: dict[str, list[_Path]] = _defaultdict(list)
+
+
+def _emit_yaml_subs_md(section_key: str, section_data: dict, clean: bool,
+                        emit_fn, sub_fn) -> None:
+    """Render all registered YAML subsections for a section into the MD report."""
+    from .form_schema import load_subsection_yaml, render_subsection_md
+    for path in _YAML_SUBS.get(section_key, []):
+        try:
+            defn = load_subsection_yaml(path)
+            content = render_subsection_md(defn, section_data, clean)
+            if content or not clean:
+                sub_fn(defn.label)
+                for line in content:
+                    emit_fn(line)
+        except Exception:
+            pass
+
+
+def _emit_yaml_subs_raw(section_key: str, section_data: dict, clean: bool,
+                         emit_fn, sub_fn) -> None:
+    """Render all registered YAML subsections for a section into the raw report."""
+    from .form_schema import load_subsection_yaml, render_subsection_raw
+    for path in _YAML_SUBS.get(section_key, []):
+        try:
+            defn = load_subsection_yaml(path)
+            content = render_subsection_raw(defn, section_data, clean)
+            if content or not clean:
+                sub_fn(defn.label)
+                for line in content:
+                    emit_fn(line)
+        except Exception:
+            pass
+
+
 def export_session_report(session_file: str, clean: bool = False) -> str:  # noqa: C901
     """
     Write a Markdown report to the session directory.
@@ -1143,6 +1198,7 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     txt("cause_understanding_detail", c)
     txt("prognosis_expectations",    c)
     txt("treatment_preference",      c)
+    _emit_yaml_subs_md("consent", c, clean, _emit, sub)
 
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 2: SUBJECTIVE EXAMINATION
@@ -1251,6 +1307,7 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     txt("harm_means",     s)
     txt("harm_intent",    s)
     txt("harm_action",    s)
+    _emit_yaml_subs_md("subjective", s, clean, _emit, sub)
 
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 3: MEDICAL SCREENING
@@ -1453,6 +1510,7 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     elif not clean:
         _emit("*(none recorded)*")
 
+    _emit_yaml_subs_md("medical", m, clean, _emit, sub)
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 4: PAIN CLASSIFICATION
     # ════════════════════════════════════════════════════════════════════════
@@ -1634,6 +1692,7 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     txt("summary_contributing",  pc)
     txt("summary_reasoning",     pc)
 
+    _emit_yaml_subs_md("pain_classification", pc, clean, _emit, sub)
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 5: OUTCOME MEASURES
     # ════════════════════════════════════════════════════════════════════════
@@ -1709,6 +1768,7 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     if hyp_rows:
         _emit(*_md_table(["#", "Measure", "Baseline", "Interval", "Rationale"], hyp_rows))
 
+    _emit_yaml_subs_md("outcome_measures", om, clean, _emit, sub)
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 6: DIAGNOSIS
     # ════════════════════════════════════════════════════════════════════════
@@ -1758,6 +1818,7 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     f("goal_3", dx)
     f("goal_4", dx)
 
+    _emit_yaml_subs_md("diagnosis", dx, clean, _emit, sub)
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 7: BARRIERS & TREATMENT PLAN
     # ════════════════════════════════════════════════════════════════════════
@@ -2039,6 +2100,14 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     f("ps_isi_pbas",       br)
     f("ps_csi",            br)
     f("ps_audit_dudit",    br)
+    _emit_yaml_subs_md("barriers", br, clean, _emit, sub)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # SECTION 8: RX PLAN
+    # ════════════════════════════════════════════════════════════════════════
+    rp = a.get("rx_plan", {}) or {}
+    sec("Section 8: Rx Plan")
+    _emit_yaml_subs_md("rx_plan", rp, clean, _emit, sub)
 
     # ════════════════════════════════════════════════════════════════════════
     # SCRATCHPAD
@@ -2677,6 +2746,7 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     txt("cause_understanding_detail", c)
     txt("prognosis_expectations",   c)
     txt("treatment_preference",     c)
+    _emit_yaml_subs_raw("consent", c, clean, _emit, sub)
 
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 2: SUBJECTIVE EXAMINATION
@@ -2783,6 +2853,7 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     txt("harm_means",     s)
     txt("harm_intent",    s)
     txt("harm_action",    s)
+    _emit_yaml_subs_raw("subjective", s, clean, _emit, sub)
 
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 3: MEDICAL SCREENING
@@ -2986,6 +3057,7 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     elif not clean:
         _emit("  (none recorded)")
 
+    _emit_yaml_subs_raw("medical", m, clean, _emit, sub)
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 4: PAIN CLASSIFICATION
     # ════════════════════════════════════════════════════════════════════════
@@ -3167,6 +3239,7 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     txt("summary_contributing", pc)
     txt("summary_reasoning",    pc)
 
+    _emit_yaml_subs_raw("pain_classification", pc, clean, _emit, sub)
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 5: OUTCOME MEASURES
     # ════════════════════════════════════════════════════════════════════════
@@ -3244,6 +3317,7 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
             f"  |  rationale: {rationale or '—'}"
         )
 
+    _emit_yaml_subs_raw("outcome_measures", om, clean, _emit, sub)
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 6: DIAGNOSIS
     # ════════════════════════════════════════════════════════════════════════
@@ -3293,6 +3367,7 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     f("goal_3", dx)
     f("goal_4", dx)
 
+    _emit_yaml_subs_raw("diagnosis", dx, clean, _emit, sub)
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 7: BARRIERS & TREATMENT PLAN
     # ════════════════════════════════════════════════════════════════════════
@@ -3573,6 +3648,14 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     f("ps_isi_pbas",        br)
     f("ps_csi",             br)
     f("ps_audit_dudit",     br)
+    _emit_yaml_subs_raw("barriers", br, clean, _emit, sub)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # SECTION 8: RX PLAN
+    # ════════════════════════════════════════════════════════════════════════
+    rp = a.get("rx_plan", {}) or {}
+    sec("SECTION 8: RX PLAN")
+    _emit_yaml_subs_raw("rx_plan", rp, clean, _emit, sub)
 
     # ════════════════════════════════════════════════════════════════════════
     # SCRATCHPAD

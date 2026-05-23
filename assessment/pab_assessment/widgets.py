@@ -40,16 +40,61 @@ class GridInput(Input):
 # RadioGroup — exclusive single-select button gang
 # ---------------------------------------------------------------------------
 
-class _RadioButton(Button):
-    """Non-focusable button inside RadioGroup. Click bubbles up; keyboard ignored."""
+class _RadioButton(Static):
+    """Non-focusable option chip inside RadioGroup.
+
+    Static avoids Button's unoverrideable variant CSS (same fix as _RegionButton
+    in the topbar). Background is controlled via CSS classes; text is always white.
+    """
 
     can_focus = False
 
-
     class Clicked(Message):
-        def __init__(self, button: "Button") -> None:
+        def __init__(self, button: "_RadioButton") -> None:
             super().__init__()
             self.button = button
+
+    DEFAULT_CSS = """
+    _RadioButton {
+        height: 3;
+        width: 6;
+        min-width: 6;
+        max-width: 6;
+        padding: 0;
+        border: none;
+        content-align: center middle;
+        color: white;
+        background: $panel;
+    }
+    _RadioButton.rb-primary { background: $primary; }
+    _RadioButton.rb-success  { background: $success; }
+    _RadioButton.rb-warning  { background: $warning; }
+    _RadioButton.rb-error    { background: $error;   }
+    """
+
+    # Maps variant name → CSS class to apply when selected
+    _VARIANT_CLASS: dict[str, str] = {
+        "primary": "rb-primary",
+        "success": "rb-success",
+        "warning": "rb-warning",
+        "error":   "rb-error",
+    }
+
+    def __init__(self, label: str, variant: str = "default", **kwargs) -> None:
+        super().__init__(label, **kwargs)
+        self._variant = variant
+
+    @property
+    def variant(self) -> str:
+        return self._variant
+
+    @variant.setter
+    def variant(self, v: str) -> None:
+        for cls in self._VARIANT_CLASS.values():
+            self.remove_class(cls)
+        self._variant = v
+        if v in self._VARIANT_CLASS:
+            self.add_class(self._VARIANT_CLASS[v])
 
     async def _on_click(self, event: events.Click) -> None:
         event.stop()
@@ -74,10 +119,9 @@ class RadioGroup(Static):
         pass
 
     DEFAULT_CSS = """
-    RadioGroup             { height: 3; layout: horizontal; width: auto; }
-    RadioGroup Button      { height: 3; width: 6; min-width: 6; max-width: 6; padding: 0; border: none; }
-    RadioGroup.-rg-focused { border: tall $accent; }
-    RadioGroup.-rg-focused Button { height: 1; min-height: 1; }
+    RadioGroup                      { height: 3; layout: horizontal; width: auto; }
+    RadioGroup.-rg-focused          { border: tall $accent; }
+    RadioGroup.-rg-focused _RadioButton { height: 1; min-height: 1; }
     """
 
     def __init__(self, options: list[tuple[str, str]], **kwargs) -> None:
@@ -101,8 +145,7 @@ class RadioGroup(Static):
             try:
                 btn = self.query_one(f"#{self.id}_r{i}", _RadioButton)
                 if i == idx:
-                    # "default" variant is visually identical to unselected;
-                    # use "primary" so selection is always visible.
+                    # "default" variant would be invisible; use "primary" instead.
                     btn.variant = variant if variant != "default" else "primary"
                 else:
                     btn.variant = "default"

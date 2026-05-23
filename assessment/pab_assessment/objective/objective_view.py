@@ -18,6 +18,35 @@ from ..storage import objective_path, save_objective, save_raw_report, export_se
 
 logger = logging.getLogger(__name__)
 
+# ── Region toggle chip ───────────────────────────────────────────────────────
+
+class _RegionButton(Static):
+    """Region toggle chip — plain Static avoids Button's unoverrideable text-color CSS."""
+
+    class Toggled(Message):
+        def __init__(self, region_id: str) -> None:
+            super().__init__()
+            self.region_id = region_id
+
+    DEFAULT_CSS = """
+    _RegionButton {
+        width: auto; height: 1; padding: 0 1; margin: 0 1 0 0;
+        background: $panel; color: $text-muted;
+    }
+    _RegionButton.active-region {
+        background: #2a5080; color: white; text-style: bold;
+    }
+    _RegionButton:hover { background: $boost; color: white; }
+    """
+
+    def __init__(self, label: str, region_id: str, **kwargs) -> None:
+        super().__init__(label, **kwargs)
+        self._region_id = region_id
+
+    def on_click(self) -> None:
+        self.post_message(self.Toggled(self._region_id))
+
+
 # All available regions (topbar order). Phase 3A: only lumbar is shown.
 _ALL_REGIONS: list[tuple[str, str]] = [
     ("lumbar",    "Lumbar"),
@@ -92,22 +121,6 @@ class RegionTopbar(Static):
         margin-right: 1;
         color: $text-muted;
     }
-    RegionTopbar Button {
-        width: auto;
-        height: 1;
-        min-width: 0;
-        border: none;
-        margin: 0 1 0 0;
-        padding: 0 1;
-        background: $panel;
-        color: $text-muted;
-    }
-    RegionTopbar Button.active-region {
-        background: #2a5080;
-        color: $text;
-        text-style: bold;
-    }
-    RegionTopbar Button:hover { background: $boost; color: $text; }
     """
 
     def __init__(self, active_regions: list[str], **kwargs) -> None:
@@ -117,35 +130,36 @@ class RegionTopbar(Static):
     def compose(self) -> ComposeResult:
         yield Static("Regions:", classes="region_label")
         for region_id, label in _ALL_REGIONS:
-            btn = Button(label, id=f"rgn_{region_id}")
+            chip = _RegionButton(label, region_id, id=f"rgn_{region_id}")
             if region_id in self._active_regions:
-                btn.add_class("active-region")
-            yield btn
+                chip.add_class("active-region")
+            yield chip
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        bid = event.button.id or ""
-        if not bid.startswith("rgn_"):
+    @on(_RegionButton.Toggled)
+    def _on_region_chip_toggled(self, event: _RegionButton.Toggled) -> None:
+        region_id = event.region_id
+        try:
+            chip = self.query_one(f"#rgn_{region_id}", _RegionButton)
+        except Exception:
             return
-        region_id = bid[4:]
-        active = "active-region" in event.button.classes
+        active = chip.has_class("active-region")
         if active:
-            event.button.remove_class("active-region")
+            chip.remove_class("active-region")
             self._active_regions = [r for r in self._active_regions if r != region_id]
         else:
-            event.button.add_class("active-region")
+            chip.add_class("active-region")
             self._active_regions.append(region_id)
         self.post_message(self.RegionToggled(region_id, not active))
-        event.stop()
 
     def set_active_regions(self, regions: list[str]) -> None:
         self._active_regions = list(regions)
         for region_id, _ in _ALL_REGIONS:
             try:
-                btn = self.query_one(f"#rgn_{region_id}", Button)
+                chip = self.query_one(f"#rgn_{region_id}", _RegionButton)
                 if region_id in regions:
-                    btn.add_class("active-region")
+                    chip.add_class("active-region")
                 else:
-                    btn.remove_class("active-region")
+                    chip.remove_class("active-region")
             except Exception:
                 pass
 

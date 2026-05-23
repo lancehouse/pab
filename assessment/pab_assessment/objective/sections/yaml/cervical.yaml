@@ -1,0 +1,77 @@
+region: cervical
+label: Cervical
+
+# ── 02 Active Movement ──────────────────────────────────────────────────────
+active_movement:
+  groups:
+    - label: "Cervical ROM"
+      notes_id: am_cx_notes
+      rows:
+        - {id: cx_flex, label: "Flexion",   bilateral: true}
+        - {id: cx_ext,  label: "Extension", bilateral: true}
+        - {id: cx_lf,   label: "Lat Flex",  bilateral: false}
+        - {id: cx_rot,  label: "Rotation",  bilateral: false}
+    - label: "Thoracic ROM"
+      notes_id: am_tx_cx_notes
+      rows:
+        - {id: tx_cx_flex, label: "Flexion",   bilateral: true}
+        - {id: tx_cx_ext,  label: "Extension", bilateral: true}
+        - {id: tx_cx_rot,  label: "Rotation",  bilateral: false}
+
+# ── 06 Muscle Testing ────────────────────────────────────────────────────────
+muscle_testing:
+  groups:
+    - label: "Muscle Length"
+      type: bilateral
+      options: ["Norm", "↓Mild", "↓Mod", "↓Mrkd"]
+      rows:
+        - {id: ml_ut,   label: "Upper trapezius"}
+        - {id: ml_ls,   label: "Levator scapulae"}
+        - {id: ml_pec,  label: "Pectorals"}
+        - {id: ml_scal, label: "Scalenes"}
+    - label: "Muscle Activation"
+      type: unilateral
+      options: ["Norm", "Fair", "Poor", "Ovact"]
+      rows:
+        - {id: ma_dcf,    label: "Deep cerv flexors"}
+        - {id: ma_cx_ext, label: "Cervical extensors"}
+        - {id: ma_sa,     label: "Serratus anterior"}
+    - label: "Cervical Endurance"
+      type: numeric
+      rows:
+        - {id: st_dcf_end, label: "DCF endurance",  placeholder: "seconds"}
+  notes_id: mu_cx_notes
+
+# ── 08 Special Tests ─────────────────────────────────────────────────────────
+# Radiculopathy cluster: Spurling + distraction + ULNT1 (all 3 positive = strong indicator)
+# CGH: FRT — side of restriction = symptomatic C1/2 segment
+# Upper cervical instability: pre-manipulation screen
+# VBI: pre-manipulation screen — see also Medical Screening section (risk factors)
+# Myelopathy: Hoffman's — combine with UMN signs in neurological section
+special_tests:
+  notes_id: st_cx_notes
+  rows:
+    # Radiculopathy cluster
+    - {id: spurling_l,    label: "Spurling Left",    options: ["Negative", "Positive"]}
+    - {id: spurling_r,    label: "Spurling Right",   options: ["Negative", "Positive"]}
+    - {id: distraction,   label: "Distraction",      options: ["Negative", "Positive"]}
+    - {id: ulnt1_l,       label: "ULNT1 Left",       options: ["Negative", "Positive", "Positive+P"]}
+    - {id: ulnt1_r,       label: "ULNT1 Right",      options: ["Negative", "Positive", "Positive+P"]}
+    - {id: ulnt2a_l,      label: "ULNT2a Left",      options: ["Negative", "Positive", "Positive+P"]}
+    - {id: ulnt2a_r,      label: "ULNT2a Right",     options: ["Negative", "Positive", "Positive+P"]}
+    - {id: ulnt3_l,       label: "ULNT3 Left",       options: ["Negative", "Positive", "Positive+P"]}
+    - {id: ulnt3_r,       label: "ULNT3 Right",      options: ["Negative", "Positive", "Positive+P"]}
+    # Cervicogenic headache
+    - {id: frt_l,         label: "FRT Left",         options: ["Negative", "Positive"]}
+    - {id: frt_r,         label: "FRT Right",        options: ["Negative", "Positive"]}
+    # Upper cervical instability (3-option: grey-zone findings)
+    - {id: sharp_purser,  label: "Sharp-Purser",     options: ["Negative", "Equivocal", "Positive"]}
+    - {id: ant_shear,     label: "Anterior shear",   options: ["Negative", "Equivocal", "Positive"]}
+    - {id: alar_sf,       label: "Alar lig (SF)",    options: ["Negative", "Equivocal", "Positive"]}
+    - {id: lat_trans,     label: "Lateral trans",    options: ["Negative", "Equivocal", "Positive"]}
+    # VBI pre-manipulation screen (risk factor history: Medical Screening section)
+    - {id: vbi_sus_rot_l, label: "VBI Sus Rot L",    options: ["Negative", "Positive"]}
+    - {id: vbi_sus_rot_r, label: "VBI Sus Rot R",    options: ["Negative", "Positive"]}
+    # Myelopathy (combine with UMN screening in neurological section)
+    - {id: hoffman_l,     label: "Hoffman's Left",   options: ["Negative", "Positive"]}
+    - {id: hoffman_r,     label: "Hoffman's Right",  options: ["Negative", "Positive"]}

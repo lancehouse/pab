@@ -29,6 +29,7 @@ from textual.widgets import Label, Static, TextArea
 
 from ...widgets import GridInput, RadioGroup
 from .active_movement import RangeCell, ROMRow
+from .cervical_tables import CervicalMuscleTables, CervicalPassiveTables, CervicalTables
 from .lumbar_tables import LumbarMuscleTables, LumbarPassiveTables, LumbarTables
 
 
@@ -438,6 +439,7 @@ class RegionContainer(Static):
     @on(TextArea.Changed)
     @on(GridInput.Changed)
     @on(LumbarTables.Changed)
+    @on(CervicalTables.Changed)
     def _on_any_field_changed(self) -> None:
         if not self._loading:
             self.post_message(self.FieldChanged())
@@ -571,6 +573,8 @@ class RegionTabContent(Container):
 # Key: (region_id, section_key)  Value: widget class
 
 REGION_EXTRAS: dict[tuple[str, str], Type] = {
-    ("lumbar", "passive"): LumbarPassiveTables,
-    ("lumbar", "muscle"):  LumbarMuscleTables,
+    ("lumbar",    "passive"): LumbarPassiveTables,
+    ("lumbar",    "muscle"):  LumbarMuscleTables,
+    ("cervical",  "passive"): CervicalPassiveTables,
+    ("cervical",  "muscle"):  CervicalMuscleTables,
 }
