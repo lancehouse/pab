@@ -1,0 +1,91 @@
+# Lumbar Knowledge Base
+# Keys map to field IDs in lumbar.yaml (special_tests section).
+# Bilateral tests use the stem only (e.g. "slr" covers slr_l + slr_r).
+
+slr:
+  label: "Straight Leg Raise (SLR)"
+  purpose: >
+    Lumbar radiculopathy / disc herniation: mechanically loads the sciatic
+    nerve and L4–S1 nerve roots. Positive = leg pain / paresthesia reproduced
+    below the knee, not hamstring tightness.
+  position: "Supine."
+  procedure: >
+    Passively raise the leg with knee straight. Record angle at symptom onset
+    (typically 30–70° in radiculopathy). Sensitise: dorsiflexion (Bragard's).
+    Positive = radicular symptoms reproduced below knee <70°.
+  sn_sp: "Sn 80–91% / Sp 26–57% (lumbar disc herniation)"
+  note: "High sensitivity — useful to rule OUT significant disc herniation."
+
+crossed_slr:
+  label: "Crossed SLR"
+  purpose: >
+    Large central/paracentral disc herniation: raising the contralateral leg
+    reproduces ipsilateral radicular symptoms (indicates medial disc compression).
+  position: "Supine."
+  procedure: >
+    Raise the unaffected leg. Positive = ipsilateral leg pain reproduced.
+  sn_sp: "Sn 29% / Sp 88% (disc herniation)"
+  note: "Low sensitivity but highly specific; strong indicator of significant herniation."
+
+slump:
+  label: "Slump Test"
+  purpose: >
+    Neural tissue mechanosensitivity along the sciatic tract: combines spinal
+    canal lengthening with peripheral neural stretch.
+  position: "Seated at edge of plinth, arms behind back."
+  procedure: >
+    1. Slump thoracic and lumbar spine. 2. Flex cervical spine. 3. Extend knee.
+    4. Dorsiflex foot. Positive = symptom reproduction differentiated by
+    cervical extension (releases tension).
+  sn_sp: "Sn 83–84% / Sp 55% (lumbar radiculopathy)"
+  note: "More sensitive than SLR for upper lumbar disc levels."
+
+femoral:
+  label: "Femoral Nerve Stretch Test"
+  purpose: >
+    Femoral nerve / L2–L4 nerve root irritation: upper lumbar disc herniation
+    or femoral nerve entrapment.
+  position: "Prone."
+  procedure: >
+    Passively flex knee. Positive = anterior thigh / groin pain reproduced.
+    Sensitise: add hip extension.
+  sn_sp: "Sn ~84% / Sp limited data (L2–L4 radiculopathy)"
+
+faber:
+  label: "FABER Test (Patrick's)"
+  purpose: >
+    Hip pathology (OA, labral tear, impingement) and sacroiliac joint
+    provocation. Not specific for single structure.
+  position: "Supine."
+  procedure: >
+    Place foot of test leg on contralateral knee (figure-4). Let knee drop
+    toward table. Positive = groin/hip pain (hip) or posterior SIJ pain (SIJ).
+    Compare side-to-side height of knee above table.
+  sn_sp: "Sn 60–88% / Sp 18% (hip OA); moderate SIJ sensitivity."
+
+fadir:
+  label: "FADIR Test"
+  purpose: >
+    Hip impingement (FAI) and labral pathology: impinges anterosuperior
+    acetabular labrum and femoral head-neck junction.
+  position: "Supine."
+  procedure: >
+    Passively flex hip 90° + adduct + internally rotate. Positive = anterior
+    groin pain reproduction.
+  sn_sp: "Sn 75–95% / Sp 43% (FAI); used within hip cluster."
+  note: "High sensitivity — if negative, FAI unlikely."
+
+prone_inst:
+  label: "Prone Instability Test"
+  purpose: >
+    Lumbar segmental instability: identifies pain provoked by segmental
+    posterior-anterior pressure that is relieved when the patient contracts
+    the lumbar extensors (lifting feet from table).
+  position: "Prone, legs hanging off end of table."
+  procedure: >
+    Apply PA pressure to painful spinal level. Positive = pain provoked.
+    Then ask patient to lift feet (activating back extensors). Re-apply PA.
+    Positive (instability) = pain abolished or significantly reduced with
+    active support.
+  sn_sp: "Sn 71% / Sp 57% (lumbar instability)"
+  note: "Interpret with clinical pattern: hypermobility, recurrent episodes, activity-related."

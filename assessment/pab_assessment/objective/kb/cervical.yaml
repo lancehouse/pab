@@ -1,0 +1,159 @@
+# Cervical Knowledge Base
+# Keys map to field IDs in cervical.yaml (special_tests section).
+# Bilateral tests use the stem only (e.g. "spurling" covers spurling_l + spurling_r).
+
+spurling:
+  label: "Spurling's Test"
+  purpose: >
+    Cervical radiculopathy: narrows IVF by compressing the neural structures
+    at the affected level. Positive = reproduction of arm/shoulder symptoms.
+  position: "Seated. Examiner stands behind."
+  procedure: >
+    Laterally flex + rotate head to symptomatic side + apply axial compression
+    downward through vertex. Hold 10–30 s. A positive result reproduces
+    arm/shoulder/periscapular pain or paresthesia (not local neck pain only).
+  variants: "Spurling A (compression only); Spurling B (LF+rot+compression)."
+  sn_sp: "Sn 30–60% / Sp 90–100% (radiculopathy)"
+  cluster: "Radiculopathy cluster: Spurling + Distraction + ULNT1 — all 3 positive = LR+ ~6"
+
+distraction:
+  label: "Cervical Distraction Test"
+  purpose: >
+    Cervical radiculopathy: offloads neural structures by increasing IVF space.
+    Positive = relief of arm symptoms with distraction.
+  position: "Supine."
+  procedure: >
+    Cradle the occiput and chin. Apply gentle axial distraction (10–15 kg).
+    Positive = reproduction of arm symptoms relieved, or arm symptoms abolished.
+  sn_sp: "Sn 40–50% / Sp 90%+ (radiculopathy)"
+  cluster: "Radiculopathy cluster: Spurling + Distraction + ULNT1"
+
+ulnt1:
+  label: "ULNT1 (Median nerve bias)"
+  purpose: >
+    Neurodynamic sensitivity of the median nerve / C5–C7 nerve roots.
+    Positive = reproduction of arm symptoms with test; sensitised by contralateral
+    cervical lateral flexion.
+  position: "Supine, arm at side."
+  procedure: >
+    1. Shoulder depress + abduct 90°. 2. Forearm supinate. 3. Wrist + finger extend.
+    4. Elbow extend. 5. Sensitise: contralateral cervical lateral flexion.
+    Positive = symptom reproduction + differentiated by cervical movement.
+  sn_sp: "Sn 72–97% / Sp 22–33% (cervical radiculopathy)"
+  note: "High sensitivity — useful to rule OUT radiculopathy; low specificity."
+
+ulnt2a:
+  label: "ULNT2a (Radial nerve bias)"
+  purpose: >
+    Neurodynamic sensitivity of the radial nerve / C6–C8 nerve roots.
+  position: "Supine."
+  procedure: >
+    1. Shoulder depress + abduct 10°. 2. Internally rotate shoulder.
+    3. Elbow extend. 4. Pronate forearm. 5. Flex wrist + fingers.
+    Sensitise: contralateral lateral cervical flexion or elbow flex/ext.
+  sn_sp: "Limited Sn/Sp data; used as part of neurodynamic cluster."
+
+ulnt3:
+  label: "ULNT3 (Ulnar nerve bias)"
+  purpose: >
+    Neurodynamic sensitivity of the ulnar nerve / C8–T1 nerve roots.
+  position: "Supine."
+  procedure: >
+    1. Shoulder depress + abduct 90° + ER. 2. Flex elbow fully.
+    3. Pronate forearm. 4. Extend wrist + fingers.
+    Sensitise: contralateral lateral cervical flexion.
+  sn_sp: "Limited Sn/Sp data; used as part of neurodynamic cluster."
+
+frt:
+  label: "Flexion-Rotation Test (FRT)"
+  purpose: >
+    Cervicogenic headache (CGH): restricted FRT rotation indicates ipsilateral
+    C1–C2 segmental dysfunction. Side of restriction = symptomatic segment.
+  position: "Supine. Cervical spine in full passive flexion (chin to chest)."
+  procedure: >
+    Maintain full flexion. Passively rotate head maximally left then right.
+    Compare range L vs R. Positive = <32° rotation or >10° L/R asymmetry
+    + reproduction of head pain.
+  sn_sp: "Sn 86–90% / Sp 84–91% (cervicogenic headache)"
+  note: "Isolates C1–C2 by locking lower cervical segments in flexion."
+
+sharp_purser:
+  label: "Sharp-Purser Test"
+  purpose: >
+    Upper cervical instability (alar / transverse ligament): posterior
+    translation of the atlas on the axis during flexion.
+  position: "Seated, cervical spine in semi-flexion."
+  procedure: >
+    Stabilise C2 spinous process with one hand. Apply posterior glide to
+    the forehead with the other. Positive = clunk/slide + symptom relief.
+    Equivocal = movement felt without clear clunk.
+  sn_sp: "Sn 69% / Sp 96% (atlantoaxial instability)"
+  note: "Screen before upper cervical manipulation. Equivocal requires caution."
+
+ant_shear:
+  label: "Anterior Shear Test"
+  purpose: >
+    Transverse ligament integrity: anterior translation of atlas on axis.
+  position: "Supine."
+  procedure: >
+    Cup occiput + C1. Apply anterior shear. Positive = laxity, clunk, or
+    neurological symptoms. Equivocal = soft end-feel without symptoms.
+  sn_sp: "Limited data; use within upper cervical instability cluster."
+
+alar_sf:
+  label: "Alar Ligament Test (Side Flex)"
+  purpose: >
+    Alar ligament integrity: checks for hypermobility with contralateral
+    restraint from the alar ligament.
+  position: "Seated."
+  procedure: >
+    Stabilise C2 spinous process. Laterally flex head. Positive = C2 does
+    not rotate (indicating contralateral alar laxity).
+  sn_sp: "Sn/Sp limited; interpret within instability cluster."
+
+lat_trans:
+  label: "Lateral Translation Test"
+  purpose: >
+    Atlanto-axial lateral stability: integrity of lateral ligamentous structures.
+  position: "Seated."
+  procedure: >
+    Stabilise C2. Apply lateral translation force to the atlas.
+    Positive = excessive translation or symptom reproduction.
+  sn_sp: "Limited Sn/Sp data."
+
+vbi_sus_rot:
+  label: "VBI Sustained Rotation Test"
+  purpose: >
+    Pre-manipulation vertebrobasilar screening: provocation of VBI symptoms
+    with sustained end-range rotation.
+  position: "Seated."
+  procedure: >
+    Rotate head to end range. Sustain 10–30 s. Positive = dizziness,
+    nausea, nystagmus, dysarthria, diplopia, drop attack, or facial numbness.
+    Stop immediately if any positive signs.
+  sn_sp: "Sn low (~50%); clinical utility is in rule-out given serious consequence."
+  note: "Negative result does not exclude VAD risk. Combine with risk factor screening."
+
+hoffman_l:
+  label: "Hoffman's Sign (Left)"
+  purpose: >
+    Upper motor neuron (UMN) screen: corticospinal tract involvement
+    (cervical myelopathy, intracranial pathology).
+  position: "Seated, hand relaxed."
+  procedure: >
+    Support the patient's middle finger. Flick the fingernail downward.
+    Positive = reflex flexion of thumb and index finger.
+  sn_sp: "Sn 58% / Sp 78% (cervical myelopathy)"
+  note: "Combine with hyperreflexia, Babinski, and clonus. UMN cluster = urgent referral."
+
+hoffman_r:
+  label: "Hoffman's Sign (Right)"
+  purpose: >
+    Upper motor neuron (UMN) screen: corticospinal tract involvement
+    (cervical myelopathy, intracranial pathology).
+  position: "Seated, hand relaxed."
+  procedure: >
+    Support the patient's middle finger. Flick the fingernail downward.
+    Positive = reflex flexion of thumb and index finger.
+  sn_sp: "Sn 58% / Sp 78% (cervical myelopathy)"
+  note: "Combine with hyperreflexia, Babinski, and clonus. UMN cluster = urgent referral."
