@@ -1764,92 +1764,225 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     br = a.get("barriers", {}) or {}
     sec("Section 7: Barriers & Treatment Plan")
 
+    # ── clean-mode barrier helper (md) ───────────────────────────────────
+    def _barrier_md(prefix: str, items: list, d: dict) -> None:
+        """Cluster parent barriers into PRESENT/ABSENT; append active sub-items inline."""
+        present_parts = []
+        absent_parts  = []
+        for label, key, sub_items in items:
+            val = d.get(key)
+            if val is True:
+                sub_parts = []
+                for sub_label, sub_key in sub_items:
+                    sv = d.get(sub_key)
+                    if sv is True:
+                        sub_parts.append(sub_label)
+                    elif isinstance(sv, str) and sv.strip():
+                        sub_parts.append(sv.strip())
+                present_parts.append(
+                    f"{label} ({', '.join(sub_parts)})" if sub_parts else label)
+            elif val is False:
+                absent_parts.append(label)
+        if present_parts:
+            _emit("**" + prefix + " PRESENT:** " + "; ".join(present_parts))
+        if absent_parts:
+            _emit("**" + prefix + " ABSENT:** " + "; ".join(absent_parts))
+
+    _NOCI_B = [
+        ("Disease/pathology",      "b_noci_disease",        []),
+        ("Pacing issues",          "b_noci_pacing",         []),
+        ("Inflammatory",           "b_noci_inflammatory",   []),
+        ("Deconditioning",         "b_noci_deconditioning", []),
+        ("Reduced movement",       "b_noci_movement",       [("Region", "bi_movement_region")]),
+        ("Gait",                   "b_noci_gait",           []),
+        ("Strength deficits",      "b_noci_strength",       [
+            ("Glute max",  "bx_strength_glute_max"),
+            ("Glute med",  "bx_strength_glute_med"),
+            ("Iliopsoas",  "bx_strength_iliopsoas"),
+            ("Quads",      "bx_strength_quads"),
+            ("Other",      "bi_strength_other"),
+        ]),
+        ("Deep muscle",            "b_noci_deep_muscle",    [
+            ("Multifidus", "bx_deep_multifidus"),
+            ("TA",         "bx_deep_ta"),
+            ("Erector",    "bx_deep_erector"),
+            ("Other",      "bi_deep_other"),
+        ]),
+        ("Overactivity",           "b_noci_overactivity",   [
+            ("Erector",    "bx_over_erector"),
+            ("QL",         "bx_over_ql"),
+            ("RA",         "bx_over_ra"),
+            ("Obliques",   "bx_over_obliques"),
+            ("Piriformis", "bx_over_piriformis"),
+            ("Iliopsoas",  "bx_over_iliopsoas"),
+            ("Hamstrings", "bx_over_hamstrings"),
+            ("Adductors",  "bx_over_adductors"),
+            ("Other",      "bi_over_other"),
+        ]),
+        ("Nerve mechanosensitivity","b_noci_nerve_mech",    [("Region", "bi_nerve_region")]),
+        ("Diet/weight",            "b_noci_diet",           []),
+    ]
+    _PSYCH_B = [
+        ("Depression",            "b_psych_depression",       [
+            ("Severity",           "bx_dep_severity"),
+            ("Psychiatry ref",     "bx_dep_psychiatry"),
+        ]),
+        ("Anxiety",               "b_psych_anxiety",          [
+            ("Severity",           "bx_anx_severity"),
+            ("Psychiatry ref",     "bx_anx_psychiatry"),
+        ]),
+        ("Stress",                "b_psych_stress",           [
+            ("Severity",           "bx_stress_severity"),
+            ("Psychiatry ref",     "bx_stress_psychiatry"),
+        ]),
+        ("Catastrophising",       "b_psych_catastrophising",  []),
+        ("Reduced self-efficacy", "b_psych_self_efficacy",    []),
+        ("Unhelpful beliefs",     "b_psych_unhelpful_beliefs",[
+            ("Unrealistic expectations","bx_belief_expectations"),
+            ("Symptom focus",           "bx_belief_symptom_focus"),
+            ("Cure focus",              "bx_belief_cure_focus"),
+            ("Further treatment",       "bx_belief_further_tx"),
+        ]),
+        ("PTSD",                  "b_psych_ptsd",             [
+            ("Mechanism",          "bx_ptsd_mechanism"),
+            ("Psychiatry ref",     "bx_ptsd_psychiatry"),
+        ]),
+        ("Unclear readiness",     "b_psych_readiness",        []),
+    ]
+    _SOCIAL_B = [
+        ("Disturbed sleep",   "b_sleep_disturbed",  []),
+        ("Home/social",       "b_social_home",      [
+            ("Family support",   "bx_soc_family_support"),
+            ("Social support",   "bx_soc_social_support"),
+            ("Relationship",     "bx_soc_relationship"),
+            ("Personal rel",     "bx_soc_personal_rel"),
+            ("Financial",        "bx_soc_financial"),
+            ("Residential",      "bx_soc_residential"),
+            ("Distance to care", "bx_soc_distance"),
+        ]),
+        ("Return to work",    "b_social_rtw",       []),
+    ]
+    _MED_B = [
+        ("Red flag",             "b_med_red_flag",    [("Detail", "bi_red_flag_detail")]),
+        ("Substance use",        "b_med_substance",   [("Detail", "bi_substance_detail")]),
+        ("Possible AS",          "b_med_as",          []),
+        ("Possible AAA",         "b_med_aaa",         []),
+        ("Vascular claudication","b_med_vascular",    []),
+        ("Cervical headache",    "b_med_cervical_ha", []),
+        ("Medico-legal",         "b_med_medico_legal",[]),
+    ]
+
     sub("Physical / Nociceptive Barriers")
-    f("b_noci_disease",        br)
-    f("b_noci_pacing",         br)
-    f("b_noci_inflammatory",   br)
-    f("b_noci_deconditioning", br)
-    f("b_noci_movement",       br)
-    f("bi_movement_region",    br)
-    f("b_noci_gait",           br)
-    f("b_noci_strength",       br)
-    f("bx_strength_glute_max", br)
-    f("bx_strength_glute_med", br)
-    f("bx_strength_iliopsoas", br)
-    f("bx_strength_quads",     br)
-    f("bi_strength_other",     br)
-    f("b_noci_deep_muscle",    br)
-    f("bx_deep_multifidus",    br)
-    f("bx_deep_ta",            br)
-    f("bx_deep_erector",       br)
-    f("bi_deep_other",         br)
-    f("b_noci_overactivity",   br)
-    f("bx_over_erector",       br)
-    f("bx_over_ql",            br)
-    f("bx_over_ra",            br)
-    f("bx_over_obliques",      br)
-    f("bx_over_piriformis",    br)
-    f("bx_over_iliopsoas",     br)
-    f("bx_over_hamstrings",    br)
-    f("bx_over_adductors",     br)
-    f("bi_over_other",         br)
-    f("b_noci_nerve_mech",     br)
-    f("bi_nerve_region",       br)
-    f("b_noci_diet",           br)
+    if clean:
+        _barrier_md("Nociceptive barriers", _NOCI_B, br)
+    else:
+        f("b_noci_disease",        br)
+        f("b_noci_pacing",         br)
+        f("b_noci_inflammatory",   br)
+        f("b_noci_deconditioning", br)
+        f("b_noci_movement",       br)
+        f("bi_movement_region",    br)
+        f("b_noci_gait",           br)
+        f("b_noci_strength",       br)
+        f("bx_strength_glute_max", br)
+        f("bx_strength_glute_med", br)
+        f("bx_strength_iliopsoas", br)
+        f("bx_strength_quads",     br)
+        f("bi_strength_other",     br)
+        f("b_noci_deep_muscle",    br)
+        f("bx_deep_multifidus",    br)
+        f("bx_deep_ta",            br)
+        f("bx_deep_erector",       br)
+        f("bi_deep_other",         br)
+        f("b_noci_overactivity",   br)
+        f("bx_over_erector",       br)
+        f("bx_over_ql",            br)
+        f("bx_over_ra",            br)
+        f("bx_over_obliques",      br)
+        f("bx_over_piriformis",    br)
+        f("bx_over_iliopsoas",     br)
+        f("bx_over_hamstrings",    br)
+        f("bx_over_adductors",     br)
+        f("bi_over_other",         br)
+        f("b_noci_nerve_mech",     br)
+        f("bi_nerve_region",       br)
+        f("b_noci_diet",           br)
 
     sub("Neuropathic Barriers")
-    f("b_neuro_confirmed",   br)
-    f("b_neuro_unconfirmed", br)
+    if clean:
+        _barrier_md("Neuropathic barriers", [
+            ("Neuropathic (confirmed)",   "b_neuro_confirmed",   []),
+            ("Neuropathic (unconfirmed)", "b_neuro_unconfirmed", []),
+        ], br)
+    else:
+        f("b_neuro_confirmed",   br)
+        f("b_neuro_unconfirmed", br)
 
     sub("Nociplastic / Central Sensitisation Barriers")
-    f("b_nocip_moderate", br)
-    f("b_nocip_crps",     br)
-    f("b_nocip_fnd",      br)
+    if clean:
+        _barrier_md("Nociplastic barriers", [
+            ("Nociplastic/CS", "b_nocip_moderate", []),
+            ("CRPS",           "b_nocip_crps",     []),
+            ("FND",            "b_nocip_fnd",      []),
+        ], br)
+    else:
+        f("b_nocip_moderate", br)
+        f("b_nocip_crps",     br)
+        f("b_nocip_fnd",      br)
 
     sub("Psychological Barriers")
-    f("b_psych_depression",        br)
-    f("bx_dep_severity",           br)
-    f("bx_dep_psychiatry",         br)
-    f("b_psych_anxiety",           br)
-    f("bx_anx_severity",           br)
-    f("bx_anx_psychiatry",         br)
-    f("b_psych_stress",            br)
-    f("bx_stress_severity",        br)
-    f("bx_stress_psychiatry",      br)
-    f("b_psych_catastrophising",   br)
-    f("b_psych_self_efficacy",     br)
-    f("b_psych_unhelpful_beliefs", br)
-    f("bx_belief_expectations",    br)
-    f("bx_belief_symptom_focus",   br)
-    f("bx_belief_cure_focus",      br)
-    f("bx_belief_further_tx",      br)
-    f("b_psych_ptsd",              br)
-    f("bx_ptsd_mechanism",         br)
-    f("bx_ptsd_psychiatry",        br)
-    f("b_psych_readiness",         br)
+    if clean:
+        _barrier_md("Psychological barriers", _PSYCH_B, br)
+    else:
+        f("b_psych_depression",        br)
+        f("bx_dep_severity",           br)
+        f("bx_dep_psychiatry",         br)
+        f("b_psych_anxiety",           br)
+        f("bx_anx_severity",           br)
+        f("bx_anx_psychiatry",         br)
+        f("b_psych_stress",            br)
+        f("bx_stress_severity",        br)
+        f("bx_stress_psychiatry",      br)
+        f("b_psych_catastrophising",   br)
+        f("b_psych_self_efficacy",     br)
+        f("b_psych_unhelpful_beliefs", br)
+        f("bx_belief_expectations",    br)
+        f("bx_belief_symptom_focus",   br)
+        f("bx_belief_cure_focus",      br)
+        f("bx_belief_further_tx",      br)
+        f("b_psych_ptsd",              br)
+        f("bx_ptsd_mechanism",         br)
+        f("bx_ptsd_psychiatry",        br)
+        f("b_psych_readiness",         br)
 
     sub("Sleep & Social / Contextual Barriers")
-    f("b_sleep_disturbed",     br)
-    f("b_social_home",         br)
-    f("bx_soc_family_support", br)
-    f("bx_soc_social_support", br)
-    f("bx_soc_relationship",   br)
-    f("bx_soc_personal_rel",   br)
-    f("bx_soc_financial",      br)
-    f("bx_soc_residential",    br)
-    f("bx_soc_distance",       br)
-    f("b_social_rtw",          br)
+    if clean:
+        _barrier_md("Sleep/social barriers", _SOCIAL_B, br)
+    else:
+        f("b_sleep_disturbed",     br)
+        f("b_social_home",         br)
+        f("bx_soc_family_support", br)
+        f("bx_soc_social_support", br)
+        f("bx_soc_relationship",   br)
+        f("bx_soc_personal_rel",   br)
+        f("bx_soc_financial",      br)
+        f("bx_soc_residential",    br)
+        f("bx_soc_distance",       br)
+        f("b_social_rtw",          br)
 
     sub("Medical / Systemic Barriers")
-    f("b_med_red_flag",      br)
-    f("bi_red_flag_detail",  br)
-    f("b_med_substance",     br)
-    f("bi_substance_detail", br)
-    f("b_med_as",            br)
-    f("b_med_aaa",           br)
-    f("b_med_vascular",      br)
-    f("b_med_cervical_ha",   br)
-    f("b_med_medico_legal",  br)
+    if clean:
+        _barrier_md("Medical barriers", _MED_B, br)
+    else:
+        f("b_med_red_flag",      br)
+        f("bi_red_flag_detail",  br)
+        f("b_med_substance",     br)
+        f("bi_substance_detail", br)
+        f("b_med_as",            br)
+        f("b_med_aaa",           br)
+        f("b_med_vascular",      br)
+        f("b_med_cervical_ha",   br)
+        f("b_med_medico_legal",  br)
 
     sub("Custom Barriers")
     f("custom_1_barrier",  br)
@@ -3166,92 +3299,224 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     br = a.get("barriers", {}) or {}
     sec("SECTION 7: BARRIERS & TREATMENT PLAN")
 
+    # ── clean-mode barrier helper (raw) ──────────────────────────────────
+    def _barrier_raw(prefix: str, items: list, d: dict) -> None:
+        present_parts = []
+        absent_parts  = []
+        for label, key, sub_items in items:
+            val = d.get(key)
+            if val is True:
+                sub_parts = []
+                for sub_label, sub_key in sub_items:
+                    sv = d.get(sub_key)
+                    if sv is True:
+                        sub_parts.append(sub_label)
+                    elif isinstance(sv, str) and sv.strip():
+                        sub_parts.append(sv.strip())
+                present_parts.append(
+                    f"{label} ({', '.join(sub_parts)})" if sub_parts else label)
+            elif val is False:
+                absent_parts.append(label)
+        if present_parts:
+            _emit("  " + prefix + " PRESENT: " + "; ".join(present_parts))
+        if absent_parts:
+            _emit("  " + prefix + " ABSENT: " + "; ".join(absent_parts))
+
+    _NOCI_B = [
+        ("Disease/pathology",      "b_noci_disease",        []),
+        ("Pacing issues",          "b_noci_pacing",         []),
+        ("Inflammatory",           "b_noci_inflammatory",   []),
+        ("Deconditioning",         "b_noci_deconditioning", []),
+        ("Reduced movement",       "b_noci_movement",       [("Region", "bi_movement_region")]),
+        ("Gait",                   "b_noci_gait",           []),
+        ("Strength deficits",      "b_noci_strength",       [
+            ("Glute max",  "bx_strength_glute_max"),
+            ("Glute med",  "bx_strength_glute_med"),
+            ("Iliopsoas",  "bx_strength_iliopsoas"),
+            ("Quads",      "bx_strength_quads"),
+            ("Other",      "bi_strength_other"),
+        ]),
+        ("Deep muscle",            "b_noci_deep_muscle",    [
+            ("Multifidus", "bx_deep_multifidus"),
+            ("TA",         "bx_deep_ta"),
+            ("Erector",    "bx_deep_erector"),
+            ("Other",      "bi_deep_other"),
+        ]),
+        ("Overactivity",           "b_noci_overactivity",   [
+            ("Erector",    "bx_over_erector"),
+            ("QL",         "bx_over_ql"),
+            ("RA",         "bx_over_ra"),
+            ("Obliques",   "bx_over_obliques"),
+            ("Piriformis", "bx_over_piriformis"),
+            ("Iliopsoas",  "bx_over_iliopsoas"),
+            ("Hamstrings", "bx_over_hamstrings"),
+            ("Adductors",  "bx_over_adductors"),
+            ("Other",      "bi_over_other"),
+        ]),
+        ("Nerve mechanosensitivity","b_noci_nerve_mech",    [("Region", "bi_nerve_region")]),
+        ("Diet/weight",            "b_noci_diet",           []),
+    ]
+    _PSYCH_B = [
+        ("Depression",            "b_psych_depression",       [
+            ("Severity",           "bx_dep_severity"),
+            ("Psychiatry ref",     "bx_dep_psychiatry"),
+        ]),
+        ("Anxiety",               "b_psych_anxiety",          [
+            ("Severity",           "bx_anx_severity"),
+            ("Psychiatry ref",     "bx_anx_psychiatry"),
+        ]),
+        ("Stress",                "b_psych_stress",           [
+            ("Severity",           "bx_stress_severity"),
+            ("Psychiatry ref",     "bx_stress_psychiatry"),
+        ]),
+        ("Catastrophising",       "b_psych_catastrophising",  []),
+        ("Reduced self-efficacy", "b_psych_self_efficacy",    []),
+        ("Unhelpful beliefs",     "b_psych_unhelpful_beliefs",[
+            ("Unrealistic expectations","bx_belief_expectations"),
+            ("Symptom focus",           "bx_belief_symptom_focus"),
+            ("Cure focus",              "bx_belief_cure_focus"),
+            ("Further treatment",       "bx_belief_further_tx"),
+        ]),
+        ("PTSD",                  "b_psych_ptsd",             [
+            ("Mechanism",          "bx_ptsd_mechanism"),
+            ("Psychiatry ref",     "bx_ptsd_psychiatry"),
+        ]),
+        ("Unclear readiness",     "b_psych_readiness",        []),
+    ]
+    _SOCIAL_B = [
+        ("Disturbed sleep",   "b_sleep_disturbed",  []),
+        ("Home/social",       "b_social_home",      [
+            ("Family support",   "bx_soc_family_support"),
+            ("Social support",   "bx_soc_social_support"),
+            ("Relationship",     "bx_soc_relationship"),
+            ("Personal rel",     "bx_soc_personal_rel"),
+            ("Financial",        "bx_soc_financial"),
+            ("Residential",      "bx_soc_residential"),
+            ("Distance to care", "bx_soc_distance"),
+        ]),
+        ("Return to work",    "b_social_rtw",       []),
+    ]
+    _MED_B = [
+        ("Red flag",             "b_med_red_flag",    [("Detail", "bi_red_flag_detail")]),
+        ("Substance use",        "b_med_substance",   [("Detail", "bi_substance_detail")]),
+        ("Possible AS",          "b_med_as",          []),
+        ("Possible AAA",         "b_med_aaa",         []),
+        ("Vascular claudication","b_med_vascular",    []),
+        ("Cervical headache",    "b_med_cervical_ha", []),
+        ("Medico-legal",         "b_med_medico_legal",[]),
+    ]
+
     sub("Physical / Nociceptive Barriers")
-    f("b_noci_disease",        br)
-    f("b_noci_pacing",         br)
-    f("b_noci_inflammatory",   br)
-    f("b_noci_deconditioning", br)
-    f("b_noci_movement",       br)
-    f("bi_movement_region",    br)
-    f("b_noci_gait",           br)
-    f("b_noci_strength",       br)
-    f("bx_strength_glute_max", br)
-    f("bx_strength_glute_med", br)
-    f("bx_strength_iliopsoas", br)
-    f("bx_strength_quads",     br)
-    f("bi_strength_other",     br)
-    f("b_noci_deep_muscle",    br)
-    f("bx_deep_multifidus",    br)
-    f("bx_deep_ta",            br)
-    f("bx_deep_erector",       br)
-    f("bi_deep_other",         br)
-    f("b_noci_overactivity",   br)
-    f("bx_over_erector",       br)
-    f("bx_over_ql",            br)
-    f("bx_over_ra",            br)
-    f("bx_over_obliques",      br)
-    f("bx_over_piriformis",    br)
-    f("bx_over_iliopsoas",     br)
-    f("bx_over_hamstrings",    br)
-    f("bx_over_adductors",     br)
-    f("bi_over_other",         br)
-    f("b_noci_nerve_mech",     br)
-    f("bi_nerve_region",       br)
-    f("b_noci_diet",           br)
+    if clean:
+        _barrier_raw("Nociceptive barriers", _NOCI_B, br)
+    else:
+        f("b_noci_disease",        br)
+        f("b_noci_pacing",         br)
+        f("b_noci_inflammatory",   br)
+        f("b_noci_deconditioning", br)
+        f("b_noci_movement",       br)
+        f("bi_movement_region",    br)
+        f("b_noci_gait",           br)
+        f("b_noci_strength",       br)
+        f("bx_strength_glute_max", br)
+        f("bx_strength_glute_med", br)
+        f("bx_strength_iliopsoas", br)
+        f("bx_strength_quads",     br)
+        f("bi_strength_other",     br)
+        f("b_noci_deep_muscle",    br)
+        f("bx_deep_multifidus",    br)
+        f("bx_deep_ta",            br)
+        f("bx_deep_erector",       br)
+        f("bi_deep_other",         br)
+        f("b_noci_overactivity",   br)
+        f("bx_over_erector",       br)
+        f("bx_over_ql",            br)
+        f("bx_over_ra",            br)
+        f("bx_over_obliques",      br)
+        f("bx_over_piriformis",    br)
+        f("bx_over_iliopsoas",     br)
+        f("bx_over_hamstrings",    br)
+        f("bx_over_adductors",     br)
+        f("bi_over_other",         br)
+        f("b_noci_nerve_mech",     br)
+        f("bi_nerve_region",       br)
+        f("b_noci_diet",           br)
 
     sub("Neuropathic Barriers")
-    f("b_neuro_confirmed",   br)
-    f("b_neuro_unconfirmed", br)
+    if clean:
+        _barrier_raw("Neuropathic barriers", [
+            ("Neuropathic (confirmed)",   "b_neuro_confirmed",   []),
+            ("Neuropathic (unconfirmed)", "b_neuro_unconfirmed", []),
+        ], br)
+    else:
+        f("b_neuro_confirmed",   br)
+        f("b_neuro_unconfirmed", br)
 
     sub("Nociplastic / Central Sensitisation Barriers")
-    f("b_nocip_moderate", br)
-    f("b_nocip_crps",     br)
-    f("b_nocip_fnd",      br)
+    if clean:
+        _barrier_raw("Nociplastic barriers", [
+            ("Nociplastic/CS", "b_nocip_moderate", []),
+            ("CRPS",           "b_nocip_crps",     []),
+            ("FND",            "b_nocip_fnd",      []),
+        ], br)
+    else:
+        f("b_nocip_moderate", br)
+        f("b_nocip_crps",     br)
+        f("b_nocip_fnd",      br)
 
     sub("Psychological Barriers")
-    f("b_psych_depression",       br)
-    f("bx_dep_severity",          br)
-    f("bx_dep_psychiatry",        br)
-    f("b_psych_anxiety",          br)
-    f("bx_anx_severity",          br)
-    f("bx_anx_psychiatry",        br)
-    f("b_psych_stress",           br)
-    f("bx_stress_severity",       br)
-    f("bx_stress_psychiatry",     br)
-    f("b_psych_catastrophising",  br)
-    f("b_psych_self_efficacy",    br)
-    f("b_psych_unhelpful_beliefs", br)
-    f("bx_belief_expectations",   br)
-    f("bx_belief_symptom_focus",  br)
-    f("bx_belief_cure_focus",     br)
-    f("bx_belief_further_tx",     br)
-    f("b_psych_ptsd",             br)
-    f("bx_ptsd_mechanism",        br)
-    f("bx_ptsd_psychiatry",       br)
-    f("b_psych_readiness",        br)
+    if clean:
+        _barrier_raw("Psychological barriers", _PSYCH_B, br)
+    else:
+        f("b_psych_depression",       br)
+        f("bx_dep_severity",          br)
+        f("bx_dep_psychiatry",        br)
+        f("b_psych_anxiety",          br)
+        f("bx_anx_severity",          br)
+        f("bx_anx_psychiatry",        br)
+        f("b_psych_stress",           br)
+        f("bx_stress_severity",       br)
+        f("bx_stress_psychiatry",     br)
+        f("b_psych_catastrophising",  br)
+        f("b_psych_self_efficacy",    br)
+        f("b_psych_unhelpful_beliefs", br)
+        f("bx_belief_expectations",   br)
+        f("bx_belief_symptom_focus",  br)
+        f("bx_belief_cure_focus",     br)
+        f("bx_belief_further_tx",     br)
+        f("b_psych_ptsd",             br)
+        f("bx_ptsd_mechanism",        br)
+        f("bx_ptsd_psychiatry",       br)
+        f("b_psych_readiness",        br)
 
     sub("Sleep & Social / Contextual Barriers")
-    f("b_sleep_disturbed",       br)
-    f("b_social_home",           br)
-    f("bx_soc_family_support",   br)
-    f("bx_soc_social_support",   br)
-    f("bx_soc_relationship",     br)
-    f("bx_soc_personal_rel",     br)
-    f("bx_soc_financial",        br)
-    f("bx_soc_residential",      br)
-    f("bx_soc_distance",         br)
-    f("b_social_rtw",            br)
+    if clean:
+        _barrier_raw("Sleep/social barriers", _SOCIAL_B, br)
+    else:
+        f("b_sleep_disturbed",       br)
+        f("b_social_home",           br)
+        f("bx_soc_family_support",   br)
+        f("bx_soc_social_support",   br)
+        f("bx_soc_relationship",     br)
+        f("bx_soc_personal_rel",     br)
+        f("bx_soc_financial",        br)
+        f("bx_soc_residential",      br)
+        f("bx_soc_distance",         br)
+        f("b_social_rtw",            br)
 
     sub("Medical / Systemic Barriers")
-    f("b_med_red_flag",     br)
-    f("bi_red_flag_detail", br)
-    f("b_med_substance",    br)
-    f("bi_substance_detail", br)
-    f("b_med_as",           br)
-    f("b_med_aaa",          br)
-    f("b_med_vascular",     br)
-    f("b_med_cervical_ha",  br)
-    f("b_med_medico_legal", br)
+    if clean:
+        _barrier_raw("Medical barriers", _MED_B, br)
+    else:
+        f("b_med_red_flag",     br)
+        f("bi_red_flag_detail", br)
+        f("b_med_substance",    br)
+        f("bi_substance_detail", br)
+        f("b_med_as",           br)
+        f("b_med_aaa",          br)
+        f("b_med_vascular",     br)
+        f("b_med_cervical_ha",  br)
+        f("b_med_medico_legal", br)
 
     sub("Custom Barriers")
     f("custom_1_barrier",  br)
