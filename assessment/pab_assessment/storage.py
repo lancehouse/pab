@@ -383,18 +383,20 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
     # Support both old flat schema and new region-based schema
     active_regions = obj.get("active_regions")
     if active_regions is not None:
-        act = {}; pas = {}; mus = {}
+        act = {}; pas = {}; mus = {}; spl = {}
         for _rid in active_regions:
             _rdata = obj.get(_rid, {}) or {}
             act.update(_rdata.get("active",  {}) or {})
             pas.update(_rdata.get("passive", {}) or {})
             mus.update(_rdata.get("muscle",  {}) or {})
+            spl.update(_rdata.get("special", {}) or {})
     else:
         act  = obj.get("active",  {}) or {}
         pas  = obj.get("passive", {}) or {}
         mus  = obj.get("muscle",  {}) or {}
+        spl  = {}
 
-    if not any([gen, act, pas, neu, sen, mus, func]):
+    if not any([gen, act, pas, neu, sen, mus, func, spl]):
         return []
 
     # ── clean-mode helpers ────────────────────────────────────────────────────
@@ -642,6 +644,26 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         _maybe_note(sl, "*Notes:*", func.get("ft_notes", "").strip())
         _flush_section("### 07 Functional", sl)
 
+    # ── 08 Special Tests ──────────────────────────────────────────────────────
+    if spl:
+        sl = []
+        st_def = [
+            ("SLR Left",          "st_slr_l"),
+            ("SLR Right",         "st_slr_r"),
+            ("Slump",             "st_slump"),
+            ("Femoral Stretch",   "st_femoral"),
+            ("FABER Left",        "st_faber_l"),
+            ("FABER Right",       "st_faber_r"),
+            ("FADIR Left",        "st_fadir_l"),
+            ("FADIR Right",       "st_fadir_r"),
+            ("Prone Instability", "st_prone_inst"),
+            ("Crossed SLR",       "st_crossed_slr"),
+        ]
+        st_rows = [[lbl, spl.get(sid) or "—"] for lbl, sid in st_def]
+        _maybe_table(sl, "", ["Test", "Result"], st_rows)
+        _maybe_note(sl, "*Notes:*", spl.get("st_lx_notes", "").strip())
+        _flush_section("### 08 Special Tests", sl)
+
     if not lines:
         return []
 
@@ -665,18 +687,20 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
     # Support both old flat schema and new region-based schema
     active_regions = obj.get("active_regions")
     if active_regions is not None:
-        act = {}; pas = {}; mus = {}
+        act = {}; pas = {}; mus = {}; spl = {}
         for _rid in active_regions:
             _rdata = obj.get(_rid, {}) or {}
             act.update(_rdata.get("active",  {}) or {})
             pas.update(_rdata.get("passive", {}) or {})
             mus.update(_rdata.get("muscle",  {}) or {})
+            spl.update(_rdata.get("special", {}) or {})
     else:
         act  = obj.get("active",  {}) or {}
         pas  = obj.get("passive", {}) or {}
         mus  = obj.get("muscle",  {}) or {}
+        spl  = {}
 
-    if not any([gen, act, pas, neu, sen, mus, func]):
+    if not any([gen, act, pas, neu, sen, mus, func, spl]):
         return
 
     # ── clean-mode helpers ────────────────────────────────────────────────────
@@ -947,6 +971,29 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
             sl.append("  Notes: (empty)")
         _flush_section("07 Functional", sl)
 
+    # ── 08 Special Tests ──────────────────────────────────────────────────────
+    if spl:
+        sl = []
+        st_def = [
+            ("SLR Left",          "st_slr_l"),
+            ("SLR Right",         "st_slr_r"),
+            ("Slump",             "st_slump"),
+            ("Femoral Stretch",   "st_femoral"),
+            ("FABER Left",        "st_faber_l"),
+            ("FABER Right",       "st_faber_r"),
+            ("FADIR Left",        "st_fadir_l"),
+            ("FADIR Right",       "st_fadir_r"),
+            ("Prone Instability", "st_prone_inst"),
+            ("Crossed SLR",       "st_crossed_slr"),
+        ]
+        st_rows = [[lbl, spl.get(sid) or "-"] for lbl, sid in st_def]
+        _maybe_table(sl, ["Test", "Result"], st_rows)
+        v = spl.get("st_lx_notes", "").strip()
+        if v:
+            sl.append(f"  Notes: {v}")
+        elif not clean:
+            sl.append("  Notes: (empty)")
+        _flush_section("08 Special Tests", sl)
 
 
 def export_session_report(session_file: str, clean: bool = False) -> str:  # noqa: C901
