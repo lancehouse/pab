@@ -223,6 +223,23 @@ Bilateral ROM rows (Flexion, Extension): only `_l` variants exist — `_r` colum
   bilateral data as aligned tables (L/R columns), not repeated label-per-side lines
 - Called automatically from `_do_save()` — never call manually unless testing
 
+## Keeping docs and search in sync — mandatory
+
+Any commit that adds, removes, or renames a field (`id`) **must** also update
+all three of these in the same commit:
+
+1. `docs/field-key-reference.md` — add/remove/rename the row in the relevant table
+2. `search.py` — add to `_FIELD_LABELS`, `_OBJ_KB_FIELDS`, `_SUBSECTIONS`, or
+   `_SECTION_SHORT`/`_SECTION_LABELS` as appropriate
+3. `docs/architecture.md` — only if the structural layer itself changes (new YAML
+   layer, new region, new KB file, etc.)
+
+This applies equally to YAML-driven field additions (`sections/yaml/*.yaml`) and
+hardcoded Python field additions. If the search index or reference doc drifts from
+the code, Ctrl+F navigation silently fails and the KB can't be linked correctly.
+
+---
+
 ## Planned — Phase 3 (not yet built)
 
 Right-panel clinical knowledge base:
