@@ -160,7 +160,7 @@ class GradeGroupWidget(Static):
         self._grid_pos: dict[str, tuple[int, int]] = {}
 
     def _rg_id(self, row_id: str, side: str = "") -> str:
-        return f"grade_{row_id}_{side}" if side else f"grade_{row_id}"
+        return f"{row_id}_{side}" if side else row_id
 
     def compose(self) -> ComposeResult:
         label = self._group.get("label", "")

@@ -130,6 +130,11 @@ def save_objective(
             data["assessment"][key] = val
         data["assessment"]["modified"] = int(time.time())
 
+        # Purge stale flat-schema keys once the new region schema is present
+        if "active_regions" in data["assessment"]:
+            for _stale in ("active", "passive", "muscle"):
+                data["assessment"].pop(_stale, None)
+
         if "sections_complete" not in data:
             data["sections_complete"] = {}
         for section_id, complete in sections_complete.items():
