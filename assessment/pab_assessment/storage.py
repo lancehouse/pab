@@ -1258,61 +1258,150 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     m = a.get("medical", {}) or {}
     sec("Section 3: Medical Screening")
 
+    # ── clean-mode clustered helpers (md) — only used when clean=True ─────
+    def _cluster_md(prefix: str, items: list, d: dict) -> None:
+        present = [l for l, k in items if d.get(k) is True]
+        absent  = [l for l, k in items if d.get(k) is False]
+        if present:
+            _emit("**" + prefix + " PRESENT:** " + "; ".join(f"**{l}:** Yes" for l in present))
+        if absent:
+            _emit("**" + prefix + " ABSENT:** " + "; ".join(absent))
+
+    def _rf_md(name: str, flags: list, d: dict, action_key: str = None) -> None:
+        raised     = [l for l, k in flags if d.get(k) is True]
+        not_raised = [l for l, k in flags if d.get(k) is False]
+        action = (d.get(action_key) or "").strip() if action_key else ""
+        if raised:
+            _emit(f"\n### Red Flags — {name}\n")
+            _emit("**⚠️ RED FLAGS RAISED:** " + "; ".join(f"**{l}**" for l in raised))
+            if not_raised:
+                _emit("**Not reported:** " + "; ".join(not_raised))
+            if action:
+                _emit(f"**Action:** {action}")
+        else:
+            suffix = f" — {action}" if action else ""
+            _emit(f"\n### Red Flags — {name} NIL REPORTED{suffix}\n")
+
+    def _pain_md(prefix: str, items: list, d: dict) -> None:
+        present = [l for l, k in items if d.get(k) is True]
+        absent  = [l for l, k in items if d.get(k) is False]
+        if present:
+            _emit("**" + prefix + ":** " + ", ".join(f"**{l}:** Yes" for l in present))
+        if absent:
+            _emit("**" + prefix + ": DENIES:** " + ", ".join(absent))
+
     sub("Comorbidities / PMH")
-    f("no_previous_injuries",    m)
-    txt("previous_injuries",     m)
-    f("comorbid_cancer",         m)
-    f("comorbid_mental_health",  m)
-    f("comorbid_osteoporosis",   m)
-    f("comorbid_inflammatory",   m)
-    f("comorbid_fibromyalgia",   m)
-    f("comorbid_cfs",            m)
-    f("comorbid_ibs",            m)
-    f("comorbid_whiplash",       m)
-    f("comorbid_skin_rash",      m)
-    f("comorbid_drug_alcohol",   m)
-    f("comorbid_fatigue_memory", m)
-    txt("comorbid_other",        m)
+    f("no_previous_injuries", m)
+    txt("previous_injuries",   m)
+    if clean:
+        _cluster_md("Comorbidities", [
+            ("Cancer",                "comorbid_cancer"),
+            ("Mental health",         "comorbid_mental_health"),
+            ("Osteoporosis",          "comorbid_osteoporosis"),
+            ("Inflammatory arthritis","comorbid_inflammatory"),
+            ("Fibromyalgia",          "comorbid_fibromyalgia"),
+            ("CFS",                   "comorbid_cfs"),
+            ("IBS",                   "comorbid_ibs"),
+            ("Whiplash",              "comorbid_whiplash"),
+            ("Skin rash",             "comorbid_skin_rash"),
+            ("Drug/alcohol",          "comorbid_drug_alcohol"),
+            ("Fatigue/memory issues", "comorbid_fatigue_memory"),
+        ], m)
+    else:
+        f("comorbid_cancer",         m)
+        f("comorbid_mental_health",  m)
+        f("comorbid_osteoporosis",   m)
+        f("comorbid_inflammatory",   m)
+        f("comorbid_fibromyalgia",   m)
+        f("comorbid_cfs",            m)
+        f("comorbid_ibs",            m)
+        f("comorbid_whiplash",       m)
+        f("comorbid_skin_rash",      m)
+        f("comorbid_drug_alcohol",   m)
+        f("comorbid_fatigue_memory", m)
+    txt("comorbid_other", m)
 
     sub("Cardiovascular Risk Factors")
-    f("cvd_hypercholesterolaemia", m)
-    f("cvd_cardiac",               m)
-    f("cvd_vascular",              m)
-    f("cvd_stroke_tia",            m)
-    f("cvd_diabetes",              m)
-    f("cvd_corticosteroids",       m)
-    f("cvd_clotting",              m)
-    f("cvd_ocp",                   m)
-    f("cvd_smoker",                m)
-    f("cvd_postpartum",            m)
-    f("cvd_familial_history",      m)
+    if clean:
+        _cluster_md("CVD risk", [
+            ("Hypercholesterolaemia",    "cvd_hypercholesterolaemia"),
+            ("Cardiac disease",          "cvd_cardiac"),
+            ("Vascular disease",         "cvd_vascular"),
+            ("Stroke/TIA",               "cvd_stroke_tia"),
+            ("Diabetes",                 "cvd_diabetes"),
+            ("Long-term corticosteroids","cvd_corticosteroids"),
+            ("Clotting disorder",        "cvd_clotting"),
+            ("OCP use",                  "cvd_ocp"),
+            ("Smoker",                   "cvd_smoker"),
+            ("Postpartum",               "cvd_postpartum"),
+            ("Familial history",         "cvd_familial_history"),
+        ], m)
+    else:
+        f("cvd_hypercholesterolaemia", m)
+        f("cvd_cardiac",               m)
+        f("cvd_vascular",              m)
+        f("cvd_stroke_tia",            m)
+        f("cvd_diabetes",              m)
+        f("cvd_corticosteroids",       m)
+        f("cvd_clotting",              m)
+        f("cvd_ocp",                   m)
+        f("cvd_smoker",                m)
+        f("cvd_postpartum",            m)
+        f("cvd_familial_history",      m)
 
-    sub("Red Flags — Malignancy")
-    f("rf_weight_loss",         m)
-    f("rf_cancer_history",      m)
-    f("rf_age_50_spinal",       m)
-    f("rf_failed_conservative", m)
+    if clean:
+        _rf_md("Malignancy", [
+            ("Unexplained weight loss","rf_weight_loss"),
+            ("Cancer history",         "rf_cancer_history"),
+            ("Age >50 with spinal",    "rf_age_50_spinal"),
+            ("Failed conservative",    "rf_failed_conservative"),
+        ], m)
+        _rf_md("Fracture", [
+            ("Recent trauma",               "rf_trauma"),
+            ("Corticosteroid fracture risk","rf_corticosteroids_fracture"),
+            ("Osteoporosis fracture risk",  "rf_osteoporosis_fracture"),
+        ], m)
+        _rf_md("Infection", [
+            ("Fever",                  "rf_fever"),
+            ("Immunosuppressed",       "rf_immunosuppressed"),
+            ("Recent spinal procedure","rf_spinal_procedure"),
+        ], m)
+        _rf_md("Cauda Equina (URGENT)", [
+            ("Saddle anaesthesia",  "rf_saddle_anaesthesia"),
+            ("Bladder disturbance", "rf_bladder_disturbance"),
+            ("Bowel disturbance",   "rf_bowel_disturbance"),
+        ], m, action_key="cauda_equina_action")
+        _rf_md("Spinal Cord (URGENT)", [
+            ("Bilateral paraesthesia","rf_bilateral_paraesthesia"),
+            ("Gait disturbance",     "rf_gait_disturbance"),
+        ], m, action_key="spinal_cord_action")
+    else:
+        sub("Red Flags — Malignancy")
+        f("rf_weight_loss",         m)
+        f("rf_cancer_history",      m)
+        f("rf_age_50_spinal",       m)
+        f("rf_failed_conservative", m)
 
-    sub("Red Flags — Fracture")
-    f("rf_trauma",                   m)
-    f("rf_corticosteroids_fracture", m)
-    f("rf_osteoporosis_fracture",    m)
+        sub("Red Flags — Fracture")
+        f("rf_trauma",                   m)
+        f("rf_corticosteroids_fracture", m)
+        f("rf_osteoporosis_fracture",    m)
 
-    sub("Red Flags — Infection")
-    f("rf_fever",           m)
-    f("rf_immunosuppressed", m)
-    f("rf_spinal_procedure", m)
+        sub("Red Flags — Infection")
+        f("rf_fever",           m)
+        f("rf_immunosuppressed", m)
+        f("rf_spinal_procedure", m)
 
-    sub("Red Flags — Cauda Equina (URGENT)")
-    f("rf_saddle_anaesthesia",  m)
-    f("rf_bladder_disturbance", m)
-    f("rf_bowel_disturbance",   m)
-    txt("cauda_equina_action",  m)
+        sub("Red Flags — Cauda Equina (URGENT)")
+        f("rf_saddle_anaesthesia",  m)
+        f("rf_bladder_disturbance", m)
+        f("rf_bowel_disturbance",   m)
+        txt("cauda_equina_action",  m)
 
-    sub("Red Flags — Spinal Cord (URGENT)")
-    f("rf_bilateral_paraesthesia", m)
-    f("rf_gait_disturbance",       m)
-    txt("spinal_cord_action",      m)
+        sub("Red Flags — Spinal Cord (URGENT)")
+        f("rf_bilateral_paraesthesia", m)
+        f("rf_gait_disturbance",       m)
+        txt("spinal_cord_action",      m)
 
     sub("Upper Motor Neurone Signs")
     f("umn_hyperreflexia",    m)
@@ -1371,85 +1460,174 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     sec("Section 4: Pain Classification")
 
     sub("Inflammatory Pain Features")
-    f("infl_constant",   pc)
-    f("infl_morning",    pc)
-    f("infl_sleep",      pc)
-    f("infl_activity",   pc)
+    if clean:
+        _pain_md("Inflammatory", [
+            ("Constant pain",     "infl_constant"),
+            ("Morning stiffness", "infl_morning"),
+            ("Night/sleep pain",  "infl_sleep"),
+            ("Activity improves", "infl_activity"),
+        ], pc)
+    else:
+        f("infl_constant",   pc)
+        f("infl_morning",    pc)
+        f("infl_sleep",      pc)
+        f("infl_activity",   pc)
     f("infl_likelihood", pc)
 
     sub("Nociceptive Pain — Subjective Features")
-    f("noci_subj_mechanical",   pc)
-    f("noci_subj_trauma",       pc)
-    f("noci_subj_localised",    pc)
-    f("noci_subj_resolving",    pc)
-    f("noci_subj_analgesia",    pc)
-    f("noci_subj_no_constant",  pc)
-    f("noci_subj_inflammation", pc)
-    f("noci_subj_recent",       pc)
+    if clean:
+        _pain_md("Nociceptive (Sx)", [
+            ("Mechanical",              "noci_subj_mechanical"),
+            ("Trauma/incident",         "noci_subj_trauma"),
+            ("Localised",               "noci_subj_localised"),
+            ("Resolving",               "noci_subj_resolving"),
+            ("Responds to analgesia",   "noci_subj_analgesia"),
+            ("Not constant",            "noci_subj_no_constant"),
+            ("Local inflammation",      "noci_subj_inflammation"),
+            ("Recent onset",            "noci_subj_recent"),
+        ], pc)
+    else:
+        f("noci_subj_mechanical",   pc)
+        f("noci_subj_trauma",       pc)
+        f("noci_subj_localised",    pc)
+        f("noci_subj_resolving",    pc)
+        f("noci_subj_analgesia",    pc)
+        f("noci_subj_no_constant",  pc)
+        f("noci_subj_inflammation", pc)
+        f("noci_subj_recent",       pc)
 
     sub("Nociceptive Pain — Examination Features")
-    f("noci_exam_mechanical",   pc)
-    f("noci_exam_palpation",    pc)
-    f("noci_exam_hyperalgesia", pc)
-    f("noci_exam_antalgic",     pc)
+    if clean:
+        _pain_md("Nociceptive (Ex)", [
+            ("Mechanical reproduction","noci_exam_mechanical"),
+            ("Palpation reproduction", "noci_exam_palpation"),
+            ("Local hyperalgesia",     "noci_exam_hyperalgesia"),
+            ("Antalgic posture",       "noci_exam_antalgic"),
+        ], pc)
+    else:
+        f("noci_exam_mechanical",   pc)
+        f("noci_exam_palpation",    pc)
+        f("noci_exam_hyperalgesia", pc)
+        f("noci_exam_antalgic",     pc)
     f("noci_likelihood",        pc)
     txt("noci_interpretation",  pc)
 
     sub("Neuropathic Pain — Subjective Features")
-    f("neuro_subj_quality",         pc)
-    f("neuro_subj_nerve_injury",    pc)
-    f("neuro_subj_neurological",    pc)
-    f("neuro_subj_dermatomal",      pc)
-    f("neuro_subj_medication",      pc)
-    f("neuro_subj_severity",        pc)
-    f("neuro_subj_neural_loading",  pc)
-    f("neuro_subj_dysaesthesia",    pc)
-    f("neuro_subj_spontaneous",     pc)
+    if clean:
+        _pain_md("Neuropathic (Sx)", [
+            ("Burning/electric/shooting quality","neuro_subj_quality"),
+            ("Known nerve injury",               "neuro_subj_nerve_injury"),
+            ("Neurological symptoms",            "neuro_subj_neurological"),
+            ("Dermatomal/nerve trunk",           "neuro_subj_dermatomal"),
+            ("Responds to neuropathic meds",     "neuro_subj_medication"),
+            ("Severe/night pain",                "neuro_subj_severity"),
+            ("Provoked by neural loading",       "neuro_subj_neural_loading"),
+            ("Dysaesthesia/allodynia",           "neuro_subj_dysaesthesia"),
+            ("Spontaneous pain",                 "neuro_subj_spontaneous"),
+        ], pc)
+    else:
+        f("neuro_subj_quality",         pc)
+        f("neuro_subj_nerve_injury",    pc)
+        f("neuro_subj_neurological",    pc)
+        f("neuro_subj_dermatomal",      pc)
+        f("neuro_subj_medication",      pc)
+        f("neuro_subj_severity",        pc)
+        f("neuro_subj_neural_loading",  pc)
+        f("neuro_subj_dysaesthesia",    pc)
+        f("neuro_subj_spontaneous",     pc)
 
     sub("Neuropathic Pain — Examination Features")
-    f("neuro_exam_neurodynamic",     pc)
-    f("neuro_exam_neural_palpation", pc)
-    f("neuro_exam_neurology",        pc)
-    f("neuro_exam_antalgic",         pc)
-    f("neuro_exam_hyperalgesia",     pc)
+    if clean:
+        _pain_md("Neuropathic (Ex)", [
+            ("Positive neurodynamic test",   "neuro_exam_neurodynamic"),
+            ("Neural palpation sensitive",   "neuro_exam_neural_palpation"),
+            ("Neurology change",             "neuro_exam_neurology"),
+            ("Antalgic posture",             "neuro_exam_antalgic"),
+            ("Hyperalgesia in distribution", "neuro_exam_hyperalgesia"),
+        ], pc)
+    else:
+        f("neuro_exam_neurodynamic",     pc)
+        f("neuro_exam_neural_palpation", pc)
+        f("neuro_exam_neurology",        pc)
+        f("neuro_exam_antalgic",         pc)
+        f("neuro_exam_hyperalgesia",     pc)
     f("neuro_likelihood",            pc)
     txt("neuro_interpretation",      pc)
 
     sub("Nociplastic Pain — Subjective Features")
-    f("nocip_subj_disproportionate",  pc)
-    f("nocip_subj_persistent",        pc)
-    f("nocip_subj_disproportionate2", pc)
-    f("nocip_subj_widespread",        pc)
-    f("nocip_subj_failed",            pc)
-    f("nocip_subj_psychosocial",      pc)
-    f("nocip_subj_medication",        pc)
-    f("nocip_subj_spontaneous",       pc)
-    f("nocip_subj_disability",        pc)
-    f("nocip_subj_constant",          pc)
-    f("nocip_subj_night_pain",        pc)
-    f("nocip_subj_dysaesthesia",      pc)
-    f("nocip_subj_severity",          pc)
+    if clean:
+        _pain_md("Nociplastic (Sx)", [
+            ("Disproportionate to pathology",    "nocip_subj_disproportionate"),
+            ("Persistent beyond healing",        "nocip_subj_persistent"),
+            ("Disproportionate to stimulus",     "nocip_subj_disproportionate2"),
+            ("Widespread/multifocal",            "nocip_subj_widespread"),
+            ("Failed previous treatment",        "nocip_subj_failed"),
+            ("Psychosocial contributors",        "nocip_subj_psychosocial"),
+            ("Responds to centrally-acting meds","nocip_subj_medication"),
+            ("Spontaneous pain",                 "nocip_subj_spontaneous"),
+            ("High disability",                  "nocip_subj_disability"),
+            ("Constant/unpredictable",           "nocip_subj_constant"),
+            ("Disturbed sleep/night pain",       "nocip_subj_night_pain"),
+            ("Dysaesthesia",                     "nocip_subj_dysaesthesia"),
+            ("Severe/difficult to control",      "nocip_subj_severity"),
+        ], pc)
+    else:
+        f("nocip_subj_disproportionate",  pc)
+        f("nocip_subj_persistent",        pc)
+        f("nocip_subj_disproportionate2", pc)
+        f("nocip_subj_widespread",        pc)
+        f("nocip_subj_failed",            pc)
+        f("nocip_subj_psychosocial",      pc)
+        f("nocip_subj_medication",        pc)
+        f("nocip_subj_spontaneous",       pc)
+        f("nocip_subj_disability",        pc)
+        f("nocip_subj_constant",          pc)
+        f("nocip_subj_night_pain",        pc)
+        f("nocip_subj_dysaesthesia",      pc)
+        f("nocip_subj_severity",          pc)
 
     sub("Nociplastic Pain — Examination Features")
-    f("nocip_exam_disproportionate", pc)
-    f("nocip_exam_hyperalgesia",     pc)
-    f("nocip_exam_diffuse",          pc)
-    f("nocip_exam_psychosocial",     pc)
+    if clean:
+        _pain_md("Nociplastic (Ex)", [
+            ("Disproportionate exam findings",    "nocip_exam_disproportionate"),
+            ("Widespread hyperalgesia/allodynia", "nocip_exam_hyperalgesia"),
+            ("Diffuse palpation tenderness",      "nocip_exam_diffuse"),
+            ("Psychosocial features on exam",     "nocip_exam_psychosocial"),
+        ], pc)
+    else:
+        f("nocip_exam_disproportionate", pc)
+        f("nocip_exam_hyperalgesia",     pc)
+        f("nocip_exam_diffuse",          pc)
+        f("nocip_exam_psychosocial",     pc)
     f("nocip_likelihood",            pc)
     txt("nocip_interpretation",      pc)
 
     sub("Central Sensitisation")
-    f("csi_score",        pc)
-    f("cs_light",         pc)
-    f("cs_touch",         pc)
-    f("cs_noise",         pc)
-    f("cs_pesticides",    pc)
-    f("cs_temperature",   pc)
-    f("cs_fatigue",       pc)
-    f("cs_sleep",         pc)
-    f("cs_concentration", pc)
-    f("cs_swelling",      pc)
-    f("cs_tingling",      pc)
+    f("csi_score", pc)
+    if clean:
+        _pain_md("CS features", [
+            ("Light sensitivity",        "cs_light"),
+            ("Touch sensitivity",        "cs_touch"),
+            ("Noise sensitivity",        "cs_noise"),
+            ("Chemical/smell sensitivity","cs_pesticides"),
+            ("Temperature sensitivity",  "cs_temperature"),
+            ("Fatigue",                  "cs_fatigue"),
+            ("Sleep disturbance",        "cs_sleep"),
+            ("Concentration difficulty", "cs_concentration"),
+            ("Perceived swelling",       "cs_swelling"),
+            ("Tingling",                 "cs_tingling"),
+        ], pc)
+    else:
+        f("cs_light",         pc)
+        f("cs_touch",         pc)
+        f("cs_noise",         pc)
+        f("cs_pesticides",    pc)
+        f("cs_temperature",   pc)
+        f("cs_fatigue",       pc)
+        f("cs_sleep",         pc)
+        f("cs_concentration", pc)
+        f("cs_swelling",      pc)
+        f("cs_tingling",      pc)
 
     sub("Pain Type Summary")
     f("summary_dominant",        pc)
@@ -2479,61 +2657,149 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     m = a.get("medical", {}) or {}
     sec("SECTION 3: MEDICAL SCREENING")
 
+    # ── clean-mode clustered helpers (raw) — only used when clean=True ───
+    def _cluster_raw(prefix: str, items: list, d: dict) -> None:
+        present = [l for l, k in items if d.get(k) is True]
+        absent  = [l for l, k in items if d.get(k) is False]
+        if present:
+            _emit("  " + prefix + " PRESENT: " + "; ".join(present))
+        if absent:
+            _emit("  " + prefix + " ABSENT: " + "; ".join(absent))
+
+    def _rf_raw(name: str, flags: list, d: dict, action_key: str = None) -> None:
+        raised     = [l for l, k in flags if d.get(k) is True]
+        not_raised = [l for l, k in flags if d.get(k) is False]
+        action = (d.get(action_key) or "").strip() if action_key else ""
+        if raised:
+            _emit(f"  Red Flags — {name}: ⚠️ RAISED: " + "; ".join(raised))
+            if not_raised:
+                _emit("    Not reported: " + "; ".join(not_raised))
+            if action:
+                _emit(f"    Action: {action}")
+        else:
+            suffix = f" — {action}" if action else ""
+            _emit(f"  Red Flags — {name}: NIL REPORTED{suffix}")
+
+    def _pain_raw(prefix: str, items: list, d: dict) -> None:
+        present = [l for l, k in items if d.get(k) is True]
+        absent  = [l for l, k in items if d.get(k) is False]
+        if present:
+            _emit("  " + prefix + " PRESENT: " + "; ".join(present))
+        if absent:
+            _emit("  " + prefix + " DENIES: " + "; ".join(absent))
+
     sub("Comorbidities / PMH")
     f("no_previous_injuries",     m)
     txt("previous_injuries",      m)
-    f("comorbid_cancer",          m)
-    f("comorbid_mental_health",   m)
-    f("comorbid_osteoporosis",    m)
-    f("comorbid_inflammatory",    m)
-    f("comorbid_fibromyalgia",    m)
-    f("comorbid_cfs",             m)
-    f("comorbid_ibs",             m)
-    f("comorbid_whiplash",        m)
-    f("comorbid_skin_rash",       m)
-    f("comorbid_drug_alcohol",    m)
-    f("comorbid_fatigue_memory",  m)
+    if clean:
+        _cluster_raw("Comorbidities", [
+            ("Cancer",                "comorbid_cancer"),
+            ("Mental health",         "comorbid_mental_health"),
+            ("Osteoporosis",          "comorbid_osteoporosis"),
+            ("Inflammatory arthritis","comorbid_inflammatory"),
+            ("Fibromyalgia",          "comorbid_fibromyalgia"),
+            ("CFS",                   "comorbid_cfs"),
+            ("IBS",                   "comorbid_ibs"),
+            ("Whiplash",              "comorbid_whiplash"),
+            ("Skin rash",             "comorbid_skin_rash"),
+            ("Drug/alcohol",          "comorbid_drug_alcohol"),
+            ("Fatigue/memory issues", "comorbid_fatigue_memory"),
+        ], m)
+    else:
+        f("comorbid_cancer",          m)
+        f("comorbid_mental_health",   m)
+        f("comorbid_osteoporosis",    m)
+        f("comorbid_inflammatory",    m)
+        f("comorbid_fibromyalgia",    m)
+        f("comorbid_cfs",             m)
+        f("comorbid_ibs",             m)
+        f("comorbid_whiplash",        m)
+        f("comorbid_skin_rash",       m)
+        f("comorbid_drug_alcohol",    m)
+        f("comorbid_fatigue_memory",  m)
     txt("comorbid_other",         m)
 
     sub("Cardiovascular Risk Factors")
-    f("cvd_hypercholesterolaemia", m)
-    f("cvd_cardiac",              m)
-    f("cvd_vascular",             m)
-    f("cvd_stroke_tia",           m)
-    f("cvd_diabetes",             m)
-    f("cvd_corticosteroids",      m)
-    f("cvd_clotting",             m)
-    f("cvd_ocp",                  m)
-    f("cvd_smoker",               m)
-    f("cvd_postpartum",           m)
-    f("cvd_familial_history",     m)
+    if clean:
+        _cluster_raw("CVD risk", [
+            ("Hypercholesterolaemia",    "cvd_hypercholesterolaemia"),
+            ("Cardiac disease",          "cvd_cardiac"),
+            ("Vascular disease",         "cvd_vascular"),
+            ("Stroke/TIA",               "cvd_stroke_tia"),
+            ("Diabetes",                 "cvd_diabetes"),
+            ("Long-term corticosteroids","cvd_corticosteroids"),
+            ("Clotting disorder",        "cvd_clotting"),
+            ("OCP use",                  "cvd_ocp"),
+            ("Smoker",                   "cvd_smoker"),
+            ("Postpartum",               "cvd_postpartum"),
+            ("Familial history",         "cvd_familial_history"),
+        ], m)
+    else:
+        f("cvd_hypercholesterolaemia", m)
+        f("cvd_cardiac",              m)
+        f("cvd_vascular",             m)
+        f("cvd_stroke_tia",           m)
+        f("cvd_diabetes",             m)
+        f("cvd_corticosteroids",      m)
+        f("cvd_clotting",             m)
+        f("cvd_ocp",                  m)
+        f("cvd_smoker",               m)
+        f("cvd_postpartum",           m)
+        f("cvd_familial_history",     m)
 
-    sub("Red Flags — Malignancy")
-    f("rf_weight_loss",          m)
-    f("rf_cancer_history",       m)
-    f("rf_age_50_spinal",        m)
-    f("rf_failed_conservative",  m)
+    if clean:
+        _rf_raw("Malignancy", [
+            ("Unexplained weight loss","rf_weight_loss"),
+            ("Cancer history",         "rf_cancer_history"),
+            ("Age >50 with spinal",    "rf_age_50_spinal"),
+            ("Failed conservative",    "rf_failed_conservative"),
+        ], m)
+        _rf_raw("Fracture", [
+            ("Recent trauma",               "rf_trauma"),
+            ("Corticosteroid fracture risk","rf_corticosteroids_fracture"),
+            ("Osteoporosis fracture risk",  "rf_osteoporosis_fracture"),
+        ], m)
+        _rf_raw("Infection", [
+            ("Fever",                  "rf_fever"),
+            ("Immunosuppressed",       "rf_immunosuppressed"),
+            ("Recent spinal procedure","rf_spinal_procedure"),
+        ], m)
+        _rf_raw("Cauda Equina (URGENT)", [
+            ("Saddle anaesthesia",  "rf_saddle_anaesthesia"),
+            ("Bladder disturbance", "rf_bladder_disturbance"),
+            ("Bowel disturbance",   "rf_bowel_disturbance"),
+        ], m, action_key="cauda_equina_action")
+        _rf_raw("Spinal Cord (URGENT)", [
+            ("Bilateral paraesthesia","rf_bilateral_paraesthesia"),
+            ("Gait disturbance",     "rf_gait_disturbance"),
+        ], m, action_key="spinal_cord_action")
+    else:
+        sub("Red Flags — Malignancy")
+        f("rf_weight_loss",          m)
+        f("rf_cancer_history",       m)
+        f("rf_age_50_spinal",        m)
+        f("rf_failed_conservative",  m)
 
-    sub("Red Flags — Fracture")
-    f("rf_trauma",                  m)
-    f("rf_corticosteroids_fracture", m)
-    f("rf_osteoporosis_fracture",   m)
+        sub("Red Flags — Fracture")
+        f("rf_trauma",                  m)
+        f("rf_corticosteroids_fracture", m)
+        f("rf_osteoporosis_fracture",   m)
 
-    sub("Red Flags — Infection")
-    f("rf_fever",           m)
-    f("rf_immunosuppressed", m)
-    f("rf_spinal_procedure", m)
+        sub("Red Flags — Infection")
+        f("rf_fever",           m)
+        f("rf_immunosuppressed", m)
+        f("rf_spinal_procedure", m)
 
-    sub("Red Flags — Cauda Equina (URGENT)")
-    f("rf_saddle_anaesthesia", m)
-    f("rf_bladder_disturbance", m)
-    f("rf_bowel_disturbance",  m)
-    txt("cauda_equina_action", m)
+        sub("Red Flags — Cauda Equina (URGENT)")
+        f("rf_saddle_anaesthesia", m)
+        f("rf_bladder_disturbance", m)
+        f("rf_bowel_disturbance",  m)
+        txt("cauda_equina_action", m)
 
-    sub("Red Flags — Spinal Cord (URGENT)")
-    f("rf_bilateral_paraesthesia", m)
-    f("rf_gait_disturbance",      m)
-    txt("spinal_cord_action",     m)
+        sub("Red Flags — Spinal Cord (URGENT)")
+        f("rf_bilateral_paraesthesia", m)
+        f("rf_gait_disturbance",      m)
+        txt("spinal_cord_action",     m)
 
     sub("Upper Motor Neurone Signs")
     f("umn_hyperreflexia",   m)
@@ -2594,85 +2860,174 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     sec("SECTION 4: PAIN CLASSIFICATION")
 
     sub("Inflammatory Pain Features")
-    f("infl_constant",    pc)
-    f("infl_morning",     pc)
-    f("infl_sleep",       pc)
-    f("infl_activity",    pc)
+    if clean:
+        _pain_raw("Inflammatory", [
+            ("Constant pain",     "infl_constant"),
+            ("Morning stiffness", "infl_morning"),
+            ("Night/sleep pain",  "infl_sleep"),
+            ("Activity improves", "infl_activity"),
+        ], pc)
+    else:
+        f("infl_constant",    pc)
+        f("infl_morning",     pc)
+        f("infl_sleep",       pc)
+        f("infl_activity",    pc)
     f("infl_likelihood",  pc)
 
     sub("Nociceptive Pain — Subjective Features")
-    f("noci_subj_mechanical",   pc)
-    f("noci_subj_trauma",       pc)
-    f("noci_subj_localised",    pc)
-    f("noci_subj_resolving",    pc)
-    f("noci_subj_analgesia",    pc)
-    f("noci_subj_no_constant",  pc)
-    f("noci_subj_inflammation", pc)
-    f("noci_subj_recent",       pc)
+    if clean:
+        _pain_raw("Nociceptive (Sx)", [
+            ("Mechanical",            "noci_subj_mechanical"),
+            ("Trauma/incident",       "noci_subj_trauma"),
+            ("Localised",             "noci_subj_localised"),
+            ("Resolving",             "noci_subj_resolving"),
+            ("Responds to analgesia", "noci_subj_analgesia"),
+            ("Not constant",          "noci_subj_no_constant"),
+            ("Local inflammation",    "noci_subj_inflammation"),
+            ("Recent onset",          "noci_subj_recent"),
+        ], pc)
+    else:
+        f("noci_subj_mechanical",   pc)
+        f("noci_subj_trauma",       pc)
+        f("noci_subj_localised",    pc)
+        f("noci_subj_resolving",    pc)
+        f("noci_subj_analgesia",    pc)
+        f("noci_subj_no_constant",  pc)
+        f("noci_subj_inflammation", pc)
+        f("noci_subj_recent",       pc)
 
     sub("Nociceptive Pain — Examination Features")
-    f("noci_exam_mechanical",  pc)
-    f("noci_exam_palpation",   pc)
-    f("noci_exam_hyperalgesia", pc)
-    f("noci_exam_antalgic",    pc)
+    if clean:
+        _pain_raw("Nociceptive (Ex)", [
+            ("Mechanical reproduction","noci_exam_mechanical"),
+            ("Palpation reproduction", "noci_exam_palpation"),
+            ("Local hyperalgesia",     "noci_exam_hyperalgesia"),
+            ("Antalgic posture",       "noci_exam_antalgic"),
+        ], pc)
+    else:
+        f("noci_exam_mechanical",  pc)
+        f("noci_exam_palpation",   pc)
+        f("noci_exam_hyperalgesia", pc)
+        f("noci_exam_antalgic",    pc)
     f("noci_likelihood",       pc)
     txt("noci_interpretation", pc)
 
     sub("Neuropathic Pain — Subjective Features")
-    f("neuro_subj_quality",        pc)
-    f("neuro_subj_nerve_injury",   pc)
-    f("neuro_subj_neurological",   pc)
-    f("neuro_subj_dermatomal",     pc)
-    f("neuro_subj_medication",     pc)
-    f("neuro_subj_severity",       pc)
-    f("neuro_subj_neural_loading", pc)
-    f("neuro_subj_dysaesthesia",   pc)
-    f("neuro_subj_spontaneous",    pc)
+    if clean:
+        _pain_raw("Neuropathic (Sx)", [
+            ("Burning/electric/shooting quality","neuro_subj_quality"),
+            ("Known nerve injury",               "neuro_subj_nerve_injury"),
+            ("Neurological symptoms",            "neuro_subj_neurological"),
+            ("Dermatomal/nerve trunk",           "neuro_subj_dermatomal"),
+            ("Responds to neuropathic meds",     "neuro_subj_medication"),
+            ("Severe/night pain",                "neuro_subj_severity"),
+            ("Provoked by neural loading",       "neuro_subj_neural_loading"),
+            ("Dysaesthesia/allodynia",           "neuro_subj_dysaesthesia"),
+            ("Spontaneous pain",                 "neuro_subj_spontaneous"),
+        ], pc)
+    else:
+        f("neuro_subj_quality",        pc)
+        f("neuro_subj_nerve_injury",   pc)
+        f("neuro_subj_neurological",   pc)
+        f("neuro_subj_dermatomal",     pc)
+        f("neuro_subj_medication",     pc)
+        f("neuro_subj_severity",       pc)
+        f("neuro_subj_neural_loading", pc)
+        f("neuro_subj_dysaesthesia",   pc)
+        f("neuro_subj_spontaneous",    pc)
 
     sub("Neuropathic Pain — Examination Features")
-    f("neuro_exam_neurodynamic",    pc)
-    f("neuro_exam_neural_palpation", pc)
-    f("neuro_exam_neurology",       pc)
-    f("neuro_exam_antalgic",        pc)
-    f("neuro_exam_hyperalgesia",    pc)
+    if clean:
+        _pain_raw("Neuropathic (Ex)", [
+            ("Positive neurodynamic test",   "neuro_exam_neurodynamic"),
+            ("Neural palpation sensitive",   "neuro_exam_neural_palpation"),
+            ("Neurology change",             "neuro_exam_neurology"),
+            ("Antalgic posture",             "neuro_exam_antalgic"),
+            ("Hyperalgesia in distribution", "neuro_exam_hyperalgesia"),
+        ], pc)
+    else:
+        f("neuro_exam_neurodynamic",    pc)
+        f("neuro_exam_neural_palpation", pc)
+        f("neuro_exam_neurology",       pc)
+        f("neuro_exam_antalgic",        pc)
+        f("neuro_exam_hyperalgesia",    pc)
     f("neuro_likelihood",           pc)
     txt("neuro_interpretation",     pc)
 
     sub("Nociplastic Pain — Subjective Features")
-    f("nocip_subj_disproportionate",  pc)
-    f("nocip_subj_persistent",        pc)
-    f("nocip_subj_disproportionate2", pc)
-    f("nocip_subj_widespread",        pc)
-    f("nocip_subj_failed",            pc)
-    f("nocip_subj_psychosocial",      pc)
-    f("nocip_subj_medication",        pc)
-    f("nocip_subj_spontaneous",       pc)
-    f("nocip_subj_disability",        pc)
-    f("nocip_subj_constant",          pc)
-    f("nocip_subj_night_pain",        pc)
-    f("nocip_subj_dysaesthesia",      pc)
-    f("nocip_subj_severity",          pc)
+    if clean:
+        _pain_raw("Nociplastic (Sx)", [
+            ("Disproportionate to pathology",    "nocip_subj_disproportionate"),
+            ("Persistent beyond healing",        "nocip_subj_persistent"),
+            ("Disproportionate to stimulus",     "nocip_subj_disproportionate2"),
+            ("Widespread/multifocal",            "nocip_subj_widespread"),
+            ("Failed previous treatment",        "nocip_subj_failed"),
+            ("Psychosocial contributors",        "nocip_subj_psychosocial"),
+            ("Responds to centrally-acting meds","nocip_subj_medication"),
+            ("Spontaneous pain",                 "nocip_subj_spontaneous"),
+            ("High disability",                  "nocip_subj_disability"),
+            ("Constant/unpredictable",           "nocip_subj_constant"),
+            ("Disturbed sleep/night pain",       "nocip_subj_night_pain"),
+            ("Dysaesthesia",                     "nocip_subj_dysaesthesia"),
+            ("Severe/difficult to control",      "nocip_subj_severity"),
+        ], pc)
+    else:
+        f("nocip_subj_disproportionate",  pc)
+        f("nocip_subj_persistent",        pc)
+        f("nocip_subj_disproportionate2", pc)
+        f("nocip_subj_widespread",        pc)
+        f("nocip_subj_failed",            pc)
+        f("nocip_subj_psychosocial",      pc)
+        f("nocip_subj_medication",        pc)
+        f("nocip_subj_spontaneous",       pc)
+        f("nocip_subj_disability",        pc)
+        f("nocip_subj_constant",          pc)
+        f("nocip_subj_night_pain",        pc)
+        f("nocip_subj_dysaesthesia",      pc)
+        f("nocip_subj_severity",          pc)
 
     sub("Nociplastic Pain — Examination Features")
-    f("nocip_exam_disproportionate", pc)
-    f("nocip_exam_hyperalgesia",     pc)
-    f("nocip_exam_diffuse",          pc)
-    f("nocip_exam_psychosocial",     pc)
+    if clean:
+        _pain_raw("Nociplastic (Ex)", [
+            ("Disproportionate exam findings",    "nocip_exam_disproportionate"),
+            ("Widespread hyperalgesia/allodynia", "nocip_exam_hyperalgesia"),
+            ("Diffuse palpation tenderness",      "nocip_exam_diffuse"),
+            ("Psychosocial features on exam",     "nocip_exam_psychosocial"),
+        ], pc)
+    else:
+        f("nocip_exam_disproportionate", pc)
+        f("nocip_exam_hyperalgesia",     pc)
+        f("nocip_exam_diffuse",          pc)
+        f("nocip_exam_psychosocial",     pc)
     f("nocip_likelihood",            pc)
     txt("nocip_interpretation",      pc)
 
     sub("Central Sensitisation")
     f("csi_score",        pc)
-    f("cs_light",         pc)
-    f("cs_touch",         pc)
-    f("cs_noise",         pc)
-    f("cs_pesticides",    pc)
-    f("cs_temperature",   pc)
-    f("cs_fatigue",       pc)
-    f("cs_sleep",         pc)
-    f("cs_concentration", pc)
-    f("cs_swelling",      pc)
-    f("cs_tingling",      pc)
+    if clean:
+        _pain_raw("CS features", [
+            ("Light sensitivity",        "cs_light"),
+            ("Touch sensitivity",        "cs_touch"),
+            ("Noise sensitivity",        "cs_noise"),
+            ("Chemical/smell sensitivity","cs_pesticides"),
+            ("Temperature sensitivity",  "cs_temperature"),
+            ("Fatigue",                  "cs_fatigue"),
+            ("Sleep disturbance",        "cs_sleep"),
+            ("Concentration difficulty", "cs_concentration"),
+            ("Perceived swelling",       "cs_swelling"),
+            ("Tingling",                 "cs_tingling"),
+        ], pc)
+    else:
+        f("cs_light",         pc)
+        f("cs_touch",         pc)
+        f("cs_noise",         pc)
+        f("cs_pesticides",    pc)
+        f("cs_temperature",   pc)
+        f("cs_fatigue",       pc)
+        f("cs_sleep",         pc)
+        f("cs_concentration", pc)
+        f("cs_swelling",      pc)
+        f("cs_tingling",      pc)
 
     sub("Pain Type Summary")
     f("summary_dominant",       pc)
