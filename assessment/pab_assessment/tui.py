@@ -638,9 +638,30 @@ class PhysioAssessmentTUI(Container):
 
     def _execute_jump(self, entry) -> None:
         from .assessment_view import AssessmentView
+        from .objective.objective_view import ObjectiveAssessmentView
         from textual.containers import ScrollableContainer
         try:
             av = self.query_one("#assessment_view", AssessmentView)
+
+            # ── Objective sections (section_id prefixed with "obj:") ──────────
+            if entry.section_id.startswith("obj:"):
+                real_section = entry.section_id[4:]
+                av._show_section("04_objective")
+                obj_view = av._obj_view
+                if obj_view is None:
+                    return
+                obj_view._show_section(real_section)
+                if entry.widget_id:
+                    try:
+                        w = obj_view.query_one(f"#{entry.widget_id}")
+                        w.focus()
+                        sc = obj_view.query_one("#obj_section_content", ScrollableContainer)
+                        sc.scroll_to_widget(w, animate=False)
+                    except Exception:
+                        pass
+                return
+
+            # ── Assessment sections ───────────────────────────────────────────
             av._show_section(entry.section_id)
             section = av.sections.get(entry.section_id)
             if section is None:

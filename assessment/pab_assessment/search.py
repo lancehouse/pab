@@ -35,13 +35,14 @@ _SECTION_SHORT: dict[str, str] = {
     "07_barriers":            "Barriers",
     "08_rx_plan":             "Rx Plan",
     "scratchpad":             "Notes",
-    "01_general":             "Obj:General",
-    "02_active":              "Obj:Active",
-    "03_passive":             "Obj:Passive",
-    "04_neurological":        "Obj:Neuro",
-    "05_sensory":             "Obj:Sensory",
-    "06_muscle":              "Obj:Muscle",
-    "07_functional":          "Obj:Functional",
+    "obj:01_general":         "Obj:General",
+    "obj:02_active":          "Obj:Active",
+    "obj:03_passive":         "Obj:Passive",
+    "obj:04_neurological":    "Obj:Neuro",
+    "obj:05_sensory":         "Obj:Sensory",
+    "obj:06_muscle":          "Obj:Muscle",
+    "obj:07_functional":      "Obj:Functional",
+    "obj:08_special":         "Obj:Special",
 }
 
 _SECTION_LABELS: dict[str, str] = {
@@ -54,13 +55,14 @@ _SECTION_LABELS: dict[str, str] = {
     "07_barriers":            "07 Barriers",
     "08_rx_plan":             "08 Rx & Plan",
     "scratchpad":             "Notes / Scratchpad",
-    "01_general":             "Obj 01 General",
-    "02_active":              "Obj 02 Active Movement",
-    "03_passive":             "Obj 03 Passive Movement",
-    "04_neurological":        "Obj 04 Neurological",
-    "05_sensory":             "Obj 05 Sensory",
-    "06_muscle":              "Obj 06 Muscle Testing",
-    "07_functional":          "Obj 07 Functional",
+    "obj:01_general":         "Obj 01 General",
+    "obj:02_active":          "Obj 02 Active Movement",
+    "obj:03_passive":         "Obj 03 Passive Movement",
+    "obj:04_neurological":    "Obj 04 Neurological",
+    "obj:05_sensory":         "Obj 05 Sensory",
+    "obj:06_muscle":          "Obj 06 Muscle Testing",
+    "obj:07_functional":      "Obj 07 Functional",
+    "obj:08_special":         "Obj 08 Special Tests",
 }
 
 # (section_id, anchor_id, display_label)
@@ -129,29 +131,32 @@ _SUBSECTIONS: list[tuple[str, str, str]] = [
     ("08_rx_plan", "rp_session1",      "Session 1"),
     ("08_rx_plan", "rp_day1",          "Day 1 Programme"),
     ("08_rx_plan", "rp_followup",      "Follow-Up"),
-    # Objective subsections (IDs added to objective section files)
-    ("01_general", "go_physical",            "General: Physical"),
-    ("01_general", "go_posture",             "General: Posture"),
-    ("01_general", "go_functional_movement", "General: Functional Movement"),
-    ("02_active",  "am_lumbar",              "Active: Lumbar ROM"),
-    ("02_active",  "am_thoracic",            "Active: Thoracic ROM"),
-    ("03_passive", "pm_overpressure",        "Passive: Overpressure"),
-    ("03_passive", "pm_paivms",              "Passive: PAIVMs"),
-    ("04_neurological", "nr_reflexes",       "Neuro: Reflexes"),
-    ("04_neurological", "nr_myotomes",       "Neuro: Myotomes"),
-    ("04_neurological", "nr_dermatomes",     "Neuro: Dermatomes"),
-    ("04_neurological", "nr_neurodynamics",  "Neuro: Neurodynamics"),
-    ("04_neurological", "nr_umn",            "Neuro: UMN Signs"),
-    ("05_sensory",  "sn_hyposensitivity",    "Sensory: Hyposensitivity"),
-    ("05_sensory",  "sn_hypersensitivity",   "Sensory: Hypersensitivity"),
-    ("06_muscle",   "ml_length",             "Muscle: Length"),
-    ("06_muscle",   "ml_activation",         "Muscle: Activation"),
-    ("06_muscle",   "ml_strength_trunk",     "Muscle: Strength (Trunk)"),
-    ("06_muscle",   "ml_strength_hip",       "Muscle: Strength (Hip)"),
-    ("06_muscle",   "ml_sij",               "Muscle: SIJ Provocation"),
-    ("07_functional", "fn_movement",         "Functional: Movement"),
-    ("07_functional", "fn_balance",          "Functional: Balance"),
-    ("07_functional", "fn_timed",            "Functional: Timed Capability"),
+    # Objective subsections
+    ("obj:01_general", "go_physical",            "General: Physical"),
+    ("obj:01_general", "go_posture",             "General: Posture"),
+    ("obj:01_general", "go_functional_movement", "General: Functional Movement"),
+    ("obj:02_active",  "am_lumbar",              "Active: Lumbar ROM"),
+    ("obj:02_active",  "am_thoracic",            "Active: Thoracic ROM"),
+    ("obj:02_active",  "am_cx_lumbar",           "Active: Cervical ROM"),
+    ("obj:03_passive", "pm_overpressure",        "Passive: Overpressure"),
+    ("obj:03_passive", "pm_paivms",              "Passive: PAIVMs"),
+    ("obj:04_neurological", "nr_reflexes",       "Neuro: Reflexes"),
+    ("obj:04_neurological", "nr_myotomes",       "Neuro: Myotomes"),
+    ("obj:04_neurological", "nr_dermatomes",     "Neuro: Dermatomes"),
+    ("obj:04_neurological", "nr_neurodynamics",  "Neuro: Neurodynamics"),
+    ("obj:04_neurological", "nr_umn",            "Neuro: UMN Signs"),
+    ("obj:05_sensory",  "sn_hyposensitivity",    "Sensory: Hyposensitivity"),
+    ("obj:05_sensory",  "sn_hypersensitivity",   "Sensory: Hypersensitivity"),
+    ("obj:06_muscle",   "ml_length",             "Muscle: Length"),
+    ("obj:06_muscle",   "ml_activation",         "Muscle: Activation"),
+    ("obj:06_muscle",   "ml_strength_trunk",     "Muscle: Strength (Trunk)"),
+    ("obj:06_muscle",   "ml_strength_hip",       "Muscle: Strength (Hip)"),
+    ("obj:06_muscle",   "ml_sij",                "Muscle: SIJ Provocation"),
+    ("obj:07_functional", "fn_movement",         "Functional: Movement"),
+    ("obj:07_functional", "fn_balance",          "Functional: Balance"),
+    ("obj:07_functional", "fn_timed",            "Functional: Timed Capability"),
+    ("obj:08_special",  "st_cervical",           "Special Tests: Cervical"),
+    ("obj:08_special",  "st_lumbar",             "Special Tests: Lumbar"),
 ]
 
 # Pre-built lookup: (section_id, anchor_id) -> subsection label
@@ -327,6 +332,42 @@ _ASSESSMENT_SECTION_IDS = [
     "05_outcome_measures", "06_diagnosis", "07_barriers", "08_rx_plan", "scratchpad",
 ]
 
+# Objective special test KB fields — (widget_id, region, section_id, human_name, extra_match)
+# widget_id uses st_ prefix (SpecialTestsWidget._rg_id pattern)
+_OBJ_KB_FIELDS: list[tuple[str, str, str, str, str]] = [
+    # ── Cervical ──────────────────────────────────────────────────────────────
+    ("st_spurling_l",    "cervical", "obj:08_special", "Spurling's Left",           "foraminal compression radiculopathy arm pain"),
+    ("st_spurling_r",    "cervical", "obj:08_special", "Spurling's Right",          "foraminal compression radiculopathy arm pain"),
+    ("st_distraction",   "cervical", "obj:08_special", "Cervical Distraction",      "radiculopathy IVF foraminal relief"),
+    ("st_ulnt1_l",       "cervical", "obj:08_special", "ULNT1 Left",                "upper limb tension median nerve neurodynamic"),
+    ("st_ulnt1_r",       "cervical", "obj:08_special", "ULNT1 Right",               "upper limb tension median nerve neurodynamic"),
+    ("st_ulnt2a_l",      "cervical", "obj:08_special", "ULNT2a Left",               "radial nerve neurodynamic upper limb tension"),
+    ("st_ulnt2a_r",      "cervical", "obj:08_special", "ULNT2a Right",              "radial nerve neurodynamic upper limb tension"),
+    ("st_ulnt3_l",       "cervical", "obj:08_special", "ULNT3 Left",                "ulnar nerve neurodynamic upper limb tension"),
+    ("st_ulnt3_r",       "cervical", "obj:08_special", "ULNT3 Right",               "ulnar nerve neurodynamic upper limb tension"),
+    ("st_frt_l",         "cervical", "obj:08_special", "FRT Left",                  "flexion rotation test cervicogenic headache CGH C1 C2"),
+    ("st_frt_r",         "cervical", "obj:08_special", "FRT Right",                 "flexion rotation test cervicogenic headache CGH"),
+    ("st_sharp_purser",  "cervical", "obj:08_special", "Sharp-Purser",              "upper cervical instability atlantoaxial"),
+    ("st_ant_shear",     "cervical", "obj:08_special", "Anterior Shear",            "upper cervical instability transverse ligament"),
+    ("st_alar_sf",       "cervical", "obj:08_special", "Alar Ligament Side Flex",   "upper cervical instability alar"),
+    ("st_lat_trans",     "cervical", "obj:08_special", "Lateral Translation",       "upper cervical instability lateral stability"),
+    ("st_vbi_sus_rot_l", "cervical", "obj:08_special", "VBI Sustained Rotation L",  "vertebrobasilar insufficiency pre-manipulation screen"),
+    ("st_vbi_sus_rot_r", "cervical", "obj:08_special", "VBI Sustained Rotation R",  "vertebrobasilar insufficiency pre-manipulation screen"),
+    ("st_hoffman_l",     "cervical", "obj:08_special", "Hoffman's Left",            "myelopathy UMN upper motor neuron corticospinal"),
+    ("st_hoffman_r",     "cervical", "obj:08_special", "Hoffman's Right",           "myelopathy UMN upper motor neuron corticospinal"),
+    # ── Lumbar ────────────────────────────────────────────────────────────────
+    ("st_slr_l",         "lumbar",   "obj:08_special", "SLR Left",                  "straight leg raise sciatic radiculopathy disc herniation"),
+    ("st_slr_r",         "lumbar",   "obj:08_special", "SLR Right",                 "straight leg raise sciatic radiculopathy disc herniation"),
+    ("st_slump",         "lumbar",   "obj:08_special", "Slump Test",                "neurodynamic sciatic lumbar radiculopathy"),
+    ("st_femoral",       "lumbar",   "obj:08_special", "Femoral Stretch",           "femoral nerve L2 L3 L4 radiculopathy"),
+    ("st_faber_l",       "lumbar",   "obj:08_special", "FABER Left",                "Patrick hip SIJ sacroiliac joint"),
+    ("st_faber_r",       "lumbar",   "obj:08_special", "FABER Right",               "Patrick hip SIJ sacroiliac joint"),
+    ("st_fadir_l",       "lumbar",   "obj:08_special", "FADIR Left",                "hip impingement FAI labral acetabular"),
+    ("st_fadir_r",       "lumbar",   "obj:08_special", "FADIR Right",               "hip impingement FAI labral acetabular"),
+    ("st_prone_inst",    "lumbar",   "obj:08_special", "Prone Instability",         "lumbar instability segmental"),
+    ("st_crossed_slr",   "lumbar",   "obj:08_special", "Crossed SLR",               "disc herniation central paracentral contralateral"),
+]
+
 
 # ---------------------------------------------------------------------------
 # Fuzzy scoring
@@ -468,6 +509,18 @@ def build_index(app: "App") -> list[SearchEntry]:
             anchor_id=anchor_id,
             widget_id=widget_id,
             kind="content",
+        ))
+
+    # 6 — Objective KB special test fields
+    for widget_id, region, sec_id, human_name, extra in _OBJ_KB_FIELDS:
+        short = _SECTION_SHORT.get(sec_id, "Obj:Special")
+        entries.append(SearchEntry(
+            display=f"{short} › {region.title()} › {human_name}",
+            match_text=f"{human_name} {extra} {region}",
+            section_id=sec_id,
+            anchor_id=None,
+            widget_id=widget_id,
+            kind="field",
         ))
 
     return entries
