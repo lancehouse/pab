@@ -63,12 +63,8 @@ class PhysioAssessment(App):
         await super()._on_app_focus(event)
         elapsed = _time.monotonic() - t0
         widget_count = len(list(self.query("*")))
-        try:
-            self.query_one("#tui_status").update(
-                f"[AppFocus] super()={elapsed:.3f}s  widgets={widget_count}"
-            )
-        except Exception:
-            pass
+        with open("/tmp/pab_focus_timing.txt", "a") as f:
+            f.write(f"AppFocus: super()={elapsed:.3f}s  widgets={widget_count}\n")
 
     async def _on_app_blur(self, event) -> None:
         if _time.monotonic() - self._last_app_focus_time < 0.25:
