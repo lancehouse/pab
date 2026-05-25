@@ -3,7 +3,8 @@ Physiotherapy Assessment TUI using Textual framework.
 
 Integrates with GTK body chart via session JSON file watcher.
 Ctrl+B  — focus body chart (signal file → GTK raises its own window)
-Ctrl+E  — export session report to Markdown
+Ctrl+E  — export session report to Markdown (full)
+Ctrl+R  — save + regenerate clean report + view as formatted markdown
 Ctrl+S  — manual save
 Ctrl+L  — return to session list
 """
@@ -27,6 +28,7 @@ from textual.binding import Binding
 from .watcher import BodyChartWatcher
 from .search import build_index
 from .search_widget import SearchModal
+from .report_modal import ReportModal
 from .storage import (
     load_assessment, save_assessment, list_sessions, create_new_session,
     read_gtk_pid, read_tui_socket, write_focus_signal, export_session_report,
@@ -449,7 +451,7 @@ class PhysioAssessmentTUI(Container):
         Binding("ctrl+b", "open_bodychart","Body Chart", show=True),
         Binding("ctrl+u", "reload_chart",  "Reload Chart", show=True),
         Binding("ctrl+e", "export",        "Export MD",  show=True),
-        Binding("ctrl+r", "export_raw",    "Raw Report", show=True),
+        Binding("ctrl+r", "view_report",   "Report",     show=True),
         Binding("ctrl+n", "scratchpad",    "Notes",      show=True),
         Binding("ctrl+f",      "search",   "Search",     show=True,  priority=True),
     ]
@@ -758,22 +760,26 @@ class PhysioAssessmentTUI(Container):
         else:
             self._show_status("Export failed — check logs")
 
-    def action_export_raw(self) -> None:
-        """Ctrl+R — flush active section and regenerate raw report in session folder."""
+    def action_view_report(self) -> None:
+        """Ctrl+R — save, regenerate clean.md + raw.txt, then show markdown viewer."""
         if not self.current_session_file:
             self._show_status("No session loaded")
             return
 
-        async def _save_then_notify():
+        async def _save_then_show():
             assessment_view = self.query_one("#assessment_view", AssessmentView)
             await assessment_view._do_save()
-            out = save_raw_report(self.current_session_file)
-            if out:
-                self._show_status(f"Raw report → {Path(out).name}", seconds=4.0)
-            else:
-                self._show_status("Raw report write failed — check logs")
+            # Regenerate both report formats
+            clean_path = export_session_report(self.current_session_file, clean=True)
+            save_raw_report(self.current_session_file)
+            if not clean_path:
+                self._show_status("Report generation failed — check logs")
+                return
+            md_text = Path(clean_path).read_text(encoding="utf-8")
+            session_name = Path(self.current_session_file).stem
+            await self.app.push_screen(ReportModal(md_text, title=session_name))
 
-        asyncio.create_task(_save_then_notify())
+        asyncio.create_task(_save_then_show())
 
     def action_scratchpad(self) -> None:
         """Ctrl+N — jump to the scratchpad section and place cursor at end."""
