@@ -2,6 +2,7 @@
 
 import sys
 import asyncio
+import time as _time
 from pathlib import Path
 from textual.app import ComposeResult, App
 from textual.binding import Binding
@@ -53,6 +54,17 @@ class PhysioAssessment(App):
         super().__init__(**kwargs)
         self.current_session_path = session_path
         self.assessment_screen = None
+
+    _last_app_focus_time: float = 0.0
+
+    async def _on_app_focus(self, event) -> None:
+        self._last_app_focus_time = _time.monotonic()
+        await super()._on_app_focus(event)
+
+    async def _on_app_blur(self, event) -> None:
+        if _time.monotonic() - self._last_app_focus_time < 0.25:
+            return  # Suppress spurious AppBlur from GNOME (<250ms after AppFocus)
+        await super()._on_app_blur(event)
 
     def compose(self) -> ComposeResult:
         yield Header()
