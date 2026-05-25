@@ -777,7 +777,7 @@ class PhysioAssessmentTUI(Container):
                 return
             md_text = Path(clean_path).read_text(encoding="utf-8")
             session_name = Path(self.current_session_file).stem
-            await self.app.push_screen(ReportModal(md_text, title=session_name))
+            await self.app.push_screen(ReportModal(md_text))
 
         asyncio.create_task(_save_then_show())
 
