@@ -4,7 +4,7 @@ import sys
 import asyncio
 import time as _time
 from pathlib import Path
-from textual.app import ComposeResult, App
+from textual.app import ComposeResult, App, NoScreen
 from textual.binding import Binding
 from textual.widgets import Header, Footer
 from textual.containers import Container
@@ -58,18 +58,35 @@ class PhysioAssessment(App):
     _last_app_focus_time: float = 0.0
 
     async def _on_app_focus(self, event) -> None:
-        t0 = _time.monotonic()
-        self._last_app_focus_time = t0
+        self._last_app_focus_time = _time.monotonic()
         await super()._on_app_focus(event)
-        elapsed = _time.monotonic() - t0
-        widget_count = len(list(self.query("*")))
-        with open("/tmp/pab_focus_timing.txt", "a") as f:
-            f.write(f"AppFocus: super()={elapsed:.3f}s  widgets={widget_count}\n")
 
     async def _on_app_blur(self, event) -> None:
         if _time.monotonic() - self._last_app_focus_time < 0.25:
             return  # Suppress spurious AppBlur from GNOME (<250ms after AppFocus)
         await super()._on_app_blur(event)
+
+    def _watch_app_focus(self, focus: bool) -> None:
+        # Skip update_node_styles() — it's O(n_widgets) and takes 3s with 2662
+        # mounted widgets. We have no app-level :focus/:blur CSS so it's wasted work.
+        if focus:
+            try:
+                if (
+                    self._last_focused_on_app_blur is not None
+                    and self._last_focused_on_app_blur.screen is self.screen
+                    and self.screen.focused is None
+                ):
+                    self.screen.set_focus(
+                        self._last_focused_on_app_blur,
+                        scroll_visible=False,
+                        from_app_focus=True,
+                    )
+            except NoScreen:
+                pass
+            self._last_focused_on_app_blur = None
+        else:
+            self._last_focused_on_app_blur = self.screen.focused
+            self.screen.set_focus(None)
 
     def compose(self) -> ComposeResult:
         yield Header()
