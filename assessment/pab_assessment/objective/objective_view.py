@@ -249,10 +249,6 @@ class ObjectiveSidebar(Static):
 class ObjectiveAssessmentView(Container):
     """Main content area for Objective TUI: region topbar + sidebar + section panels."""
 
-    BINDINGS = [
-        Binding("ctrl+k", "toggle_kb", "KB Panel", show=False),
-    ]
-
     DEFAULT_CSS = """
     ObjectiveAssessmentView {
         width: 100%;
@@ -304,7 +300,6 @@ class ObjectiveAssessmentView(Container):
                 Vertical(id="obj_section_content_inner"),
                 id="obj_section_content",
             )
-            yield KBPanel(id="kb_panel")
 
     def on_mount(self) -> None:
         # Build generic sections
@@ -343,7 +338,7 @@ class ObjectiveAssessmentView(Container):
         # Pre-load KB registry once (no-op if already loaded)
         get_registry()
         try:
-            self.query_one(KBPanel).show_placeholder()
+            self.app.query_one(KBPanel).show_placeholder()
         except Exception:
             pass
 
@@ -452,22 +447,13 @@ class ObjectiveAssessmentView(Container):
     def _go_back(self) -> None:
         self.post_message(self.ExitRequested())
 
-    # ── KB panel ──────────────────────────────────────────────────────────────
-
-    def action_toggle_kb(self) -> None:
-        try:
-            panel = self.query_one(KBPanel)
-            panel.display = not panel.display
-        except Exception:
-            pass
-
     def on_descendant_focus(self, event: events.DescendantFocus) -> None:
         widget = event.widget
         wid = widget.id or ""
         if not wid:
             return
         try:
-            panel = self.query_one(KBPanel)
+            panel = self.app.query_one(KBPanel)
         except Exception:
             return
         if not panel.display:

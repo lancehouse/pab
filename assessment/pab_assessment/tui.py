@@ -29,6 +29,7 @@ from .watcher import BodyChartWatcher
 from .search import build_index
 from .search_widget import SearchModal
 from .report_modal import ReportModal
+from .objective.kb_panel import KBPanel
 from .storage import (
     load_assessment, save_assessment, list_sessions, create_new_session,
     read_gtk_pid, read_tui_socket, write_focus_signal, export_session_report,
@@ -453,7 +454,8 @@ class PhysioAssessmentTUI(Container):
         Binding("ctrl+e", "export",        "Export MD",  show=True),
         Binding("ctrl+r", "view_report",   "Report",     show=True),
         Binding("ctrl+n", "scratchpad",    "Notes",      show=True),
-        Binding("ctrl+f",      "search",   "Search",     show=True,  priority=True),
+        Binding("ctrl+k", "toggle_kb",     "KB",         show=True,  priority=True),
+        Binding("ctrl+f", "search",        "Search",     show=True,  priority=True),
     ]
 
     DEFAULT_CSS = """
@@ -791,6 +793,14 @@ class PhysioAssessmentTUI(Container):
         sp = assessment_view.sections.get("scratchpad")
         if sp:
             sp.focus_end()
+
+    def action_toggle_kb(self) -> None:
+        """Ctrl+K — toggle KB panel (global; panel lives inside objective view)."""
+        try:
+            panel = self.query_one(KBPanel)
+            panel.display = not panel.display
+        except Exception:
+            self._show_status("KB panel not available")
 
     # ------------------------------------------------------------------
     # Arrow-key scroll fallback — only when no widget is focused

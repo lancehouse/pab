@@ -21,6 +21,7 @@ from .sections.barriers import BarriersSection
 from .sections.rx_plan import RxPlanSection
 from .sections.scratchpad import ScratchpadSection
 from .objective.objective_view import ObjectiveAssessmentView
+from .objective.kb_panel import KBPanel
 from .storage import (
     save_all_sections,
     save_raw_report,
@@ -194,6 +195,7 @@ class AssessmentView(Container):
         yield SectionNav(on_section_selected=self._show_section, id="section_nav")
         yield ScrollableContainer(Vertical(id="section_content_inner"), id="section_content")
         yield ObjectiveAssessmentView(id="obj_view")
+        yield KBPanel(id="kb_panel")
 
     def on_mount(self) -> None:
         """Initialize after mounting."""
