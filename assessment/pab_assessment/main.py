@@ -2,6 +2,7 @@
 
 import sys
 import asyncio
+import logging
 import time as _time
 from pathlib import Path
 from textual.app import ComposeResult, App, NoScreen
@@ -182,6 +183,12 @@ class PhysioAssessment(App):
 
 def main():
     """Entry point — accepts optional --session <path> argument."""
+    logging.basicConfig(
+        level=logging.DEBUG,
+        filename="/tmp/pab.log",
+        filemode="w",
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+    )
     session_path = ""
     args = sys.argv[1:]
     for i, arg in enumerate(args):

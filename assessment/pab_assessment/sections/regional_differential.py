@@ -254,9 +254,12 @@ class RegionalDifferentialPanel(Vertical):
         self._pending_tests: dict = {}
         self._structure = _load_region_structure(region_id)
         self._kb: dict = dict(get_registry()._data.get(region_id, {}))
+        logger.debug("RDP panel: created for region=%s groups=%d kb_entries=%d",
+                     region_id, len(self._structure.get("groups", [])), len(self._kb))
 
     def compose(self) -> ComposeResult:
         region_label = self._region_id.capitalize()
+        logger.debug("RDP panel: compose() for %s", self._region_id)
         yield Static(f"◆ {region_label} — Special Test Summary", classes="rdp_region_title")
         for group in self._structure.get("groups", []):
             cid = group.get("cluster_id", "")
@@ -266,6 +269,8 @@ class RegionalDifferentialPanel(Vertical):
             )
 
     def on_mount(self) -> None:
+        logger.debug("RDP panel: on_mount() for %s pending=%s",
+                     self._region_id, bool(self._pending_tests))
         if self._pending_tests:
             self.set_tests(self._pending_tests)
             self._pending_tests = {}

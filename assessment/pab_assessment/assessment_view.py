@@ -546,10 +546,16 @@ class AssessmentView(Container):
 
     @on(RegionTopbar.RegionToggled)
     def _on_region_topbar_toggled_05(self, event: RegionTopbar.RegionToggled) -> None:
+        logger.debug("RDP broker: RegionToggled %s active=%s", event.region_id, event.active)
         section_05 = self.sections.get("04_pain_classification")
         if section_05 and self._obj_view:
-            section_05.set_active_regions(list(self._obj_view._active_regions))
+            active = list(self._obj_view._active_regions)
+            logger.debug("RDP broker: calling set_active_regions(%s)", active)
+            section_05.set_active_regions(active)
             self._push_region_tests_to_section05()
+        else:
+            logger.debug("RDP broker: skipped — section_05=%s _obj_view=%s",
+                         section_05, self._obj_view)
 
     def _push_region_tests_to_section05(self) -> None:
         section_05 = self.sections.get("04_pain_classification")
@@ -557,8 +563,11 @@ class AssessmentView(Container):
             return
         try:
             obj = load_objective(self.session_file).get("assessment", {})
-            for rid in obj.get("active_regions", []):
+            active = obj.get("active_regions", [])
+            logger.debug("RDP push: active_regions from file=%s", active)
+            for rid in active:
                 tests = obj.get(rid, {}).get("special", {})
+                logger.debug("RDP push: %s tests sample=%s", rid, dict(list(tests.items())[:3]))
                 section_05.set_region_test_data(rid, tests)
         except Exception as e:
             logger.warning("Failed to push region tests to section 05: %s", e)

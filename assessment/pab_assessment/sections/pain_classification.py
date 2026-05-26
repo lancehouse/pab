@@ -1,6 +1,7 @@
 """Pain Type Classification section (core/04)."""
 
 import json
+import logging
 from pathlib import Path
 
 from textual.app import ComposeResult, on
@@ -9,6 +10,8 @@ from textual.widgets import Button, Label, Input, TextArea, Static
 from textual.message import Message
 
 from .base import BaseSection
+
+logger = logging.getLogger(__name__)
 from ..widgets import CheckButton
 from .medical import LikelihoodField
 from .regional_differential import RegionalDifferentialPanel
@@ -320,15 +323,19 @@ class PainClassificationSection(BaseSection):
 
     def set_active_regions(self, regions: list[str]) -> None:
         """Mount/unmount regional differential panels to match active regions."""
+        logger.debug("RDP section05: set_active_regions(%s)", regions)
         try:
             container = self.query_one("#pc_diff_region", Vertical)
-        except Exception:
+        except Exception as e:
+            logger.warning("RDP section05: cannot find #pc_diff_region: %s", e)
             return
         current = set(self._diff_panels.keys())
+        logger.debug("RDP section05: current panels=%s", current)
         for rid in current - set(regions):
             panel = self._diff_panels.pop(rid)
             panel.remove()
         for rid in set(regions) - current:
+            logger.debug("RDP section05: mounting panel for %s", rid)
             panel = RegionalDifferentialPanel(rid, id=f"pc_diff_{rid}")
             self._diff_panels[rid] = panel
             container.mount(panel)
