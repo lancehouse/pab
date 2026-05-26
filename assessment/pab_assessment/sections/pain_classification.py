@@ -94,7 +94,7 @@ class PainClassificationSection(BaseSection):
         padding: 0 1;
     }
     .section_title { text-style: bold; color: $text; margin-bottom: 0; }
-    .subgroup_header { color: $text-muted; margin-top: 0; margin-bottom: 0; text-style: italic; }
+    .subgroup_header { color: $text-muted; margin-top: 0; margin-bottom: 0; text-style: bold italic; }
     .reference_note  { color: $text-muted; margin-bottom: 0; }
 
     .btn_row { height: auto; width: 100%; margin-bottom: 0; }
