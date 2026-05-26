@@ -4,13 +4,14 @@ import json
 from pathlib import Path
 
 from textual.app import ComposeResult, on
-from textual.containers import Horizontal, ScrollableContainer
+from textual.containers import Horizontal, Vertical, ScrollableContainer
 from textual.widgets import Button, Label, Input, TextArea, Static
 from textual.message import Message
 
 from .base import BaseSection
 from ..widgets import CheckButton
 from .medical import LikelihoodField
+from .regional_differential import RegionalDifferentialPanel
 
 
 class PainTypeSelector(Static):
@@ -86,6 +87,10 @@ class PainTypeSelector(Static):
 
 class PainClassificationSection(BaseSection):
     """Pain Type Classification section (core/04)."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._diff_panels: dict[str, RegionalDifferentialPanel] = {}
 
     DEFAULT_CSS = """
     PainClassificationSection {
@@ -297,6 +302,9 @@ class PainClassificationSection(BaseSection):
             yield CheckButton("Tingling/numbness", id="cs_tingling")
         yield Static("", id="xref_cs_tingling", classes="xref_badge")
 
+        # ── Regional Differential ───────────────────────────────────────
+        yield Vertical(id="pc_diff_region")
+
         # ── Summary ──────────────────────────────────────────────────────
         yield Label("— Pain Type Summary —", classes="subsection_header", id="pc_summary")
         yield PainTypeSelector("Dominant pain type:", field_id="summary_dominant")
@@ -305,6 +313,31 @@ class PainClassificationSection(BaseSection):
         yield TextArea(id="summary_contributing", language="plain")
         yield Label("Clinical reasoning:")
         yield TextArea(id="summary_reasoning", language="plain")
+
+    # ------------------------------------------------------------------
+    # Regional differential panel management
+    # ------------------------------------------------------------------
+
+    def set_active_regions(self, regions: list[str]) -> None:
+        """Mount/unmount regional differential panels to match active regions."""
+        try:
+            container = self.query_one("#pc_diff_region", Vertical)
+        except Exception:
+            return
+        current = set(self._diff_panels.keys())
+        for rid in current - set(regions):
+            panel = self._diff_panels.pop(rid)
+            panel.remove()
+        for rid in set(regions) - current:
+            panel = RegionalDifferentialPanel(rid, id=f"pc_diff_{rid}")
+            self._diff_panels[rid] = panel
+            container.mount(panel)
+
+    def set_region_test_data(self, region_id: str, tests: dict) -> None:
+        """Push latest special test results to the matching regional panel."""
+        panel = self._diff_panels.get(region_id)
+        if panel:
+            panel.set_tests(tests)
 
     # ------------------------------------------------------------------
     # Navigation

@@ -20,7 +20,7 @@ from .sections.diagnosis import DiagnosisSection
 from .sections.barriers import BarriersSection
 from .sections.rx_plan import RxPlanSection
 from .sections.scratchpad import ScratchpadSection
-from .objective.objective_view import ObjectiveAssessmentView
+from .objective.objective_view import ObjectiveAssessmentView, RegionTopbar
 from .objective.kb_panel import KBPanel
 from .storage import (
     save_all_sections,
@@ -332,6 +332,16 @@ class AssessmentView(Container):
         if self._obj_view is not None:
             self._obj_view.load_session(session_file, obj_file_data)
 
+        # Push active regions and test data to section 05 regional panels
+        section_05 = self.sections.get("04_pain_classification")
+        if section_05:
+            obj_assessment = obj_file_data.get("assessment", {})
+            obj_regions = obj_assessment.get("active_regions", [])
+            section_05.set_active_regions(obj_regions)
+            for rid in obj_regions:
+                tests = obj_assessment.get(rid, {}).get("special", {})
+                section_05.set_region_test_data(rid, tests)
+
         # Update nav indicators and medical tab color
         self._refresh_nav_indicators(nav_data)
         self._update_medical_tab_color()
@@ -531,6 +541,27 @@ class AssessmentView(Container):
     @on(ObjectiveAssessmentView.SaveStateChanged)
     def _on_obj_save_state(self, event: ObjectiveAssessmentView.SaveStateChanged) -> None:
         self.post_message(self.SaveStateChanged(event.state))
+        if event.state == "saved":
+            self._push_region_tests_to_section05()
+
+    @on(RegionTopbar.RegionToggled)
+    def _on_region_topbar_toggled_05(self, event: RegionTopbar.RegionToggled) -> None:
+        section_05 = self.sections.get("04_pain_classification")
+        if section_05 and self._obj_view:
+            section_05.set_active_regions(list(self._obj_view._active_regions))
+            self._push_region_tests_to_section05()
+
+    def _push_region_tests_to_section05(self) -> None:
+        section_05 = self.sections.get("04_pain_classification")
+        if not section_05 or not self.session_file:
+            return
+        try:
+            obj = load_objective(self.session_file).get("assessment", {})
+            for rid in obj.get("active_regions", []):
+                tests = obj.get(rid, {}).get("special", {})
+                section_05.set_region_test_data(rid, tests)
+        except Exception as e:
+            logger.warning("Failed to push region tests to section 05: %s", e)
 
     class SaveStateChanged(Message):
         """Posted when save state changes: 'pending', 'saving', or 'saved'."""
