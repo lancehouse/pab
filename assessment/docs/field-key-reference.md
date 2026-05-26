@@ -24,7 +24,8 @@ Jump to a section:
 - [Objective — 05 Sensory](#obj-05-sensory)
 - [Objective — 07 Functional](#obj-07-functional)
 - [Objective — Lumbar YAML fields (02/06/08)](#objective-lumbar-yaml-fields)
-- [Objective — Cervical YAML fields (02/06/08)](#objective-cervical-yaml-fields)
+- [Objective — Cervical YAML fields (02/03/06/08)](#objective-cervical-yaml-fields)
+- [Objective — Shoulder YAML fields (02/03/06/08)](#objective-shoulder-yaml-fields)
 
 ---
 
@@ -318,6 +319,7 @@ These fields are in `objective/sections/general.py`.
 | `go_sts` | Sit-to-stand (Normal / Limited / Unable) |
 | `go_functional_notes` | Functional movement free-text notes |
 
+
 ---
 
 ## Obj 04 Neurological
@@ -549,46 +551,72 @@ active movement / muscle testing RadioGroups; `st_` prefix for special tests).
 | `st_flex` | `st_flex` | Trunk flexion endurance (reps/min) |
 | `st_ext` | `st_ext` | Trunk extension endurance (raises/min) |
 
-### 08 Special Tests (RadioGroup, widget ID = `st_{key}`)
+### 08 Special Tests (CycleButton L/R pairs, storage key = `st_{stem}_l` / `st_{stem}_r`)
 
-| Key | KB entry | Description |
-|---|---|---|
-| `slr_l` | `slr` | SLR Left |
-| `slr_r` | `slr` | SLR Right |
-| `slump` | `slump` | Slump test |
-| `femoral` | `femoral` | Femoral nerve stretch test |
-| `faber_l` | `faber` | FABER Left (Patrick's) |
-| `faber_r` | `faber` | FABER Right |
-| `fadir_l` | `fadir` | FADIR Left |
-| `fadir_r` | `fadir` | FADIR Right |
-| `prone_inst` | `prone_inst` | Prone instability test |
-| `crossed_slr` | `crossed_slr` | Crossed SLR |
-| `st_lx_notes` | — | Special tests notes (TextArea) |
+| Storage key (L) | Storage key (R) | KB stem | Group | Description |
+|---|---|---|---|---|
+| `st_slr_l` | `st_slr_r` | `slr` | Neurodynamics | Straight leg raise |
+| `st_slump_l` | `st_slump_r` | `slump` | Neurodynamics | Slump test |
+| `st_femoral_l` | `st_femoral_r` | `femoral` | Neurodynamics | Femoral nerve stretch |
+| `st_crossed_slr_l` | `st_crossed_slr_r` | `crossed_slr` | Disc/Herniation | Crossed SLR |
+| `st_faber_l` | `st_faber_r` | `faber` | Hip Screen | FABER (Patrick's) |
+| `st_fadir_l` | `st_fadir_r` | `fadir` | Hip Screen | FADIR |
+| `st_prone_inst_l` | `st_prone_inst_r` | `prone_inst` | Instability | Prone instability test |
+| `st_lx_notes` | — | — | — | Special tests notes (TextArea) |
 
 ---
 
 ## Objective Cervical YAML fields
 
-Defined in `objective/sections/yaml/cervical.yaml`.
+Defined in `objective/sections/yaml/cervical.yaml` (active movement, muscle, special tests)
+and `objective/sections/cervical_tables.py` (passive, neck strength).
 
 ### 02 Active Movement — Cervical ROM
 
 | Key | Widget ID | Description |
 |---|---|---|
-| `cx_flex` | `cx_flex_l`, `cx_flex_r` | Cervical flexion (bilateral) |
-| `cx_ext` | `cx_ext_l`, `cx_ext_r` | Cervical extension (bilateral) |
-| `cx_lf` | `cx_lf` | Cervical lateral flexion |
-| `cx_rot` | `cx_rot` | Cervical rotation |
+| `cx_flex` | `cx_flex_l`, `cx_flex_r` | Cervical flexion (bilateral:true — L only populated) |
+| `cx_ext` | `cx_ext_l`, `cx_ext_r` | Cervical extension (bilateral:true — L only) |
+| `cx_lf` | `cx_lf_l`, `cx_lf_r` | Cervical lateral flexion |
+| `cx_rot` | `cx_rot_l`, `cx_rot_r` | Cervical rotation |
 | `am_cx_notes` | `am_cx_notes` | Cervical ROM notes |
 
 ### 02 Active Movement — Thoracic ROM (cervical region)
 
 | Key | Widget ID | Description |
 |---|---|---|
-| `tx_cx_flex` | `tx_cx_flex_l`, `tx_cx_flex_r` | Thoracic flexion (cervical region) |
-| `tx_cx_ext` | `tx_cx_ext_l`, `tx_cx_ext_r` | Thoracic extension (cervical region) |
-| `tx_cx_rot` | `tx_cx_rot` | Thoracic rotation (cervical region) |
+| `tx_cx_flex` | `tx_cx_flex_l`, `tx_cx_flex_r` | Thoracic flexion (bilateral:true — L only) |
+| `tx_cx_ext` | `tx_cx_ext_l`, `tx_cx_ext_r` | Thoracic extension (bilateral:true — L only) |
+| `tx_cx_rot` | `tx_cx_rot_l`, `tx_cx_rot_r` | Thoracic rotation |
 | `am_tx_cx_notes` | `am_tx_cx_notes` | Thoracic ROM notes (cervical region) |
+
+### 03 Passive Movement — Overpressure (CervicalPassiveTables)
+
+Widget IDs follow `{prefix}_ef` and `{prefix}_resp` pattern.
+
+| Prefix | Description |
+|---|---|
+| `cx_op_flex` | Cervical flexion OP |
+| `cx_op_ext` | Cervical extension OP |
+| `cx_op_lf_l` | Lateral flexion left OP |
+| `cx_op_lf_r` | Lateral flexion right OP |
+| `cx_op_rot_l` | Rotation left OP |
+| `cx_op_rot_r` | Rotation right OP |
+| `cx_op_quad_l` | Quadrant left OP |
+| `cx_op_quad_r` | Quadrant right OP |
+| `cx_pm_op_notes` | Cervical OP notes (TextArea) |
+
+### 03 Passive Movement — PAIVMs (CervicalPassiveTables)
+
+Field IDs: `cx_pm_{level_key}_{direction}` — direction is `ul_l`, `c`, or `ul_r`.
+
+| Level key | Display | Field IDs |
+|---|---|---|
+| `C0_1` | C0/1 | `cx_pm_C0_1_ul_l`, `cx_pm_C0_1_c`, `cx_pm_C0_1_ul_r` |
+| `C1_2` | C1/2 | `cx_pm_C1_2_ul_l` … |
+| `C2`–`C7` | C2–C7 | `cx_pm_C2_ul_l` … |
+| `T1`–`T4` | T1–T4 | `cx_pm_T1_ul_l` … |
+| `cx_pm_paivm_notes` | — | PAIVM notes (TextArea) |
 
 ### 06 Muscle Testing — Muscle Length (bilateral RadioGroup)
 
@@ -596,7 +624,7 @@ Defined in `objective/sections/yaml/cervical.yaml`.
 |---|---|---|
 | `ml_ut` | `ml_ut_l`, `ml_ut_r` | Upper trapezius length |
 | `ml_ls` | `ml_ls_l`, `ml_ls_r` | Levator scapulae length |
-| `ml_pec` | `ml_pec_l`, `ml_pec_r` | Pectorals minor length |
+| `ml_pec` | `ml_pec_l`, `ml_pec_r` | Pectorals length |
 | `ml_scal` | `ml_scal_l`, `ml_scal_r` | Scalenes length |
 
 ### 06 Muscle Testing — Muscle Activation (unilateral RadioGroup)
@@ -606,38 +634,158 @@ Defined in `objective/sections/yaml/cervical.yaml`.
 | `ma_dcf` | `ma_dcf` | Deep cervical flexors (CCFT) |
 | `ma_cx_ext` | `ma_cx_ext` | Cervical extensors (prone head lift) |
 | `ma_sa` | `ma_sa` | Serratus anterior |
-| `mu_cx_notes` | `mu_cx_notes` | Muscle testing notes (TextArea) |
 
-### 06 Muscle Testing — Cervical Endurance (numeric GridInput)
+### 06 Muscle Testing — Cervical Endurance and Neck Strength (CervicalMuscleTables)
 
 | Key | Widget ID | Description |
 |---|---|---|
 | `st_dcf_end` | `st_dcf_end` | DCF endurance (chin tuck hold, seconds) |
+| `cx_neck_flex` | `cx_neck_flex_l`, `cx_neck_flex_r` | Neck flexion strength (kg) |
+| `cx_neck_ext` | `cx_neck_ext_l`, `cx_neck_ext_r` | Neck extension strength (kg) |
+| `cx_neck_lf` | `cx_neck_lf_l`, `cx_neck_lf_r` | Neck lateral flexion strength (kg) |
+| `cx_neck_rot` | `cx_neck_rot_l`, `cx_neck_rot_r` | Neck rotation strength (kg) |
+| `mu_cx_notes` | `mu_cx_notes` | Muscle testing notes (TextArea) |
 
-### 08 Special Tests (RadioGroup, widget ID = `st_{key}`)
+### 08 Special Tests (CycleButton widget ID = `st_{stem}_l` / `st_{stem}_r`)
 
-| Key | KB entry | Description |
+Special tests use `BilateralGridSpecialTestsWidget`. CycleButton outer widget ID is the
+storage key. KB entry key is the stem (the loader strips `_l`/`_r`).
+
+| Widget ID (L) | Widget ID (R) | KB entry | Description |
+|---|---|---|---|
+| `st_spurling_l` | `st_spurling_r` | `spurling` | Spurling's (foraminal compression) |
+| `st_distraction_l` | `st_distraction_r` | `distraction` | Cervical distraction |
+| `st_ulnt1_l` | `st_ulnt1_r` | `ulnt1` | ULNT1 (median nerve bias) |
+| `st_ulnt2a_l` | `st_ulnt2a_r` | `ulnt2a` | ULNT2a (radial nerve bias) |
+| `st_ulnt3_l` | `st_ulnt3_r` | `ulnt3` | ULNT3 (ulnar nerve bias) |
+| `st_frt_l` | `st_frt_r` | `frt` | FRT (cervicogenic headache) |
+| `st_sharp_purser_l` | `st_sharp_purser_r` | `sharp_purser` | Sharp-Purser (UC instability) |
+| `st_ant_shear_l` | `st_ant_shear_r` | `ant_shear` | Anterior shear (transverse lig) |
+| `st_alar_sf_l` | `st_alar_sf_r` | `alar_sf` | Alar ligament side flexion |
+| `st_lat_trans_l` | `st_lat_trans_r` | `lat_trans` | Lateral translation (UC) |
+| `st_vbi_sus_rot_l` | `st_vbi_sus_rot_r` | `vbi_sus_rot` | VBI sustained rotation |
+| `st_hoffman_l` | `st_hoffman_r` | `hoffman` | Hoffman's sign (myelopathy) |
+| `st_cx_notes` | — | — | Special tests notes (TextArea) |
+
+---
+
+## Objective Shoulder YAML fields
+
+Defined in `objective/sections/yaml/shoulder.yaml` (active movement, muscle, special tests)
+and `objective/sections/shoulder_tables.py` (passive OP/accessory/AC-SC, strength).
+
+### 02 Active Movement — Shoulder ROM
+
+All rows `bilateral: false` — separate L/R values.
+
+| Key | Widget ID | Description |
 |---|---|---|
-| `spurling_l` | `spurling` | Spurling's Left (foraminal compression) |
-| `spurling_r` | `spurling` | Spurling's Right |
-| `distraction` | `distraction` | Cervical distraction test |
-| `ulnt1_l` | `ulnt1` | ULNT1 Left (median nerve bias) |
-| `ulnt1_r` | `ulnt1` | ULNT1 Right |
-| `ulnt2a_l` | `ulnt2a` | ULNT2a Left (radial nerve bias) |
-| `ulnt2a_r` | `ulnt2a` | ULNT2a Right |
-| `ulnt3_l` | `ulnt3` | ULNT3 Left (ulnar nerve bias) |
-| `ulnt3_r` | `ulnt3` | ULNT3 Right |
-| `frt_l` | `frt` | Flexion-Rotation Test Left (cervicogenic headache) |
-| `frt_r` | `frt` | Flexion-Rotation Test Right |
-| `sharp_purser` | `sharp_purser` | Sharp-Purser (upper cervical instability) |
-| `ant_shear` | `ant_shear` | Anterior shear (transverse ligament) |
-| `alar_sf` | `alar_sf` | Alar ligament side flexion |
-| `lat_trans` | `lat_trans` | Lateral translation (upper cervical) |
-| `vbi_sus_rot_l` | `vbi_sus_rot` | VBI sustained rotation left |
-| `vbi_sus_rot_r` | `vbi_sus_rot` | VBI sustained rotation right |
-| `hoffman_l` | `hoffman_l` | Hoffman's sign left (myelopathy) |
-| `hoffman_r` | `hoffman_r` | Hoffman's sign right |
-| `st_cx_notes` | — | Special tests notes (TextArea) |
+| `sh_flex` | `sh_flex_l`, `sh_flex_r` | Shoulder flexion |
+| `sh_ext` | `sh_ext_l`, `sh_ext_r` | Shoulder extension |
+| `sh_abd` | `sh_abd_l`, `sh_abd_r` | Shoulder abduction |
+| `sh_ir` | `sh_ir_l`, `sh_ir_r` | Internal rotation |
+| `sh_er` | `sh_er_l`, `sh_er_r` | External rotation |
+| `sh_hadd` | `sh_hadd_l`, `sh_hadd_r` | Horizontal adduction |
+| `sh_hbb` | `sh_hbb_l`, `sh_hbb_r` | Hand behind back |
+| `am_sh_notes` | `am_sh_notes` | Shoulder ROM notes |
+
+### 02 Active Movement — Thoracic ROM (shoulder region)
+
+| Key | Widget ID | Description |
+|---|---|---|
+| `tx_sh_flex` | `tx_sh_flex_l` | Thoracic flexion (bilateral:true — L only) |
+| `tx_sh_ext` | `tx_sh_ext_l` | Thoracic extension (bilateral:true — L only) |
+| `tx_sh_rot` | `tx_sh_rot_l`, `tx_sh_rot_r` | Thoracic rotation |
+| `am_tx_sh_notes` | `am_tx_sh_notes` | Thoracic ROM notes (shoulder region) |
+
+### 03 Passive Movement — Overpressure (ShoulderPassiveTables)
+
+Field IDs follow `{prefix}_ef` and `{prefix}_resp`.
+
+| Prefix | Description |
+|---|---|
+| `sh_op_flex` | Flexion OP |
+| `sh_op_ext` | Extension OP |
+| `sh_op_abd` | Abduction OP |
+| `sh_op_ir` | Internal rotation OP |
+| `sh_op_er` | External rotation OP |
+| `sh_op_hadd` | Horizontal adduction OP |
+| `sh_op_habd` | Horizontal abduction OP |
+| `sh_pm_op_notes` | Shoulder OP notes (TextArea) |
+
+### 03 Passive Movement — GH Accessory Glides (ShoulderPassiveTables)
+
+Field IDs: `sh_acc_{direction}_{side}_{type}` — direction: `inf`, `post`, `ant`; side: `l`, `r`; type: `grade`, `resp`.
+
+| Widget ID pattern | Description |
+|---|---|
+| `sh_acc_inf_l_grade` / `sh_acc_inf_l_resp` | Inferior glide left (Maitland grade + response) |
+| `sh_acc_post_l_grade` / `sh_acc_post_l_resp` | Posterior glide left |
+| `sh_acc_ant_l_grade` / `sh_acc_ant_l_resp` | Anterior glide left |
+| `sh_acc_{dir}_r_grade` / `sh_acc_{dir}_r_resp` | Right-side equivalents |
+| `sh_pm_acc_notes` | Accessory notes (TextArea) |
+
+### 03 Passive Movement — AC / SC Joint (ShoulderPassiveTables)
+
+| Widget ID (L) | Widget ID (R) | Description |
+|---|---|---|
+| `sh_ac_pm_stress_l` | `sh_ac_pm_stress_r` | AC joint stress |
+| `sh_ac_pm_palp_l` | `sh_ac_pm_palp_r` | AC joint palpation |
+| `sh_sc_pm_stress_l` | `sh_sc_pm_stress_r` | SC joint stress |
+
+### 06 Muscle Testing — Muscle Length (bilateral RadioGroup)
+
+| Key | Widget ID | Description |
+|---|---|---|
+| `ml_pec_min` | `ml_pec_min_l`, `ml_pec_min_r` | Pec minor length |
+| `ml_pec_st` | `ml_pec_st_l`, `ml_pec_st_r` | Pec major sternal length |
+| `ml_pec_cl` | `ml_pec_cl_l`, `ml_pec_cl_r` | Pec major clavicular length |
+| `ml_lat` | `ml_lat_l`, `ml_lat_r` | Latissimus dorsi length |
+| `ml_post_cap` | `ml_post_cap_l`, `ml_post_cap_r` | Posterior capsule length |
+
+### 06 Muscle Testing — Muscle Activation (bilateral RadioGroup)
+
+| Key | Widget ID | Description |
+|---|---|---|
+| `ma_lt` | `ma_lt_l`, `ma_lt_r` | Lower trapezius activation |
+| `ma_sa` | `ma_sa_l`, `ma_sa_r` | Serratus anterior activation (bilateral) |
+| `ma_er_fc` | `ma_er_fc_l`, `ma_er_fc_r` | ER force couple |
+| `mu_sh_notes` | `mu_sh_notes` | Shoulder muscle notes (TextArea) |
+
+### 06 Muscle Testing — Shoulder Strength (ShoulderMuscleTables, GridInput kg or 0–5)
+
+| Key | Widget ID | Description |
+|---|---|---|
+| `sh_str_flex` | `sh_str_flex_l`, `sh_str_flex_r` | Shoulder flexion strength |
+| `sh_str_abd` | `sh_str_abd_l`, `sh_str_abd_r` | Shoulder abduction strength |
+| `sh_str_ir` | `sh_str_ir_l`, `sh_str_ir_r` | Internal rotation strength |
+| `sh_str_er` | `sh_str_er_l`, `sh_str_er_r` | External rotation strength |
+| `sh_str_scap` | `sh_str_scap_l`, `sh_str_scap_r` | Scaption strength |
+
+### 08 Special Tests (CycleButton widget ID = `st_{stem}_l` / `st_{stem}_r`)
+
+| Widget ID (L) | Widget ID (R) | KB entry | Description |
+|---|---|---|---|
+| `st_hawkins_l` | `st_hawkins_r` | `hawkins` | Hawkins-Kennedy (impingement) |
+| `st_neer_l` | `st_neer_r` | `neer` | Neer sign (impingement) |
+| `st_painful_arc_l` | `st_painful_arc_r` | `painful_arc` | Painful arc (impingement) |
+| `st_empty_can_l` | `st_empty_can_r` | `empty_can` | Empty can / Jobe's (supraspinatus) |
+| `st_full_can_l` | `st_full_can_r` | `full_can` | Full can (supraspinatus) |
+| `st_er_lag_l` | `st_er_lag_r` | `er_lag` | ER lag sign (infraspinatus) |
+| `st_lift_off_l` | `st_lift_off_r` | `lift_off` | Lift-off / Gerber's (subscapularis) |
+| `st_belly_press_l` | `st_belly_press_r` | `belly_press` | Belly press / Napoleon (subscapularis) |
+| `st_drop_arm_l` | `st_drop_arm_r` | `drop_arm` | Drop arm (full-thickness RC tear) |
+| `st_cross_body_l` | `st_cross_body_r` | `cross_body` | Cross-body adduction (AC joint) |
+| `st_ac_stress_l` | `st_ac_stress_r` | `ac_stress` | AC joint stress |
+| `st_speeds_l` | `st_speeds_r` | `speeds` | Speed's test (biceps / SLAP) |
+| `st_yergason_l` | `st_yergason_r` | `yergason` | Yergason's (bicipital groove) |
+| `st_obrien_l` | `st_obrien_r` | `obrien` | O'Brien active compression (SLAP / AC) |
+| `st_apprehension_l` | `st_apprehension_r` | `apprehension` | Apprehension (anterior instability) |
+| `st_relocation_l` | `st_relocation_r` | `relocation` | Relocation / Jobe (anterior instability) |
+| `st_sulcus_l` | `st_sulcus_r` | `sulcus` | Sulcus sign (inferior instability / MDI) |
+| `st_scap_assist_l` | `st_scap_assist_r` | `scap_assist` | Scapular assistance (dyskinesis) |
+| `st_wall_pushup_l` | `st_wall_pushup_r` | `wall_pushup` | Wall push-up (serratus anterior winging) |
+| `st_sh_notes` | — | — | Special tests notes (TextArea) |
 
 ---
 

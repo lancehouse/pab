@@ -1,0 +1,265 @@
+# Shoulder Knowledge Base
+# Keys map to field ID stems in shoulder.yaml (special_tests section).
+# Bilateral tests use the stem only (e.g. "hawkins" covers hawkins_l + hawkins_r).
+# Sn/Sp figures from Hegedus et al. 2012 systematic review unless noted.
+
+# ── Impingement ───────────────────────────────────────────────────────────────
+
+hawkins:
+  label: "Hawkins-Kennedy Test"
+  purpose: >
+    Subacromial impingement: internally rotates the supraspinatus under the
+    coracoacromial ligament. Most sensitive of the impingement cluster.
+  position: "Seated or standing. Shoulder and elbow both flexed 90°."
+  procedure: >
+    Stabilise the scapula. Passively internally rotate the shoulder until
+    end range or symptom reproduction. Positive = pain at anterior/lateral
+    shoulder.
+  sn_sp: "Sn 72–79% / Sp 56–66% (subacromial impingement)"
+  cluster: "Impingement cluster: Hawkins + Neer + Painful Arc — 2/3 positive increases diagnostic confidence."
+
+neer:
+  label: "Neer Impingement Sign"
+  purpose: >
+    Subacromial impingement: forces the supraspinatus against the anterior
+    acromion and coracoacromial ligament during passive flexion.
+  position: "Seated or standing. Arm at side, elbow extended, forearm pronated."
+  procedure: >
+    Stabilise the scapula to prevent shrugging. Passively flex the arm
+    through full range. Positive = pain at anterior/lateral shoulder
+    before or at full flexion.
+  sn_sp: "Sn 72–83% / Sp 58–68% (subacromial impingement)"
+  cluster: "Impingement cluster: Hawkins + Neer + Painful Arc — 2/3 positive."
+
+painful_arc:
+  label: "Painful Arc"
+  purpose: >
+    Subacromial impingement: compression of the subacromial bursa and
+    supraspinatus between the greater tuberosity and the acromion during
+    active abduction. Highest specificity of the impingement cluster.
+  position: "Standing."
+  procedure: >
+    Patient actively abducts the arm through full range. Note the arc of
+    pain. Positive = pain specifically within 60–120° of active abduction
+    that resolves beyond 120°.
+  sn_sp: "Sn 74% / Sp 81% (subacromial impingement)"
+  cluster: "Impingement cluster: Hawkins + Neer + Painful Arc — 2/3 positive."
+
+# ── Rotator Cuff ─────────────────────────────────────────────────────────────
+
+empty_can:
+  label: "Empty Can Test (Jobe's)"
+  purpose: >
+    Supraspinatus integrity: assesses resisted abduction in the scapular
+    plane with the shoulder internally rotated (thumb down / empty can).
+  position: >
+    Standing. Shoulder in the scapular plane (30° horizontal flexion),
+    abducted 90°, internally rotated (thumb pointing to floor).
+  procedure: >
+    Apply downward resistance at the wrist/distal forearm. Positive = pain
+    or weakness with resistance, or inability to hold position.
+  sn_sp: "Sn 69–75% / Sp 66–77% (supraspinatus tear)"
+  note: "Sensitivity improves for full-thickness tears. Pain alone does not indicate tear — weakness is more specific."
+
+full_can:
+  label: "Full Can Test"
+  purpose: >
+    Supraspinatus integrity: resisted abduction in the scapular plane with
+    ER (thumb up). Produces less subacromial impingement than empty can and
+    is preferred when the patient reports the empty can position is too painful.
+  position: >
+    Standing. Shoulder in scapular plane, abducted 90°, externally rotated
+    (thumb pointing to ceiling).
+  procedure: >
+    Apply downward resistance at the wrist. Positive = pain or weakness.
+  sn_sp: "Sn 66% / Sp 64% (supraspinatus tear)"
+  note: "Similar diagnostic utility to empty can. Preferred when IR is painful or restricted."
+
+er_lag:
+  label: "External Rotation Lag Sign"
+  purpose: >
+    Infraspinatus integrity: inability to maintain passive ER indicates
+    significant loss of ER strength consistent with a full-thickness tear.
+  position: "Seated. Elbow flexed 90°, shoulder at 0° abduction."
+  procedure: >
+    Passively take the shoulder to near-maximal ER. Ask the patient to
+    hold position as you release. Positive = lag (arm drifts into IR). The
+    degree of lag correlates with tear size.
+  sn_sp: "Sn 56–70% / Sp 98–100% (infraspinatus full-thickness tear)"
+  note: "High specificity — a positive lag sign is strong evidence of full-thickness infraspinatus tear."
+
+lift_off:
+  label: "Lift-off Test (Gerber's)"
+  purpose: >
+    Subscapularis integrity: requires subscapularis to generate IR force
+    sufficient to lift the hand away from the lower back.
+  position: "Seated. Hand placed behind back at L3–5 level, dorsum against back."
+  procedure: >
+    Ask the patient to actively lift the hand away from the back. Positive =
+    inability to lift hand off back, or pain with attempt.
+  sn_sp: "Sn 62–79% / Sp 91–100% (subscapularis full-thickness tear)"
+  note: "Cannot be performed if shoulder IR is restricted. Use Belly Press as alternative."
+
+belly_press:
+  label: "Belly Press Test (Napoleon)"
+  purpose: >
+    Subscapularis integrity: alternative to lift-off when IR is restricted.
+    Assesses ability to maintain IR force with the palm pressed against the abdomen.
+  position: "Seated. Palm pressed flat against abdomen."
+  procedure: >
+    Patient presses palm against abdomen while keeping elbow in front of
+    the body (resisting ER). Positive = elbow drops behind the trunk or wrist
+    flexes as a substitute for lost IR force.
+  sn_sp: "Sn 40–58% / Sp 60–98% (subscapularis tear)"
+  note: "Wide Sn/Sp range reflects population differences. Wrist flexion substitute = positive."
+
+drop_arm:
+  label: "Drop Arm Sign"
+  purpose: >
+    Full-thickness RC tear (supraspinatus): inability to eccentrically control
+    arm lowering indicates loss of RC force couple.
+  position: "Standing. Shoulder passively abducted to 90°, elbow extended."
+  procedure: >
+    Ask the patient to slowly lower the arm to the side. Positive = arm
+    suddenly drops or the patient cannot control smooth lowering.
+    A gentle tap to the forearm may precipitate the sign in partial tears.
+  sn_sp: "Sn 21–35% / Sp 77–98% (full-thickness supraspinatus tear)"
+  note: "Low sensitivity but high specificity — positive result strongly indicates a large or complete RC tear."
+
+# ── AC Joint ─────────────────────────────────────────────────────────────────
+
+cross_body:
+  label: "Cross-Body Adduction Test"
+  purpose: >
+    AC joint pathology: passively adducting the arm across the body
+    compresses the AC joint.
+  position: "Seated. Shoulder flexed 90°, elbow extended or flexed."
+  procedure: >
+    Passively adduct the arm across the body toward the opposite shoulder.
+    Positive = pain localised to the AC joint.
+  sn_sp: "Sn 77% / Sp 79% (AC joint pathology)"
+  cluster: "AC cluster: Cross-body + AC Stress — 2/2 positive LR+ ~6."
+
+ac_stress:
+  label: "AC Joint Stress Test"
+  purpose: >
+    AC joint integrity: direct compression and shear of the AC joint.
+  position: "Seated."
+  procedure: >
+    Cup the AC joint between thumb and fingers. Apply compression and
+    anterior-posterior shear force. Positive = pain localised to the AC joint.
+  sn_sp: "Sn 79% / Sp 50% (AC joint pathology)"
+  cluster: "AC cluster: Cross-body + AC Stress — 2/2 positive LR+ ~6."
+
+# ── Biceps / SLAP ─────────────────────────────────────────────────────────────
+
+speeds:
+  label: "Speed's Test"
+  purpose: >
+    Biceps tendinopathy / SLAP lesion: loads the long head of biceps tendon
+    at the bicipital groove and the superior labrum.
+  position: "Standing. Shoulder flexed 90°, elbow extended, forearm supinated."
+  procedure: >
+    Apply downward resistance at the wrist. Positive = pain at the anterior
+    shoulder or bicipital groove.
+  sn_sp: "Sn 32–69% / Sp 55–75% (biceps tendinopathy / SLAP)"
+  note: "Moderate accuracy alone; most useful as part of the biceps/SLAP cluster."
+
+yergason:
+  label: "Yergason's Test"
+  purpose: >
+    Bicipital tendinopathy and biceps tendon instability in the groove:
+    resisted supination loads the LHB and tests groove containment.
+  position: "Seated. Elbow flexed 90°, arm against trunk, forearm pronated."
+  procedure: >
+    Resist simultaneous forearm supination and shoulder ER. Positive = pain
+    at the bicipital groove, or the tendon snaps out of the groove.
+  sn_sp: "Sn 32–43% / Sp 79–86% (bicipital tendinopathy)"
+  note: "Low sensitivity — a negative result does not exclude biceps pathology."
+
+obrien:
+  label: "O'Brien Active Compression Test"
+  purpose: >
+    SLAP tear and AC joint pathology: differential based on pain location.
+    Deep joint pain = SLAP; top-of-shoulder pain = AC joint.
+  position: "Standing. Shoulder flexed 90°, adducted 15° medially, elbow extended."
+  procedure: >
+    1. IR position (thumb down): examiner applies downward resistance.
+    2. ER position (thumb up): repeat resistance. Positive for SLAP = pain
+    or click deep in the joint in IR but reduced/absent in ER. Positive for
+    AC = pain on top of shoulder in both positions.
+  sn_sp: "Sn 47–78% / Sp 54–76% (SLAP tear); Sn 16% / Sp 99% (AC joint)"
+  note: "Pain location is the key differentiator. A positive AC result rules in AC pathology."
+
+# ── Instability ───────────────────────────────────────────────────────────────
+
+apprehension:
+  label: "Apprehension Test"
+  purpose: >
+    Anterior glenohumeral instability: recreation of the threat of anterior
+    dislocation with ER in abduction. Most specific instability test.
+  position: "Supine or seated. Shoulder abducted 90°, elbow flexed 90°."
+  procedure: >
+    Gradually externally rotate the shoulder toward end range. Positive =
+    patient apprehension (fear that the shoulder will dislocate), not pain
+    alone. Facial expression and guarding are key indicators.
+  sn_sp: "Sn 72–81% / Sp 96–99% (anterior GH instability)"
+  note: "Apprehension must be distinguished from pain. Apprehension alone = high specificity for instability."
+  cluster: "Instability cluster: Apprehension + Relocation — both positive LR+ >10."
+
+relocation:
+  label: "Relocation Test (Jobe)"
+  purpose: >
+    Confirms anterior instability: posterior pressure on the humeral head
+    reduces apprehension during the apprehension test position.
+  position: "Supine. Shoulder in apprehension position (90° abd, near end-range ER)."
+  procedure: >
+    Apply a firm posterior-directed force to the anterior humeral head.
+    Positive = relief of apprehension (fear of dislocation). Pain relief
+    alone is not a positive result.
+  sn_sp: "Sn 32–81% / Sp 54–87% (anterior GH instability)"
+  note: "Interpret in context of apprehension test. Apprehension relieved by relocation = high diagnostic value."
+  cluster: "Instability cluster: Apprehension + Relocation — both positive LR+ >10."
+
+sulcus:
+  label: "Sulcus Sign"
+  purpose: >
+    Inferior GH instability and multidirectional instability (MDI):
+    demonstrates inferior translation of the humeral head under downward load.
+  position: "Seated or standing. Arm relaxed at side, muscles fully relaxed."
+  procedure: >
+    Apply a steady downward traction force to the arm. Observe for sulcus
+    (groove) below the acromion. Grade by depth: Grade I <1 cm, Grade II
+    1–2 cm, Grade III >2 cm. Repeat with arm in ER to reduce.
+  sn_sp: "Sn 72% / Sp 85–88% (inferior instability / MDI)"
+  note: "Grade II+ persistent in ER = high specificity for MDI. Always assess bilaterally — generalised laxity affects baseline."
+
+# ── Scapular ──────────────────────────────────────────────────────────────────
+
+scap_assist:
+  label: "Scapular Assistance Test"
+  purpose: >
+    Scapular contribution to shoulder symptoms: manually assisting scapular
+    upward rotation and posterior tilt reduces subacromial compression. Positive
+    result indicates scapular dyskinesis is a contributing factor.
+  position: "Standing. Examiner behind, hands placed on scapula."
+  procedure: >
+    Ask patient to elevate arm (any painful arc or limited ROM). Repeat while
+    examiner manually assists scapular upward rotation and posterior tilt.
+    Positive = pain reduced or range improved with scapular assistance.
+  sn_sp: "Sn ~72% for scapular dyskinesis contribution (limited data)"
+  note: "Positive result supports prioritising scapular stabilisation (LT, SA) in rehabilitation."
+
+wall_pushup:
+  label: "Wall Push-up Test"
+  purpose: >
+    Serratus anterior weakness / long thoracic nerve palsy: scapular winging
+    under load indicates SA inhibition or denervation.
+  position: "Standing ~40 cm from a wall. Arms extended, hands on wall at shoulder height."
+  procedure: >
+    Perform a controlled wall push-up. Observe the medial scapular border.
+    Positive = medial border prominence (winging) during the push-up.
+    Progress to floor push-up if wall push-up is negative but SA weakness
+    is suspected.
+  sn_sp: "Limited formal Sn/Sp data; clinical observation is standard."
+  note: "Combine with Scap Assist to distinguish serratus anterior vs. lower trapezius as the primary contributor to dyskinesis."

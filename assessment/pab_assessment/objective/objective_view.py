@@ -458,7 +458,9 @@ class ObjectiveAssessmentView(Container):
             return
         if not panel.display:
             return
-        # Strip st_ prefix used by SpecialTestsWidget
+        # Strip _btn from CycleButton inner buttons; strip st_ prefix from special test fields
+        if wid.endswith("_btn"):
+            wid = wid[:-4]
         field_id = wid[3:] if wid.startswith("st_") else wid
         registry = get_registry()
         for region in self._active_regions:
