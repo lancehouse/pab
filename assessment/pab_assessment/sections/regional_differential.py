@@ -166,7 +166,7 @@ class _ClusterBlock(Vertical):
         height: auto; width: 100%;
         margin-bottom: 1;
         padding: 0 0 0 1;
-        border-left: tall $primary 30%;
+        border-left: solid $primary;
     }
     _ClusterBlock .cb_header {
         height: 1; width: 100%;
@@ -237,7 +237,7 @@ class RegionalDifferentialPanel(Vertical):
     RegionalDifferentialPanel {
         height: auto; width: 100%;
         margin-bottom: 1;
-        border: solid $primary 20%;
+        border: solid $primary;
         padding: 0 1;
     }
     RegionalDifferentialPanel .rdp_region_title {

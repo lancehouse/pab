@@ -128,6 +128,11 @@ class PainClassificationSection(BaseSection):
     #pc_mixed_reminder {
         width: 100%; padding: 0 1; color: $warning; margin-bottom: 0;
     }
+    #pc_diff_region {
+        height: auto;
+        width: 100%;
+        margin-bottom: 1;
+    }
     .xref_badge {
         width: 100%; height: auto; padding: 0 1; margin-bottom: 0;
         color: $accent; background: $accent 12%;
@@ -174,6 +179,7 @@ class PainClassificationSection(BaseSection):
 
     def compose(self) -> ComposeResult:  # noqa: C901
         yield Label("Pain Type Classification", classes="section_title")
+        yield Vertical(id="pc_diff_region")
 
         # ── Inflammatory ────────────────────────────────────────────────
         yield Label("— Inflammatory Pain —", classes="subsection_header", id="pc_inflammatory")
@@ -304,9 +310,6 @@ class PainClassificationSection(BaseSection):
             yield CheckButton("Limb swelling sensation", id="cs_swelling")
             yield CheckButton("Tingling/numbness", id="cs_tingling")
         yield Static("", id="xref_cs_tingling", classes="xref_badge")
-
-        # ── Regional Differential ───────────────────────────────────────
-        yield Vertical(id="pc_diff_region")
 
         # ── Summary ──────────────────────────────────────────────────────
         yield Label("— Pain Type Summary —", classes="subsection_header", id="pc_summary")
