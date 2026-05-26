@@ -1,0 +1,107 @@
+region: shoulder
+label: Shoulder
+
+# ── 02 Active Movement ──────────────────────────────────────────────────────
+# All shoulder movements bilateral: false — separate L/R (typically asymmetric
+# in shoulder pathology). Thoracic ROM included for context.
+active_movement:
+  groups:
+    - label: "Shoulder ROM"
+      notes_id: am_sh_notes
+      rows:
+        - {id: sh_flex,  label: "Flexion",       bilateral: false}
+        - {id: sh_ext,   label: "Extension",      bilateral: false}
+        - {id: sh_abd,   label: "Abduction",      bilateral: false}
+        - {id: sh_ir,    label: "Int Rotation",   bilateral: false}
+        - {id: sh_er,    label: "Ext Rotation",   bilateral: false}
+        - {id: sh_hadd,  label: "Horiz Add",      bilateral: false}
+        - {id: sh_hbb,   label: "Hand Bk Back",   bilateral: false}
+    - label: "Thoracic ROM"
+      notes_id: am_tx_sh_notes
+      rows:
+        - {id: tx_sh_flex, label: "Flexion",   bilateral: true}
+        - {id: tx_sh_ext,  label: "Extension", bilateral: true}
+        - {id: tx_sh_rot,  label: "Rotation",  bilateral: false}
+
+# ── 06 Muscle Testing ────────────────────────────────────────────────────────
+# Muscle length and activation both bilateral (L/R) — side-to-side comparison
+# is clinically essential for shoulder pathology.
+# Activation uses ↓ severity scale (not Fair/Poor) — reflects inhibition
+# pattern (RC inhibition, serratus/LT shutdown), not MMT grading.
+muscle_testing:
+  groups:
+    - label: "Muscle Length"
+      type: bilateral
+      options: ["Norm", "↓Mild", "↓Mod", "↓Mrkd"]
+      rows:
+        - {id: ml_pec_min,   label: "Pec minor"}
+        - {id: ml_pec_st,    label: "Pec maj sternal"}
+        - {id: ml_pec_cl,    label: "Pec maj clav"}
+        - {id: ml_lat,       label: "Latissimus"}
+        - {id: ml_post_cap,  label: "Post capsule"}
+    - label: "Muscle Activation"
+      type: bilateral
+      options: ["Norm", "↓Mild", "↓Mod", "Absent"]
+      rows:
+        - {id: ma_lt,    label: "Lower trap"}
+        - {id: ma_sa,    label: "Serratus ant"}
+        - {id: ma_er_fc, label: "ER force couple"}
+  notes_id: mu_sh_notes
+
+# ── 08 Special Tests ─────────────────────────────────────────────────────────
+# Grouped bilateral format: two tests per display row, L/R inline per test.
+# cluster_id on each group maps to future DDx pattern-matching and KB clusters.
+# Row IDs are stems — widget creates st_{id}_l and st_{id}_r.
+#
+# Impingement cluster: Hawkins + Neer + Painful Arc (2/3 → subacromial)
+# RC integrity: Empty/Full can (supraspinatus), ER lag (infraspinatus),
+#               Lift-off/Belly press (subscapularis), Drop arm (full thickness)
+# AC joint: Cross-body + AC stress (2/2 → AC pathology)
+# Biceps/SLAP: O'Brien most sensitive; Speed's + Yergason = bicipital groove
+# Instability: Apprehension + Relocation (together), Sulcus (inferior laxity)
+# Scapular: Scap assist (SA/LT function), Wall pushup (serratus winging)
+special_tests:
+  notes_id: st_sh_notes
+  groups:
+    - label: "Impingement"
+      cluster_id: sh_impingement
+      rows:
+        - {id: hawkins,     label: "Hawkins"}
+        - {id: neer,        label: "Neer"}
+        - {id: painful_arc, label: "Painful Arc"}
+
+    - label: "Rotator Cuff"
+      cluster_id: sh_rc_integrity
+      rows:
+        - {id: empty_can,   label: "Empty Can"}
+        - {id: full_can,    label: "Full Can"}
+        - {id: er_lag,      label: "ER Lag"}
+        - {id: lift_off,    label: "Lift-off"}
+        - {id: belly_press, label: "Belly Press"}
+        - {id: drop_arm,    label: "Drop Arm"}
+
+    - label: "AC Joint"
+      cluster_id: sh_ac_joint
+      rows:
+        - {id: cross_body,  label: "Cross-body"}
+        - {id: ac_stress,   label: "AC Stress"}
+
+    - label: "Biceps / SLAP"
+      cluster_id: sh_biceps_slap
+      rows:
+        - {id: speeds,      label: "Speed's"}
+        - {id: yergason,    label: "Yergason"}
+        - {id: obrien,      label: "O'Brien"}
+
+    - label: "Instability"
+      cluster_id: sh_instability
+      rows:
+        - {id: apprehension, label: "Apprehension"}
+        - {id: relocation,   label: "Relocation"}
+        - {id: sulcus,       label: "Sulcus"}
+
+    - label: "Scapular"
+      cluster_id: sh_scapular
+      rows:
+        - {id: scap_assist, label: "Scap Assist"}
+        - {id: wall_pushup, label: "Wall Pushup"}

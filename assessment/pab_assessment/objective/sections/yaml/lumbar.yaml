@@ -47,18 +47,32 @@ muscle_testing:
   notes_id: mu_notes
 
 # ── 08 Special Tests ─────────────────────────────────────────────────────────
-# Each row: id (data key), label, options list.
-# Variant colouring is inferred: index 0 = success, last = error, rest = warning.
+# Row IDs are stems — widget creates st_{id}_l and st_{id}_r.
+# Neurodynamic cluster: SLR + Slump (2/2 positive with sensitisation = strong indicator)
+# Hip screen: FABER (SIJ/hip) + FADIR (FAI/labral) — rule out hip as pain source
+# Crossed SLR: low Sn / high Sp for large central disc herniation
 special_tests:
   notes_id: st_lx_notes
-  rows:
-    - {id: slr_l,       label: "SLR Left",         options: ["Negative", "Positive", "Positive+P"]}
-    - {id: slr_r,       label: "SLR Right",         options: ["Negative", "Positive", "Positive+P"]}
-    - {id: slump,       label: "Slump",             options: ["Negative", "Positive", "Positive+P"]}
-    - {id: femoral,     label: "Femoral Stretch",   options: ["Negative", "Positive", "Positive+P"]}
-    - {id: faber_l,     label: "FABER Left",        options: ["Negative", "Positive"]}
-    - {id: faber_r,     label: "FABER Right",       options: ["Negative", "Positive"]}
-    - {id: fadir_l,     label: "FADIR Left",        options: ["Negative", "Positive"]}
-    - {id: fadir_r,     label: "FADIR Right",       options: ["Negative", "Positive"]}
-    - {id: prone_inst,  label: "Prone Instability", options: ["Negative", "Positive"]}
-    - {id: crossed_slr, label: "Crossed SLR",       options: ["Negative", "Positive"]}
+  groups:
+    - label: "Disc / Herniation"
+      cluster_id: lx_disc
+      rows:
+        - {id: slr,         label: "SLR"}
+        - {id: crossed_slr, label: "Crossed SLR"}
+
+    - label: "Neurodynamics"
+      cluster_id: lx_neurodynamics
+      rows:
+        - {id: slump,   label: "Slump"}
+        - {id: femoral, label: "Femoral"}
+
+    - label: "Hip Screen"
+      cluster_id: lx_hip_screen
+      rows:
+        - {id: faber, label: "FABER"}
+        - {id: fadir, label: "FADIR"}
+
+    - label: "Instability"
+      cluster_id: lx_instability
+      rows:
+        - {id: prone_inst, label: "Prone Inst"}
