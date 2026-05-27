@@ -46,7 +46,7 @@ class LikelihoodField(Static):
         padding: 0;
     }
     LikelihoodField > Label {
-        width: 1fr;
+        width: auto;
         margin-bottom: 0;
         padding-right: 1;
     }

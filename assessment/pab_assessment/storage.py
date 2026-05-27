@@ -2123,13 +2123,9 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     sec("Section 5: Outcome Measures")
 
     sub("Patient Specific Functional Scale (PSFS)")
-    f("psfs_score",  om)
-    f("psfs_interp", om)
     f("psfs_act_1",  om)
     f("psfs_act_2",  om)
     f("psfs_act_3",  om)
-    f("psfs_act_4",  om)
-    f("psfs_act_5",  om)
 
     sub("Brief Pain Inventory (BPI) — interference /10")
     f("bpi_activity",  om)
@@ -2159,7 +2155,8 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     f("pcs_total_risk",  om)
 
     sub("Pain Self-Efficacy Questionnaire (PSEQ)")
-    f("pseq_score", om)
+    f("pseq_score",  om)
+    f("pseq_interp", om)
 
     sub("PCL-5 (PTSD)")
     f("pcl5_score",    om)
@@ -2177,6 +2174,16 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     f("add_dudit",  om)
     txt("add_epoc", om)
     txt("add_other", om)
+
+    sub("Planned Outcome Measures")
+    f("plan_psfs",       om)
+    f("plan_bpi",        om)
+    f("plan_dass",       om)
+    f("plan_pcs",        om)
+    f("plan_pseq",       om)
+    f("plan_pcl5",       om)
+    f("plan_sleep",      om)
+    f("plan_additional", om)
 
     sub("Hypothesis Testing")
     hyp_rows = []
@@ -2853,13 +2860,9 @@ LABELS: dict[str, str] = {
     "summary_contributing":             "Contributing pain types",
     "summary_reasoning":                "Pain classification reasoning",
     # ── 05 Outcome Measures ───────────────────────────────────────────────────
-    "psfs_score":                       "PSFS score",
     "psfs_act_1":                       "PSFS activity 1",
     "psfs_act_2":                       "PSFS activity 2",
     "psfs_act_3":                       "PSFS activity 3",
-    "psfs_act_4":                       "PSFS activity 4",
-    "psfs_act_5":                       "PSFS activity 5",
-    "psfs_interp":                      "PSFS interpretation",
     "bpi_activity":                     "BPI: Activity interference",
     "bpi_mood":                         "BPI: Mood interference",
     "bpi_walking":                      "BPI: Walking interference",
@@ -2882,6 +2885,7 @@ LABELS: dict[str, str] = {
     "pcs_help_risk":                    "PCS: Helplessness risk",
     "pcs_total_risk":                   "PCS: Total risk",
     "pseq_score":                       "PSEQ score",
+    "pseq_interp":                      "PSEQ interpretation",
     "pcl5_score":                       "PCL-5 score",
     "pcl5_interp":                      "PCL-5 interpretation",
     "pcl5_action":                      "PCL-5 action taken",
@@ -2893,6 +2897,14 @@ LABELS: dict[str, str] = {
     "add_dudit":                        "DUDIT administered",
     "add_epoc":                         "EPPOC notes",
     "add_other":                        "Additional measures notes",
+    "plan_psfs":                        "Plan: PSFS",
+    "plan_bpi":                         "Plan: BPI",
+    "plan_dass":                        "Plan: DASS-21",
+    "plan_pcs":                         "Plan: PCS",
+    "plan_pseq":                        "Plan: PSEQ",
+    "plan_pcl5":                        "Plan: PCL-5",
+    "plan_sleep":                       "Plan: Sleep measures",
+    "plan_additional":                  "Plan: Additional measures",
     # ── 06 Diagnosis ──────────────────────────────────────────────────────────
     "mechanism":                        "Mechanism",
     "primary_subtype":                  "Primary subtype",
@@ -3674,13 +3686,9 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     sec("SECTION 5: OUTCOME MEASURES")
 
     sub("Patient Specific Functional Scale (PSFS)")
-    f("psfs_score",  om)
-    f("psfs_interp", om)
     f("psfs_act_1",  om)
     f("psfs_act_2",  om)
     f("psfs_act_3",  om)
-    f("psfs_act_4",  om)
-    f("psfs_act_5",  om)
 
     sub("Brief Pain Inventory (BPI) — interference /10")
     f("bpi_activity",  om)
@@ -3710,7 +3718,8 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     f("pcs_total_risk",  om)
 
     sub("Pain Self-Efficacy Questionnaire (PSEQ)")
-    f("pseq_score", om)
+    f("pseq_score",  om)
+    f("pseq_interp", om)
 
     sub("PCL-5 (PTSD)")
     f("pcl5_score",      om)
@@ -3728,6 +3737,16 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     f("add_dudit",    om)
     txt("add_epoc",   om)
     txt("add_other",  om)
+
+    sub("Planned Outcome Measures")
+    f("plan_psfs",       om)
+    f("plan_bpi",        om)
+    f("plan_dass",       om)
+    f("plan_pcs",        om)
+    f("plan_pseq",       om)
+    f("plan_pcl5",       om)
+    f("plan_sleep",      om)
+    f("plan_additional", om)
 
     sub("Hypothesis Testing")
     for i in range(3):

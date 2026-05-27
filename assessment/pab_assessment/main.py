@@ -2,6 +2,7 @@
 
 import sys
 import asyncio
+import logging
 import time as _time
 from pathlib import Path
 from textual.app import ComposeResult, App, NoScreen
@@ -32,7 +33,7 @@ class PhysioAssessment(App):
         Binding("f7", "section_diagnosis",        show=False, priority=True),
         Binding("f8", "section_barriers",         show=False, priority=True),
         Binding("f9", "section_rx_plan",          show=False, priority=True),
-        Binding("f10", "section_scratchpad",      show=False, priority=True),
+        Binding("f10", "toggle_notes",            show=False, priority=True),
         # Subjective subsection jump — Alt+letter (priority=True overrides TextArea)
         Binding("alt+s", "sub_symptoms",             show=False, priority=True),
         Binding("alt+h", "sub_history",              show=False, priority=True),
@@ -156,7 +157,13 @@ class PhysioAssessment(App):
     def action_section_diagnosis(self):  self._goto_section("06_diagnosis")
     def action_section_barriers(self):   self._goto_section("07_barriers")
     def action_section_rx_plan(self):    self._goto_section("08_rx_plan")
-    def action_section_scratchpad(self): self._goto_section("scratchpad")
+    def action_toggle_notes(self) -> None:
+        try:
+            from .tui import PhysioAssessmentTUI
+            tui = self.query_one(PhysioAssessmentTUI)
+            tui.action_toggle_notes()
+        except Exception:
+            pass
 
     # ------------------------------------------------------------------
     # Subjective subsection jump (Alt+S/H/F/M/A/W/E/B/P/R) — global
@@ -182,6 +189,12 @@ class PhysioAssessment(App):
 
 def main():
     """Entry point — accepts optional --session <path> argument."""
+    logging.basicConfig(
+        level=logging.DEBUG,
+        filename="/tmp/pab.log",
+        filemode="w",
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+    )
     session_path = ""
     args = sys.argv[1:]
     for i, arg in enumerate(args):

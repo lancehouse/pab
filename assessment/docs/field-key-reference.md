@@ -193,8 +193,7 @@ dynamically by the search index. They have IDs beginning with `rf_`, `cvd_`,
 
 | Key | Description |
 |---|---|
-| `psfs_score` | PSFS total score |
-| `psfs_act_1` – `psfs_act_5` | PSFS activities 1–5 |
+| `psfs_act_1` – `psfs_act_3` | PSFS activities 1–3 |
 | `bpi_activity` | BPI: Activity interference |
 | `bpi_mood` | BPI: Mood interference |
 | `bpi_walking` | BPI: Walking interference |
@@ -210,11 +209,27 @@ dynamically by the search index. They have IDs beginning with `rf_`, `cvd_`,
 | `pcs_help_score` | PCS: Helplessness |
 | `pcs_total_score` | PCS: Total score |
 | `pseq_score` | PSEQ score |
+| `pseq_interp` | PSEQ interpretation (Low/Moderate/High) |
 | `pcl5_score` | PCL-5 score |
 | `pcl5_action` | PCL-5 — action taken |
 | `isi_score` | ISI (Insomnia Severity Index) score |
 | `pbas_score` | PBAS score |
+| `add_audit` | AUDIT administered (bool) |
+| `add_dudit` | DUDIT administered (bool) |
 | `add_epoc` | EPOC / additional measures notes |
+| `add_other` | Other additional measures notes |
+| `plan_psfs` | Intent to use PSFS (bool) |
+| `plan_bpi` | Intent to use BPI (bool) |
+| `plan_dass` | Intent to use DASS-21 (bool) |
+| `plan_pcs` | Intent to use PCS (bool) |
+| `plan_pseq` | Intent to use PSEQ (bool) |
+| `plan_pcl5` | Intent to use PCL-5 (bool) |
+| `plan_sleep` | Intent to use sleep measures (bool) |
+| `plan_additional` | Intent to use additional measures (bool) |
+| `hyp_0_measure` – `hyp_2_measure` | Hypothesis test measure name |
+| `hyp_0_baseline` – `hyp_2_baseline` | Hypothesis test baseline value |
+| `hyp_0_interval` – `hyp_2_interval` | Hypothesis test interval |
+| `hyp_0_rationale` – `hyp_2_rationale` | Hypothesis test rationale |
 
 ---
 

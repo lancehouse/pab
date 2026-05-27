@@ -9,7 +9,7 @@ from pathlib import Path
 from textual.app import ComposeResult, on
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
 from textual.message import Message
-from textual.widgets import Button, Label, Static
+from textual.widgets import Button, Label, Static, TextArea
 
 from .sections.consent import ConsentSection
 from .sections.subjective import SubjectiveSection
@@ -19,9 +19,9 @@ from .sections.outcome_measures import OutcomeMeasuresSection
 from .sections.diagnosis import DiagnosisSection
 from .sections.barriers import BarriersSection
 from .sections.rx_plan import RxPlanSection
-from .sections.scratchpad import ScratchpadSection
-from .objective.objective_view import ObjectiveAssessmentView
+from .objective.objective_view import ObjectiveAssessmentView, RegionTopbar
 from .objective.kb_panel import KBPanel
+from .sections.regional_differential import RequestKBEntry
 from .storage import (
     save_all_sections,
     save_raw_report,
@@ -34,6 +34,46 @@ from .storage import (
 
 
 logger = logging.getLogger(__name__)
+
+
+class NotesOverlay(Vertical):
+    """Bottom quick-notes panel, toggled with Ctrl+N. Fits within content_column."""
+
+    class Changed(Message):
+        pass
+
+    DEFAULT_CSS = """
+    NotesOverlay {
+        height: 10;
+        width: 100%;
+        display: none;
+        border-top: thick $primary;
+    }
+    NotesOverlay TextArea {
+        height: 1fr;
+        border: none;
+        padding: 0;
+    }
+    """
+
+    def compose(self) -> ComposeResult:
+        yield TextArea(id="notes_textarea")
+
+    def on_text_area_changed(self, event: TextArea.Changed) -> None:
+        self.post_message(self.Changed())
+
+    @property
+    def text(self) -> str:
+        try:
+            return self.query_one("#notes_textarea", TextArea).text
+        except Exception:
+            return ""
+
+    def load_text(self, notes: str) -> None:
+        try:
+            self.query_one("#notes_textarea", TextArea).load_text(notes)
+        except Exception:
+            pass
 
 
 class SectionNav(Static):
@@ -79,7 +119,6 @@ class SectionNav(Static):
         "06_diagnosis": "07 Diagnosis",
         "07_barriers": "08 Barriers",
         "08_rx_plan":  "09 Rx & Plan",
-        "scratchpad":  "📝 Notes",
     }
 
     def __init__(self, on_section_selected: callable, **kwargs):
@@ -100,7 +139,6 @@ class SectionNav(Static):
             "06_diagnosis",
             "07_barriers",
             "08_rx_plan",
-            "scratchpad",
         ]:
             label = self.SECTION_LABELS.get(section_id, section_id)
             btn = Button(label, id=f"nav_{section_id}")
@@ -162,9 +200,15 @@ class AssessmentView(Container):
         layout: horizontal;
     }
 
-    #section_content {
+    #content_column {
         width: 1fr;
         height: 100%;
+        layout: vertical;
+    }
+
+    #section_content {
+        width: 100%;
+        height: 1fr;
     }
 
     #section_content_inner {
@@ -193,7 +237,9 @@ class AssessmentView(Container):
     def compose(self) -> ComposeResult:
         """Create sidebar nav + content area."""
         yield SectionNav(on_section_selected=self._show_section, id="section_nav")
-        yield ScrollableContainer(Vertical(id="section_content_inner"), id="section_content")
+        with Vertical(id="content_column"):
+            yield ScrollableContainer(Vertical(id="section_content_inner"), id="section_content")
+            yield NotesOverlay(id="notes_overlay")
         yield ObjectiveAssessmentView(id="obj_view")
         yield KBPanel(id="kb_panel")
 
@@ -208,7 +254,6 @@ class AssessmentView(Container):
             "06_diagnosis":           DiagnosisSection(id="section_06_diagnosis"),
             "07_barriers":            BarriersSection(id="section_07_barriers"),
             "08_rx_plan":             RxPlanSection(id="section_08_rx_plan"),
-            "scratchpad":             ScratchpadSection(id="section_scratchpad"),
         }
 
         content = self.query_one("#section_content_inner", Vertical)
@@ -319,18 +364,28 @@ class AssessmentView(Container):
             if isinstance(dx_data, dict):
                 dx_section.load(dx_data)
 
-        # Load scratchpad section
+        # Load notes overlay
         sp_data = assessment.get("scratchpad", {})
-        if "scratchpad" in self.sections:
-            sp_section = self.sections["scratchpad"]
-            sp_section.session_file = session_file
-            if isinstance(sp_data, dict):
-                sp_section.load(sp_data)
+        notes_text = sp_data.get("notes", "") if isinstance(sp_data, dict) else ""
+        try:
+            self.query_one("#notes_overlay", NotesOverlay).load_text(notes_text)
+        except Exception:
+            pass
 
         # Load objective sections via ObjectiveAssessmentView
         obj_file_data = load_objective(session_file)
         if self._obj_view is not None:
             self._obj_view.load_session(session_file, obj_file_data)
+
+        # Push active regions and test data to section 05 regional panels
+        section_05 = self.sections.get("04_pain_classification")
+        if section_05:
+            obj_assessment = obj_file_data.get("assessment", {})
+            obj_regions = obj_assessment.get("active_regions", [])
+            section_05.set_active_regions(obj_regions)
+            for rid in obj_regions:
+                tests = obj_assessment.get(rid, {}).get("special", {})
+                section_05.set_region_test_data(rid, tests)
 
         # Update nav indicators and medical tab color
         self._refresh_nav_indicators(nav_data)
@@ -343,12 +398,16 @@ class AssessmentView(Container):
             return
 
         # Any assessment F-key while in objective mode exits it first
+        coming_from_objective = self._in_objective_mode
         if self._in_objective_mode:
             self._exit_objective_mode_silent()
 
         self._last_assessment_section_id = section_id
 
-        if section_id == self.active_section_id:
+        # Skip redraw only when staying within assessment mode on the same section.
+        # If we just exited objective mode, active_section_id was never updated while
+        # there, so the guard would incorrectly suppress the show() call.
+        if not coming_from_objective and section_id == self.active_section_id:
             return
 
         if self.active_section_id == "03_medical":
@@ -401,13 +460,13 @@ class AssessmentView(Container):
 
         self._in_objective_mode = True
 
-        # Hide assessment sidebar + content
+        # Hide assessment sidebar + content column (includes notes overlay)
         current = self.sections.get(self.active_section_id)
         if current:
             current.display = False
         try:
             self.query_one("#section_nav", SectionNav).display = False
-            self.query_one("#section_content", ScrollableContainer).display = False
+            self.query_one("#content_column", Vertical).display = False
         except Exception:
             pass
         try:
@@ -426,7 +485,7 @@ class AssessmentView(Container):
             self._obj_view.display = False
         try:
             self.query_one("#section_nav", SectionNav).display = True
-            self.query_one("#section_content", ScrollableContainer).display = True
+            self.query_one("#content_column", Vertical).display = True
         except Exception:
             pass
 
@@ -493,7 +552,6 @@ class AssessmentView(Container):
             ("06_diagnosis",         "diagnosis"),
             ("07_barriers",          "barriers"),
             ("08_rx_plan",           "rx_plan"),
-            ("scratchpad",           "scratchpad"),
         ]
 
         assessment_data: dict = {}
@@ -504,8 +562,14 @@ class AssessmentView(Container):
             if section is None:
                 continue
             assessment_data[json_key] = section.collect()
-            if section_id != "scratchpad":
-                sections_complete[section_id] = section.is_complete()
+            sections_complete[section_id] = section.is_complete()
+
+        # Notes overlay — saved under the legacy "scratchpad" key for backward compat
+        try:
+            notes_text = self.query_one("#notes_overlay", NotesOverlay).text
+        except Exception:
+            notes_text = ""
+        assessment_data["scratchpad"] = {"notes": notes_text}
 
         save_all_sections(self.session_file, assessment_data, sections_complete)
         # Objective sections save themselves via ObjectiveAssessmentView autosave.
@@ -531,12 +595,51 @@ class AssessmentView(Container):
     @on(ObjectiveAssessmentView.SaveStateChanged)
     def _on_obj_save_state(self, event: ObjectiveAssessmentView.SaveStateChanged) -> None:
         self.post_message(self.SaveStateChanged(event.state))
+        if event.state == "saved":
+            self._push_region_tests_to_section05()
+
+    @on(RegionTopbar.RegionToggled)
+    def _on_region_topbar_toggled_05(self, event: RegionTopbar.RegionToggled) -> None:
+        logger.debug("RDP broker: RegionToggled %s active=%s", event.region_id, event.active)
+        section_05 = self.sections.get("04_pain_classification")
+        if section_05 and self._obj_view:
+            active = list(self._obj_view._active_regions)
+            logger.debug("RDP broker: calling set_active_regions(%s)", active)
+            section_05.set_active_regions(active)
+            self._push_region_tests_to_section05()
+        else:
+            logger.debug("RDP broker: skipped — section_05=%s _obj_view=%s",
+                         section_05, self._obj_view)
+
+    def _push_region_tests_to_section05(self) -> None:
+        section_05 = self.sections.get("04_pain_classification")
+        if not section_05 or not self.session_file:
+            return
+        try:
+            obj = load_objective(self.session_file).get("assessment", {})
+            active = obj.get("active_regions", [])
+            logger.debug("RDP push: active_regions from file=%s", active)
+            for rid in active:
+                tests = obj.get(rid, {}).get("special", {})
+                logger.debug("RDP push: %s tests sample=%s", rid, dict(list(tests.items())[:3]))
+                section_05.set_region_test_data(rid, tests)
+        except Exception as e:
+            logger.warning("Failed to push region tests to section 05: %s", e)
 
     class SaveStateChanged(Message):
         """Posted when save state changes: 'pending', 'saving', or 'saved'."""
         def __init__(self, state: str) -> None:
             super().__init__()
             self.state = state
+
+    @on(RequestKBEntry)
+    def _on_request_kb_entry(self, event: RequestKBEntry) -> None:
+        try:
+            kb = self.query_one("#kb_panel", KBPanel)
+            kb.update(event.region_id, event.stem)
+            kb.display = True
+        except Exception:
+            pass
 
     def on_consent_section_field_changed(self) -> None:
         self._schedule_save()
@@ -563,7 +666,7 @@ class AssessmentView(Container):
     def on_rx_plan_section_field_changed(self) -> None:
         self._schedule_save()
 
-    def on_scratchpad_section_field_changed(self) -> None:
+    def on_notes_overlay_changed(self) -> None:
         self._schedule_save()
 
     def on_active_movement_section_field_changed(self) -> None:

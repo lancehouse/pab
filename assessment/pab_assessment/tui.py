@@ -4,7 +4,8 @@ Physiotherapy Assessment TUI using Textual framework.
 Integrates with GTK body chart via session JSON file watcher.
 Ctrl+B  — focus body chart (signal file → GTK raises its own window)
 Ctrl+E  — export session report to Markdown (full)
-Ctrl+R  — save + regenerate clean report + view as formatted markdown
+Ctrl+R  — report view  |  Ctrl+K — toggle KB panel
+Ctrl+N  — toggle bottom notes overlay
 Ctrl+S  — manual save
 Ctrl+L  — return to session list
 """
@@ -35,7 +36,7 @@ from .storage import (
     read_gtk_pid, read_tui_socket, write_focus_signal, export_session_report,
     save_raw_report,
 )
-from .assessment_view import AssessmentView
+from .assessment_view import AssessmentView, NotesOverlay
 
 
 
@@ -452,8 +453,8 @@ class PhysioAssessmentTUI(Container):
         Binding("ctrl+b", "open_bodychart","Body Chart", show=True),
         Binding("ctrl+u", "reload_chart",  "Reload Chart", show=True),
         Binding("ctrl+e", "export",        "Export MD",  show=True),
-        Binding("ctrl+r", "view_report",   "Report",     show=True),
-        Binding("ctrl+n", "scratchpad",    "Notes",      show=True),
+        Binding("ctrl+r", "view_report",     "Report",     show=True,  priority=True),
+        Binding("ctrl+n", "toggle_notes",  "Notes",      show=True,  priority=True),
         Binding("ctrl+k", "toggle_kb",     "KB",         show=True,  priority=True),
         Binding("ctrl+f", "search",        "Search",     show=True,  priority=True),
     ]
@@ -783,16 +784,27 @@ class PhysioAssessmentTUI(Container):
 
         asyncio.create_task(_save_then_show())
 
-    def action_scratchpad(self) -> None:
-        """Ctrl+N — jump to the scratchpad section and place cursor at end."""
-        if not self.current_session_file:
-            self._show_status("No session loaded")
-            return
-        assessment_view = self.query_one("#assessment_view", AssessmentView)
-        assessment_view._show_section("scratchpad")
-        sp = assessment_view.sections.get("scratchpad")
-        if sp:
-            sp.focus_end()
+    def action_toggle_notes(self) -> None:
+        """Ctrl+N — toggle the bottom notes overlay."""
+        try:
+            av = self.query_one("#assessment_view", AssessmentView)
+            overlay = av.query_one(NotesOverlay)
+            if overlay.display:
+                overlay.display = False
+                # Return focus to active section so hotkeys work immediately
+                def _refocus():
+                    try:
+                        section = av.sections.get(av.active_section_id)
+                        if section:
+                            section.focus_first_field()
+                    except Exception:
+                        self.set_focus(None)
+                self.call_after_refresh(_refocus)
+            else:
+                overlay.display = True
+                overlay.call_after_refresh(lambda: overlay.query_one(TextArea).focus())
+        except Exception:
+            pass
 
     def action_toggle_kb(self) -> None:
         """Ctrl+K — toggle KB panel (global; panel lives inside objective view)."""

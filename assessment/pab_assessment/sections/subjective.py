@@ -14,8 +14,8 @@ from ..yaml_subsection import YamlSubsection
 
 _SLEEP_YAML = Path(__file__).resolve().parent / "yaml" / "subj_sleep_pilot.yaml"
 
-# Must match GTK MAX_NOTES
-MAX_NOTE_SLOTS = 10
+_FULL_SLOTS     = 3   # slots 0-2: full 4-field layout
+_OVERFLOW_SLOTS = 2   # slots 3-4: loc+nat only, labelled "Misc symptoms (N)"
 
 
 class SubjectiveSection(BaseSection):
@@ -28,9 +28,8 @@ class SubjectiveSection(BaseSection):
 
     Alt+S/H/F/M/A/W/L/B/P/R jump to subsections (active when this tab is showing).
 
-    Per-note slots (note_slot_0 … note_slot_9) are pre-composed and hidden;
-    load() shows the relevant ones and populates them from body-chart prefill +
-    previously saved clinician edits.
+    Per-note slots are lazy-mounted by _rebuild_note_slots() on load.
+    Slots 0-2: full 4-field layout. Slots 3+: loc+nat only, labelled "Misc symptoms (N)".
     """
 
     DEFAULT_CSS = """
@@ -101,7 +100,7 @@ class SubjectiveSection(BaseSection):
         margin: 0 0 0 0;
     }
 
-    /* Per-note slots — hidden until load() reveals them */
+    /* Per-note slots — hidden until _rebuild_note_slots() reveals them */
     .note_slot {
         width: 100%;
         height: auto;
@@ -155,9 +154,9 @@ class SubjectiveSection(BaseSection):
             yield CheckButton("Body chart completed", id="body_chart_completed",
                               classes="solo_btn")
 
-            # Pre-compose all note slots (hidden via CSS).
-            # load() reveals and populates only those matching the body chart.
-            for i in range(MAX_NOTE_SLOTS):
+            # Pre-compose 3 full slots + 2 overflow slots (hidden via CSS).
+            # _rebuild_note_slots() shows the relevant ones and populates them.
+            for i in range(_FULL_SLOTS):
                 with Vertical(id=f"note_slot_{i}", classes="note_slot"):
                     yield Label("", id=f"note_label_{i}", classes="note_header")
                     with Horizontal(classes="field_row"):
@@ -172,6 +171,15 @@ class SubjectiveSection(BaseSection):
                     with Horizontal(classes="field_row"):
                         yield Label("Easing\nfactors:")
                         yield TextArea(id=f"note_{i}_ease", language="plain")
+            for i in range(_FULL_SLOTS, _FULL_SLOTS + _OVERFLOW_SLOTS):
+                with Vertical(id=f"note_slot_{i}", classes="note_slot"):
+                    yield Label("", id=f"note_label_{i}", classes="misc_header")
+                    with Horizontal(classes="field_row"):
+                        yield Label("Location &\ndistribution:")
+                        yield TextArea(id=f"note_{i}_loc", language="plain")
+                    with Horizontal(classes="field_row"):
+                        yield Label("Nature:")
+                        yield TextArea(id=f"note_{i}_nat", language="plain")
 
             # Misc slot — clusters with no nearby note
             with Vertical(id="misc_slot", classes="note_slot"):
@@ -368,8 +376,8 @@ class SubjectiveSection(BaseSection):
                 live_note_fields[str(sid)] = {
                     "loc":  self.query_one(f"#note_{i}_loc",  TextArea).text,
                     "nat":  self.query_one(f"#note_{i}_nat",  TextArea).text,
-                    "agg":  self.query_one(f"#note_{i}_agg",  TextArea).text,
-                    "ease": self.query_one(f"#note_{i}_ease", TextArea).text,
+                    "agg":  self.query_one(f"#note_{i}_agg",  TextArea).text if i < _FULL_SLOTS else "",
+                    "ease": self.query_one(f"#note_{i}_ease", TextArea).text if i < _FULL_SLOTS else "",
                 }
             except Exception:
                 pass
@@ -395,49 +403,43 @@ class SubjectiveSection(BaseSection):
         saved_note_fields: data["note_fields"] from _assessment.json (clinician edits)
         prefill:           output of build_prefill() from the session JSON
         """
-        # Reset all slots to hidden
-        for i in range(MAX_NOTE_SLOTS):
+        total_slots = _FULL_SLOTS + _OVERFLOW_SLOTS
+        for i in range(total_slots):
             self.query_one(f"#note_slot_{i}").display = False
         self.query_one("#misc_slot").display = False
         self._slot_to_stable_id.clear()
 
         notes = prefill.get("notes", [])
 
-        for i, note in enumerate(notes[:MAX_NOTE_SLOTS]):
+        for i, note in enumerate(notes[:total_slots]):
             sid   = note["stable_id"]
             num   = note["number"]
             saved = saved_note_fields.get(str(sid), {})
 
             self._slot_to_stable_id[i] = sid
-
-            slot = self.query_one(f"#note_slot_{i}")
-            slot.display = True
+            self.query_one(f"#note_slot_{i}").display = True
 
             region = note["location_distribution"] or f"Note {num}"
-            self.query_one(f"#note_label_{i}", Label).update(
-                f"Note {num} — {region}"
-            )
+            loc  = saved.get("loc")  or note["location_distribution"] or ""
+            nat  = saved.get("nat")  or note["nature"] or ""
 
-            # Saved clinician text takes priority; fall back to body-chart prefill
-            loc  = saved.get("loc")  or note["location_distribution"]
-            nat  = saved.get("nat")  or note["nature"]
-            agg  = saved.get("agg",  "")
-            ease = saved.get("ease", "")
+            if i < _FULL_SLOTS:
+                self.query_one(f"#note_label_{i}", Label).update(f"Note {num} — {region}")
+                agg  = saved.get("agg",  "")
+                ease = saved.get("ease", "")
+                ta = self.query_one(f"#note_{i}_agg", TextArea)
+                if ta.text != agg:   ta.text = agg
+                ta = self.query_one(f"#note_{i}_ease", TextArea)
+                if ta.text != ease:  ta.text = ease
+            else:
+                self.query_one(f"#note_label_{i}", Label).update(f"Misc symptoms ({num})")
 
             ta = self.query_one(f"#note_{i}_loc", TextArea)
-            if ta.text != loc:
-                ta.text = loc
+            if ta.text != loc:  ta.text = loc
             ta = self.query_one(f"#note_{i}_nat", TextArea)
-            if ta.text != nat:
-                ta.text = nat
-            ta = self.query_one(f"#note_{i}_agg", TextArea)
-            if ta.text != agg:
-                ta.text = agg
-            ta = self.query_one(f"#note_{i}_ease", TextArea)
-            if ta.text != ease:
-                ta.text = ease
+            if ta.text != nat:  ta.text = nat
 
-        # Misc slot
+        # Misc slot — unlabelled body-chart clusters (no note marker placed)
         misc      = prefill.get("misc", {})
         misc_loc  = saved_note_fields.get("misc_loc") or misc.get("location_distribution", "")
         misc_nat  = saved_note_fields.get("misc_nat") or misc.get("nature", "")
@@ -527,8 +529,8 @@ class SubjectiveSection(BaseSection):
                 note_fields[str(sid)] = {
                     "loc":  self.query_one(f"#note_{i}_loc",  TextArea).text,
                     "nat":  self.query_one(f"#note_{i}_nat",  TextArea).text,
-                    "agg":  self.query_one(f"#note_{i}_agg",  TextArea).text,
-                    "ease": self.query_one(f"#note_{i}_ease", TextArea).text,
+                    "agg":  self.query_one(f"#note_{i}_agg",  TextArea).text if i < _FULL_SLOTS else "",
+                    "ease": self.query_one(f"#note_{i}_ease", TextArea).text if i < _FULL_SLOTS else "",
                 }
             except Exception:
                 pass
