@@ -376,9 +376,8 @@ class OutcomeBlock(Vertical):
 
 def _mount_psfs(body: Vertical) -> None:
     body.mount(
-        Label("Score /80:"),
         Horizontal(
-            Input(id="psfs_score", placeholder="/80", classes="om_score"),
+            Input(id="psfs_score", placeholder="score", classes="om_score"),
             CycleField("psfs_interp", _PSFS_INTERP_OPTIONS),
             classes="om_row",
         ),
