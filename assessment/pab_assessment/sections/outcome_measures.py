@@ -24,10 +24,15 @@ _DASS_OPTIONS = [
     ("Extremely severe", "error"),
 ]
 
-_PCS_RISK_OPTIONS = [
-    ("Low",       "success"),
-    ("Moderate",  "warning"),
-    ("High risk", "error"),
+_PCS_TOTAL_OPTIONS = [
+    ("Mild (<20)",  "success"),
+    ("High",        "warning"),
+    ("Severe (>30)", "error"),
+]
+
+_PCS_SUB_OPTIONS = [
+    ("Normal", "success"),
+    ("Clinical", "error"),
 ]
 
 _PCL5_OPTIONS = [
@@ -47,9 +52,10 @@ _PBAS_OPTIONS = [
 ]
 
 _PSEQ_OPTIONS = [
-    ("Low (<20)",  "error"),
-    ("Moderate",   "warning"),
-    ("High (≥40)", "success"),
+    ("Severe (<20)",   "error"),
+    ("Moderate (20–30)", "warning"),
+    ("Mild (31–40)",   "primary"),
+    ("Minimal (>40)",  "success"),
 ]
 
 # ---------------------------------------------------------------------------
@@ -81,9 +87,21 @@ def _interp_dass_str(score: int) -> str:
 
 
 def _interp_pcs_total(score: int) -> str:
-    if score < 20: return "Low"
-    if score < 30: return "Moderate"
-    return "High risk"
+    if score < 20: return "Mild (<20)"
+    if score <= 30: return "High"
+    return "Severe (>30)"
+
+
+def _interp_pcs_rum(score: int) -> str:
+    return "Clinical" if score >= 11 else "Normal"
+
+
+def _interp_pcs_mag(score: int) -> str:
+    return "Clinical" if score >= 5 else "Normal"
+
+
+def _interp_pcs_help(score: int) -> str:
+    return "Clinical" if score >= 13 else "Normal"
 
 
 def _interp_pcl5(score: int) -> str:
@@ -95,9 +113,10 @@ def _interp_isi(score: int) -> str:
 
 
 def _interp_pseq(score: int) -> str:
-    if score < 20: return "Low (<20)"
-    if score < 40: return "Moderate"
-    return "High (≥40)"
+    if score < 20: return "Severe (<20)"
+    if score <= 30: return "Moderate (20–30)"
+    if score <= 40: return "Mild (31–40)"
+    return "Minimal (>40)"
 
 
 # ---------------------------------------------------------------------------
@@ -440,16 +459,16 @@ def _mount_pcs(body: Vertical) -> None:
         Horizontal(
             Label("Rum:", classes="inline_lbl"),
             Input(id="pcs_rum_score",  placeholder="##", classes="inline_score"),
-            CycleField("pcs_rum_risk",  _PCS_RISK_OPTIONS),
+            CycleField("pcs_rum_risk",  _PCS_SUB_OPTIONS),
             Label("Mag:", classes="inline_lbl"),
             Input(id="pcs_mag_score",  placeholder="##", classes="inline_score"),
-            CycleField("pcs_mag_risk",  _PCS_RISK_OPTIONS),
+            CycleField("pcs_mag_risk",  _PCS_SUB_OPTIONS),
             Label("Help:", classes="inline_lbl"),
             Input(id="pcs_help_score", placeholder="##", classes="inline_score"),
-            CycleField("pcs_help_risk", _PCS_RISK_OPTIONS),
+            CycleField("pcs_help_risk", _PCS_SUB_OPTIONS),
             Label("Total:", classes="inline_lbl"),
             Input(id="pcs_total_score", placeholder="##", classes="inline_score"),
-            CycleField("pcs_total_risk", _PCS_RISK_OPTIONS),
+            CycleField("pcs_total_risk", _PCS_TOTAL_OPTIONS),
             classes="inline_row",
         ),
         Static("", id="om_pcs_alert", classes="om_alert"),
@@ -649,6 +668,9 @@ class OutcomeMeasuresSection(BaseSection):
             ("dass_dep_score",  "dass_dep_interp", _interp_dass_dep),
             ("dass_anx_score",  "dass_anx_interp", _interp_dass_anx),
             ("dass_str_score",  "dass_str_interp", _interp_dass_str),
+            ("pcs_rum_score",   "pcs_rum_risk",    _interp_pcs_rum),
+            ("pcs_mag_score",   "pcs_mag_risk",    _interp_pcs_mag),
+            ("pcs_help_score",  "pcs_help_risk",   _interp_pcs_help),
             ("pcs_total_score", "pcs_total_risk",  _interp_pcs_total),
             ("pcl5_score",      "pcl5_interp",     _interp_pcl5),
             ("isi_score",       "isi_interp",      _interp_isi),
@@ -679,7 +701,7 @@ class OutcomeMeasuresSection(BaseSection):
 
     def _update_alerts(self) -> None:
         _checks = [
-            ("pcs_total_score", 30, "om_pcs_alert",  "⚠ PCS total ≥30 — high catastrophising: consider psychology referral"),
+            ("pcs_total_score", 20, "om_pcs_alert",  "⚠ PCS ≥20 — clinically significant catastrophising: consider psychology referral"),
             ("pcl5_score",      33, "om_pcl5_alert", "⚠ PCL-5 ≥33 — PTSD likely: document action above"),
             ("isi_score",       10, "om_isi_alert",  "⚠ ISI ≥10 — clinically significant insomnia"),
         ]

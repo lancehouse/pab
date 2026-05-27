@@ -4,7 +4,7 @@ Physiotherapy Assessment TUI using Textual framework.
 Integrates with GTK body chart via session JSON file watcher.
 Ctrl+B  — focus body chart (signal file → GTK raises its own window)
 Ctrl+E  — export session report to Markdown (full)
-Ctrl+R  — toggle KB panel
+Ctrl+R  — report view  |  Ctrl+K — toggle KB panel
 Ctrl+N  — toggle bottom notes overlay
 Ctrl+S  — manual save
 Ctrl+L  — return to session list
@@ -453,9 +453,9 @@ class PhysioAssessmentTUI(Container):
         Binding("ctrl+b", "open_bodychart","Body Chart", show=True),
         Binding("ctrl+u", "reload_chart",  "Reload Chart", show=True),
         Binding("ctrl+e", "export",        "Export MD",  show=True),
-        Binding("ctrl+r", "toggle_kb",      "KB",         show=True,  priority=True),
+        Binding("ctrl+r", "view_report",     "Report",     show=True,  priority=True),
         Binding("ctrl+n", "toggle_notes",  "Notes",      show=True,  priority=True),
-        Binding("ctrl+k", "toggle_kb",     "KB",         show=False, priority=True),
+        Binding("ctrl+k", "toggle_kb",     "KB",         show=True,  priority=True),
         Binding("ctrl+f", "search",        "Search",     show=True,  priority=True),
     ]
 
@@ -791,6 +791,15 @@ class PhysioAssessmentTUI(Container):
             overlay = av.query_one(NotesOverlay)
             if overlay.display:
                 overlay.display = False
+                # Return focus to active section so hotkeys work immediately
+                def _refocus():
+                    try:
+                        section = av.sections.get(av.active_section_id)
+                        if section:
+                            section.focus_first_field()
+                    except Exception:
+                        self.set_focus(None)
+                self.call_after_refresh(_refocus)
             else:
                 overlay.display = True
                 overlay.call_after_refresh(lambda: overlay.query_one(TextArea).focus())
