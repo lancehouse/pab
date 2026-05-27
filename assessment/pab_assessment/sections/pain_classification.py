@@ -97,22 +97,15 @@ class PainClassificationSection(BaseSection):
     .subgroup_header { color: $text-muted; margin-top: 0; margin-bottom: 0; text-style: italic; }
     .reference_note  { color: $text-muted; margin-bottom: 0; }
 
-    /* Two-column button rows */
     .btn_row { height: auto; width: 100%; margin-bottom: 0; }
-    .btn_row CheckButton { width: 1fr; height: 4; min-width: 0; margin: 0 1 0 0; }
-    .btn_row CheckButton:last-of-type { margin: 0; }
 
-    /* Full-width solo button */
-    .solo_btn { width: 100%; height: 4; margin-bottom: 0; }
+    CheckButton { width: auto; height: 3; min-width: 16; margin: 0 1 0 0; }
 
     /* Label + field row */
     .field_row { height: auto; width: 100%; margin: 0; padding: 0; }
     .field_row Label { width: 28; height: auto; padding: 0 1 0 0; }
     .field_row Input { width: 1fr; height: auto; padding: 0 1; }
     .field_row TextArea { width: 1fr; height: auto; min-height: 2; padding: 0 1; }
-
-    /* Standalone CheckButton (not in a row) */
-    CheckButton { width: auto; height: 3; min-width: 18; margin: 0 1 0 0; }
 
     TextArea { height: auto; min-height: 2; padding: 0 1; }
     Input    { height: auto; padding: 0 1; }
