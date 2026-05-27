@@ -2123,13 +2123,9 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     sec("Section 5: Outcome Measures")
 
     sub("Patient Specific Functional Scale (PSFS)")
-    f("psfs_score",  om)
-    f("psfs_interp", om)
     f("psfs_act_1",  om)
     f("psfs_act_2",  om)
     f("psfs_act_3",  om)
-    f("psfs_act_4",  om)
-    f("psfs_act_5",  om)
 
     sub("Brief Pain Inventory (BPI) — interference /10")
     f("bpi_activity",  om)
@@ -2863,13 +2859,9 @@ LABELS: dict[str, str] = {
     "summary_contributing":             "Contributing pain types",
     "summary_reasoning":                "Pain classification reasoning",
     # ── 05 Outcome Measures ───────────────────────────────────────────────────
-    "psfs_score":                       "PSFS score",
     "psfs_act_1":                       "PSFS activity 1",
     "psfs_act_2":                       "PSFS activity 2",
     "psfs_act_3":                       "PSFS activity 3",
-    "psfs_act_4":                       "PSFS activity 4",
-    "psfs_act_5":                       "PSFS activity 5",
-    "psfs_interp":                      "PSFS interpretation",
     "bpi_activity":                     "BPI: Activity interference",
     "bpi_mood":                         "BPI: Mood interference",
     "bpi_walking":                      "BPI: Walking interference",
@@ -3692,13 +3684,9 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     sec("SECTION 5: OUTCOME MEASURES")
 
     sub("Patient Specific Functional Scale (PSFS)")
-    f("psfs_score",  om)
-    f("psfs_interp", om)
     f("psfs_act_1",  om)
     f("psfs_act_2",  om)
     f("psfs_act_3",  om)
-    f("psfs_act_4",  om)
-    f("psfs_act_5",  om)
 
     sub("Brief Pain Inventory (BPI) — interference /10")
     f("bpi_activity",  om)

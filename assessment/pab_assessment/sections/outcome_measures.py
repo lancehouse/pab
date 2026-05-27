@@ -46,13 +46,6 @@ _PBAS_OPTIONS = [
     ("Severe",   "error"),
 ]
 
-_PSFS_INTERP_OPTIONS = [
-    ("Mild",     "success"),
-    ("Moderate", "warning"),
-    ("Marked",   "error"),
-]
-
-
 # ---------------------------------------------------------------------------
 # Auto-interpretation functions
 # ---------------------------------------------------------------------------
@@ -190,6 +183,7 @@ class HypRow(Horizontal):
     """One row in the hypothesis testing table."""
 
     def __init__(self, row_idx: int, **kwargs):
+        kwargs.setdefault("id", f"hyp_row_{row_idx}")
         super().__init__(**kwargs)
         self._row_idx = row_idx
 
@@ -376,88 +370,75 @@ class OutcomeBlock(Vertical):
 
 def _mount_psfs(body: Vertical) -> None:
     body.mount(
-        Horizontal(
-            Input(id="psfs_score", placeholder="score", classes="om_score"),
-            CycleField("psfs_interp", _PSFS_INTERP_OPTIONS),
-            classes="om_row",
-        ),
-        Label("Activities listed:"),
-        Input(id="psfs_act_1", placeholder="1."),
-        Input(id="psfs_act_2", placeholder="2."),
-        Input(id="psfs_act_3", placeholder="3."),
-        Input(id="psfs_act_4", placeholder="4."),
-        Input(id="psfs_act_5", placeholder="5."),
+        Input(id="psfs_act_1", placeholder="Activity 1"),
+        Input(id="psfs_act_2", placeholder="Activity 2"),
+        Input(id="psfs_act_3", placeholder="Activity 3"),
     )
 
 
 def _mount_bpi(body: Vertical) -> None:
+    # 2-column layout, left-then-right tab order preserved:
+    # activity→mood, walking→work, relations→sleep, enjoyment
     body.mount(
-        Label("Scores /10 — higher = greater impairment due to pain", classes="reference_note"),
-        Horizontal(Label("General activity:", classes="bpi_label"),
-                   Input(id="bpi_activity", placeholder="/10", classes="bpi_score"),
-                   classes="bpi_row"),
-        Horizontal(Label("Mood:", classes="bpi_label"),
-                   Input(id="bpi_mood", placeholder="/10", classes="bpi_score"),
-                   classes="bpi_row"),
-        Horizontal(Label("Walking ability:", classes="bpi_label"),
-                   Input(id="bpi_walking", placeholder="/10", classes="bpi_score"),
-                   classes="bpi_row"),
-        Horizontal(Label("Normal work:", classes="bpi_label"),
-                   Input(id="bpi_work", placeholder="/10", classes="bpi_score"),
-                   classes="bpi_row"),
-        Horizontal(Label("Relations with other people:", classes="bpi_label"),
-                   Input(id="bpi_relations", placeholder="/10", classes="bpi_score"),
-                   classes="bpi_row"),
-        Horizontal(Label("Sleep:", classes="bpi_label"),
-                   Input(id="bpi_sleep", placeholder="/10", classes="bpi_score"),
-                   classes="bpi_row"),
-        Horizontal(Label("Enjoyment of life:", classes="bpi_label"),
-                   Input(id="bpi_enjoyment", placeholder="/10", classes="bpi_score"),
-                   classes="bpi_row"),
+        Label("/10 — higher = greater impairment", classes="reference_note"),
+        Horizontal(
+            Label("Activity:", classes="bpi_lbl2"), Input(id="bpi_activity",  placeholder="/10", classes="bpi_sc2"),
+            Label("Mood:",     classes="bpi_lbl2"), Input(id="bpi_mood",      placeholder="/10", classes="bpi_sc2"),
+            classes="bpi_row2",
+        ),
+        Horizontal(
+            Label("Walking:", classes="bpi_lbl2"), Input(id="bpi_walking",   placeholder="/10", classes="bpi_sc2"),
+            Label("Work:",    classes="bpi_lbl2"), Input(id="bpi_work",      placeholder="/10", classes="bpi_sc2"),
+            classes="bpi_row2",
+        ),
+        Horizontal(
+            Label("Relations:", classes="bpi_lbl2"), Input(id="bpi_relations", placeholder="/10", classes="bpi_sc2"),
+            Label("Sleep:",     classes="bpi_lbl2"), Input(id="bpi_sleep",     placeholder="/10", classes="bpi_sc2"),
+            classes="bpi_row2",
+        ),
+        Horizontal(
+            Label("Enjoyment:", classes="bpi_lbl2"), Input(id="bpi_enjoyment", placeholder="/10", classes="bpi_sc2"),
+            classes="bpi_row2",
+        ),
     )
 
 
 def _mount_dass(body: Vertical) -> None:
     body.mount(
         Static("", id="xref_om_dass", classes="xref_badge"),
-        Horizontal(Label("Depression:", classes="dass_label"),
-                   Input(id="dass_dep_score", placeholder="0–42", classes="dass_score"),
-                   CycleField("dass_dep_interp", _DASS_OPTIONS),
-                   classes="dass_row"),
-        Horizontal(Label("Anxiety:", classes="dass_label"),
-                   Input(id="dass_anx_score", placeholder="0–42", classes="dass_score"),
-                   CycleField("dass_anx_interp", _DASS_OPTIONS),
-                   classes="dass_row"),
-        Horizontal(Label("Stress:", classes="dass_label"),
-                   Input(id="dass_str_score", placeholder="0–42", classes="dass_score"),
-                   CycleField("dass_str_interp", _DASS_OPTIONS),
-                   classes="dass_row"),
+        Horizontal(
+            Label("Dep:", classes="inline_lbl"),
+            Input(id="dass_dep_score", placeholder="##", classes="inline_score"),
+            CycleField("dass_dep_interp", _DASS_OPTIONS),
+            Label("Anx:", classes="inline_lbl"),
+            Input(id="dass_anx_score", placeholder="##", classes="inline_score"),
+            CycleField("dass_anx_interp", _DASS_OPTIONS),
+            Label("Str:", classes="inline_lbl"),
+            Input(id="dass_str_score", placeholder="##", classes="inline_score"),
+            CycleField("dass_str_interp", _DASS_OPTIONS),
+            classes="inline_row",
+        ),
     )
 
 
 def _mount_pcs(body: Vertical) -> None:
     body.mount(
         Static("", id="xref_om_pcs", classes="xref_badge"),
-        Horizontal(Label("Rumination:", classes="pcs_label"),
-                   Label("/16", classes="pcs_max"),
-                   Input(id="pcs_rum_score", placeholder="0–16", classes="pcs_score"),
-                   CycleField("pcs_rum_risk", _PCS_RISK_OPTIONS),
-                   classes="pcs_row"),
-        Horizontal(Label("Magnification:", classes="pcs_label"),
-                   Label("/12", classes="pcs_max"),
-                   Input(id="pcs_mag_score", placeholder="0–12", classes="pcs_score"),
-                   CycleField("pcs_mag_risk", _PCS_RISK_OPTIONS),
-                   classes="pcs_row"),
-        Horizontal(Label("Helplessness:", classes="pcs_label"),
-                   Label("/24", classes="pcs_max"),
-                   Input(id="pcs_help_score", placeholder="0–24", classes="pcs_score"),
-                   CycleField("pcs_help_risk", _PCS_RISK_OPTIONS),
-                   classes="pcs_row"),
-        Horizontal(Label("Total:", classes="pcs_label"),
-                   Label("/52", classes="pcs_max"),
-                   Input(id="pcs_total_score", placeholder="0–52", classes="pcs_score"),
-                   CycleField("pcs_total_risk", _PCS_RISK_OPTIONS),
-                   classes="pcs_row"),
+        Horizontal(
+            Label("Rum:", classes="inline_lbl"),
+            Input(id="pcs_rum_score",  placeholder="##", classes="inline_score"),
+            CycleField("pcs_rum_risk",  _PCS_RISK_OPTIONS),
+            Label("Mag:", classes="inline_lbl"),
+            Input(id="pcs_mag_score",  placeholder="##", classes="inline_score"),
+            CycleField("pcs_mag_risk",  _PCS_RISK_OPTIONS),
+            Label("Help:", classes="inline_lbl"),
+            Input(id="pcs_help_score", placeholder="##", classes="inline_score"),
+            CycleField("pcs_help_risk", _PCS_RISK_OPTIONS),
+            Label("Total:", classes="inline_lbl"),
+            Input(id="pcs_total_score", placeholder="##", classes="inline_score"),
+            CycleField("pcs_total_risk", _PCS_RISK_OPTIONS),
+            classes="inline_row",
+        ),
         Static("", id="om_pcs_alert", classes="om_alert"),
     )
 
@@ -520,9 +501,6 @@ def _mount_additional(body: Vertical) -> None:
 # OutcomeMeasuresSection
 # ---------------------------------------------------------------------------
 
-_HYP_ROWS = 3
-
-
 class OutcomeMeasuresSection(BaseSection):
     """Outcome Measures section (core/05)."""
 
@@ -540,35 +518,32 @@ class OutcomeMeasuresSection(BaseSection):
 
     TextArea, Input { height: auto; min-height: 1; margin-bottom: 0; }
 
-    /* Compact table rows */
-    .om_row     { height: auto; margin-bottom: 0; }
-    .om_label   { width: 1fr; margin-bottom: 0; }
-    .om_score   { width: 10; margin-bottom: 0; }
+    /* OutcomeBlock header — 2 rows deep for larger click target */
+    .ob_header { min-height: 2; }
+    .ob_label  { height: 1fr; }
 
-    /* DASS */
-    .dass_row   { height: auto; margin-bottom: 0; }
-    .dass_label { width: 1fr; margin-bottom: 0; }
-    .dass_score { width: 8; margin-bottom: 0; }
+    /* Dense single-row layout (DASS, PCS) */
+    .inline_row   { height: auto; margin-bottom: 0; }
+    .inline_lbl   { width: auto; padding: 0 1; margin-bottom: 0; }
+    .inline_score { width: 5; margin-bottom: 0; }
 
-    /* PCS */
-    .pcs_row    { height: auto; margin-bottom: 0; }
-    .pcs_label  { width: 1fr; margin-bottom: 0; }
-    .pcs_max    { width: 5; color: $text-muted; margin-bottom: 0; }
-    .pcs_score  { width: 8; margin-bottom: 0; }
+    /* BPI 2-column pairs */
+    .bpi_row2  { height: auto; margin-bottom: 0; }
+    .bpi_lbl2  { width: 1fr; margin-bottom: 0; }
+    .bpi_sc2   { width: 6; margin-bottom: 0; }
 
-    /* BPI */
-    .bpi_row    { height: auto; margin-bottom: 0; }
-    .bpi_label  { width: 1fr; margin-bottom: 0; }
-    .bpi_score  { width: 8; margin-bottom: 0; }
+    /* Compact score row (PCL-5, PSEQ, Sleep) */
+    .om_row   { height: auto; margin-bottom: 0; }
+    .om_score { width: 10; margin-bottom: 0; }
 
     /* Hypothesis testing table */
-    .hyp_header_row  { height: auto; margin-bottom: 0; }
-    .hyp_header      { text-style: bold; color: $text-muted; margin-bottom: 0; }
-    .hyp_measure     { width: 2fr; }
-    .hyp_baseline    { width: 2fr; }
-    .hyp_interval    { width: 2fr; }
-    .hyp_rationale   { width: 3fr; }
-    HypRow           { height: auto; margin-bottom: 0; }
+    .hyp_header_row { height: auto; margin-bottom: 0; }
+    .hyp_header     { text-style: bold; color: $text-muted; margin-bottom: 0; }
+    .hyp_measure    { width: 2fr; }
+    .hyp_baseline   { width: 2fr; }
+    .hyp_interval   { width: 2fr; }
+    .hyp_rationale  { width: 3fr; }
+    HypRow          { height: auto; margin-bottom: 0; }
 
     /* Alert banners */
     .om_alert {
@@ -594,7 +569,7 @@ class OutcomeMeasuresSection(BaseSection):
     """
 
     # ------------------------------------------------------------------
-    # compose
+    # compose / on_mount
     # ------------------------------------------------------------------
 
     def compose(self) -> ComposeResult:
@@ -610,19 +585,19 @@ class OutcomeMeasuresSection(BaseSection):
 
         yield Label("— Measures Selected for Ongoing Hypothesis Testing —",
                     classes="subsection_header", id="om_hypothesis")
-        yield Label(
-            "Individualise questionnaire set to test your clinical hypothesis for this patient.",
-            classes="reference_note",
-        )
         with Horizontal(classes="hyp_header_row"):
             yield Label("Measure",   classes="hyp_measure hyp_header")
             yield Label("Baseline",  classes="hyp_baseline hyp_header")
             yield Label("Interval",  classes="hyp_interval hyp_header")
             yield Label("Rationale", classes="hyp_rationale hyp_header")
-        for i in range(_HYP_ROWS):
-            yield HypRow(i)
+        with Vertical(id="hyp_table"):
+            yield HypRow(0)
         yield Label("Administer questionnaires same day where possible. Score before next session.",
                     classes="reference_note")
+
+    def on_mount(self) -> None:
+        self._hyp_row_count: int = 1
+        self._hyp_pending: dict = {}
 
     # ------------------------------------------------------------------
     # Navigation
@@ -760,7 +735,7 @@ class OutcomeMeasuresSection(BaseSection):
         data = {}
         for block in self.query(OutcomeBlock):
             data.update(block.collect_data())
-        for i in range(_HYP_ROWS):
+        for i in range(self._hyp_row_count):
             for col in _HYP_COLS:
                 fid = f"hyp_{i}_{col}"
                 try:
@@ -775,23 +750,62 @@ class OutcomeMeasuresSection(BaseSection):
             om = data if isinstance(data, dict) else {}
             for block in self.query(OutcomeBlock):
                 block.store_data(om)
-            for i in range(_HYP_ROWS):
+            # Mount additional hyp rows needed for this session's data
+            max_hyp = -1
+            for k in om:
+                if k.startswith("hyp_"):
+                    parts = k.split("_")
+                    if len(parts) >= 3 and parts[1].isdigit():
+                        max_hyp = max(max_hyp, int(parts[1]))
+            if max_hyp >= self._hyp_row_count:
+                try:
+                    hyp_table = self.query_one("#hyp_table")
+                    for i in range(self._hyp_row_count, max_hyp + 1):
+                        hyp_table.mount(HypRow(i))
+                        self._hyp_row_count += 1
+                except Exception:
+                    pass
+            self._hyp_pending = {k: v for k, v in om.items() if k.startswith("hyp_")}
+        finally:
+            self._loading = False
+            self.update_cross_refs()
+        if self._hyp_pending:
+            self.call_after_refresh(self._drain_hyp)
+
+    def _drain_hyp(self) -> None:
+        self._loading = True
+        try:
+            for i in range(self._hyp_row_count):
                 for col in _HYP_COLS:
                     fid = f"hyp_{i}_{col}"
-                    if fid in om:
+                    val = self._hyp_pending.get(fid, "")
+                    if val:
                         try:
-                            self.query_one(f"#{fid}", Input).value = om[fid]
+                            self.query_one(f"#{fid}", Input).value = val
                         except Exception:
                             pass
         finally:
             self._loading = False
-            self.update_cross_refs()
+        self._hyp_pending = {}
+
+    def _maybe_add_hyp_row(self) -> None:
+        last_idx = self._hyp_row_count - 1
+        try:
+            has_content = any(
+                (self.query_one(f"#hyp_{last_idx}_{col}", Input).value or "").strip()
+                for col in _HYP_COLS
+            )
+            if has_content:
+                self.query_one("#hyp_table").mount(HypRow(self._hyp_row_count))
+                self._hyp_row_count += 1
+        except Exception:
+            pass
 
     def is_complete(self) -> bool:
         d = self.collect()
-        main_scores = ["psfs_score", "bpi_activity", "dass_dep_score",
-                       "pcs_total_score", "pseq_score", "pcl5_score", "isi_score"]
-        return any(d.get(f, "").strip() for f in main_scores if isinstance(d.get(f), str))
+        indicators = ["psfs_act_1", "bpi_activity", "dass_dep_score",
+                      "pcs_total_score", "pseq_score", "pcl5_score", "isi_score"]
+        return any(d.get(f, "").strip() for f in indicators if isinstance(d.get(f), str))
 
     # ------------------------------------------------------------------
     # Events
@@ -815,11 +829,13 @@ class OutcomeMeasuresSection(BaseSection):
     @on(CycleField.Changed)
     @on(Input.Changed, selector="Input")
     @on(TextArea.Changed, selector="TextArea")
-    def _on_field_changed(self) -> None:
+    def _on_field_changed(self, event: Message = None) -> None:
         if self._loading:
             return
         self._update_auto_interp()
         self._update_alerts()
+        if isinstance(event, Input.Changed) and getattr(event.input, "id", "").startswith("hyp_"):
+            self._maybe_add_hyp_row()
         self.post_message(self.FieldChanged())
 
     class FieldChanged(Message):

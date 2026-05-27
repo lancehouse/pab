@@ -193,8 +193,7 @@ dynamically by the search index. They have IDs beginning with `rf_`, `cvd_`,
 
 | Key | Description |
 |---|---|
-| `psfs_score` | PSFS total score |
-| `psfs_act_1` – `psfs_act_5` | PSFS activities 1–5 |
+| `psfs_act_1` – `psfs_act_3` | PSFS activities 1–3 |
 | `bpi_activity` | BPI: Activity interference |
 | `bpi_mood` | BPI: Mood interference |
 | `bpi_walking` | BPI: Walking interference |

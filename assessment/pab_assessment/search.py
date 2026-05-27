@@ -267,12 +267,9 @@ _FIELD_LABELS: dict[str, tuple[str, str | None, str]] = {
     "summary_contributing": ("04_pain_classification", "pc_summary",     "Contributing factors"),
     "summary_reasoning":    ("04_pain_classification", "pc_summary",     "Classification reasoning"),
     # 05 Outcome Measures
-    "psfs_score":    ("05_outcome_measures", "om_psfs",       "PSFS total score"),
     "psfs_act_1":    ("05_outcome_measures", "om_psfs",       "PSFS activity 1"),
     "psfs_act_2":    ("05_outcome_measures", "om_psfs",       "PSFS activity 2"),
     "psfs_act_3":    ("05_outcome_measures", "om_psfs",       "PSFS activity 3"),
-    "psfs_act_4":    ("05_outcome_measures", "om_psfs",       "PSFS activity 4"),
-    "psfs_act_5":    ("05_outcome_measures", "om_psfs",       "PSFS activity 5"),
     "bpi_activity":  ("05_outcome_measures", "om_bpi",        "BPI: Activity"),
     "bpi_mood":      ("05_outcome_measures", "om_bpi",        "BPI: Mood"),
     "bpi_walking":   ("05_outcome_measures", "om_bpi",        "BPI: Walking"),
