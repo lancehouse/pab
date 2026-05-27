@@ -22,6 +22,7 @@ from .sections.rx_plan import RxPlanSection
 from .sections.scratchpad import ScratchpadSection
 from .objective.objective_view import ObjectiveAssessmentView, RegionTopbar
 from .objective.kb_panel import KBPanel
+from .sections.regional_differential import RequestKBEntry
 from .storage import (
     save_all_sections,
     save_raw_report,
@@ -577,6 +578,15 @@ class AssessmentView(Container):
         def __init__(self, state: str) -> None:
             super().__init__()
             self.state = state
+
+    @on(RequestKBEntry)
+    def _on_request_kb_entry(self, event: RequestKBEntry) -> None:
+        try:
+            kb = self.query_one("#kb_panel", KBPanel)
+            kb.update(event.region_id, event.stem)
+            kb.display = True
+        except Exception:
+            pass
 
     def on_consent_section_field_changed(self) -> None:
         self._schedule_save()
