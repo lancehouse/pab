@@ -546,7 +546,7 @@ class OutcomeMeasuresSection(BaseSection):
     /* Dense single-row layout (DASS, PCS) */
     .inline_row   { height: auto; margin-bottom: 0; }
     .inline_lbl   { width: auto; padding: 0 1; margin-bottom: 0; }
-    .inline_score { width: 7; margin-bottom: 0; }
+    .inline_score { width: 10; margin-bottom: 0; }
 
     /* BPI 2-column pairs */
     .bpi_row2    { height: auto; margin-bottom: 0; }
