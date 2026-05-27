@@ -209,6 +209,7 @@ dynamically by the search index. They have IDs beginning with `rf_`, `cvd_`,
 | `pcs_help_score` | PCS: Helplessness |
 | `pcs_total_score` | PCS: Total score |
 | `pseq_score` | PSEQ score |
+| `pseq_interp` | PSEQ interpretation (Low/Moderate/High) |
 | `pcl5_score` | PCL-5 score |
 | `pcl5_action` | PCL-5 — action taken |
 | `isi_score` | ISI (Insomnia Severity Index) score |

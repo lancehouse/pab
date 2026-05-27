@@ -2155,7 +2155,8 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     f("pcs_total_risk",  om)
 
     sub("Pain Self-Efficacy Questionnaire (PSEQ)")
-    f("pseq_score", om)
+    f("pseq_score",  om)
+    f("pseq_interp", om)
 
     sub("PCL-5 (PTSD)")
     f("pcl5_score",    om)
@@ -2884,6 +2885,7 @@ LABELS: dict[str, str] = {
     "pcs_help_risk":                    "PCS: Helplessness risk",
     "pcs_total_risk":                   "PCS: Total risk",
     "pseq_score":                       "PSEQ score",
+    "pseq_interp":                      "PSEQ interpretation",
     "pcl5_score":                       "PCL-5 score",
     "pcl5_interp":                      "PCL-5 interpretation",
     "pcl5_action":                      "PCL-5 action taken",
@@ -3716,7 +3718,8 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     f("pcs_total_risk",  om)
 
     sub("Pain Self-Efficacy Questionnaire (PSEQ)")
-    f("pseq_score", om)
+    f("pseq_score",  om)
+    f("pseq_interp", om)
 
     sub("PCL-5 (PTSD)")
     f("pcl5_score",      om)

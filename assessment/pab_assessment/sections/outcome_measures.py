@@ -46,6 +46,12 @@ _PBAS_OPTIONS = [
     ("Severe",   "error"),
 ]
 
+_PSEQ_OPTIONS = [
+    ("Low (<20)",  "error"),
+    ("Moderate",   "warning"),
+    ("High (≥40)", "success"),
+]
+
 # ---------------------------------------------------------------------------
 # Auto-interpretation functions
 # ---------------------------------------------------------------------------
@@ -86,6 +92,12 @@ def _interp_pcl5(score: int) -> str:
 
 def _interp_isi(score: int) -> str:
     return "Clinically significant (≥10)" if score >= 10 else "No insomnia (<10)"
+
+
+def _interp_pseq(score: int) -> str:
+    if score < 20: return "Low (<20)"
+    if score < 40: return "Moderate"
+    return "High (≥40)"
 
 
 # ---------------------------------------------------------------------------
@@ -231,16 +243,16 @@ class OutcomeBlock(Vertical):
         margin-bottom: 0;
     }
     .ob_header {
-        height: auto; width: 100%;
+        height: 3; width: 100%;
         background: $surface-lighten-1;
         padding: 0;
     }
     .ob_plan_btn {
-        width: auto; min-width: 8; height: auto;
+        width: auto; min-width: 8; height: 1fr;
         margin: 0; padding: 0 1;
     }
     .ob_label {
-        width: 1fr; height: auto;
+        width: 1fr; height: 1fr;
         color: $accent; text-style: bold;
         padding: 0 1;
     }
@@ -377,27 +389,28 @@ def _mount_psfs(body: Vertical) -> None:
 
 
 def _mount_bpi(body: Vertical) -> None:
-    # 2-column layout, left-then-right tab order preserved:
-    # activity→mood, walking→work, relations→sleep, enjoyment
+    # 2 columns × 4 rows; tab order: activity→mood→walking→work→relations→sleep→enjoyment
+    # Row 4 right slot shows computed average (read-only Static)
     body.mount(
-        Label("/10 — higher = greater impairment", classes="reference_note"),
+        Label("Scores /10 — higher = greater impairment due to pain", classes="reference_note"),
         Horizontal(
-            Label("Activity:", classes="bpi_lbl2"), Input(id="bpi_activity",  placeholder="/10", classes="bpi_sc2"),
-            Label("Mood:",     classes="bpi_lbl2"), Input(id="bpi_mood",      placeholder="/10", classes="bpi_sc2"),
+            Horizontal(Label("Activity:", classes="bpi_lbl2"),  Input(id="bpi_activity",  placeholder="0–10", classes="bpi_sc2"), classes="bpi_pair"),
+            Horizontal(Label("Mood:",     classes="bpi_lbl2"),  Input(id="bpi_mood",      placeholder="0–10", classes="bpi_sc2"), classes="bpi_pair"),
             classes="bpi_row2",
         ),
         Horizontal(
-            Label("Walking:", classes="bpi_lbl2"), Input(id="bpi_walking",   placeholder="/10", classes="bpi_sc2"),
-            Label("Work:",    classes="bpi_lbl2"), Input(id="bpi_work",      placeholder="/10", classes="bpi_sc2"),
+            Horizontal(Label("Walking:", classes="bpi_lbl2"),   Input(id="bpi_walking",   placeholder="0–10", classes="bpi_sc2"), classes="bpi_pair"),
+            Horizontal(Label("Work:",    classes="bpi_lbl2"),   Input(id="bpi_work",      placeholder="0–10", classes="bpi_sc2"), classes="bpi_pair"),
             classes="bpi_row2",
         ),
         Horizontal(
-            Label("Relations:", classes="bpi_lbl2"), Input(id="bpi_relations", placeholder="/10", classes="bpi_sc2"),
-            Label("Sleep:",     classes="bpi_lbl2"), Input(id="bpi_sleep",     placeholder="/10", classes="bpi_sc2"),
+            Horizontal(Label("Relations:", classes="bpi_lbl2"), Input(id="bpi_relations", placeholder="0–10", classes="bpi_sc2"), classes="bpi_pair"),
+            Horizontal(Label("Sleep:",     classes="bpi_lbl2"), Input(id="bpi_sleep",     placeholder="0–10", classes="bpi_sc2"), classes="bpi_pair"),
             classes="bpi_row2",
         ),
         Horizontal(
-            Label("Enjoyment:", classes="bpi_lbl2"), Input(id="bpi_enjoyment", placeholder="/10", classes="bpi_sc2"),
+            Horizontal(Label("Enjoyment:", classes="bpi_lbl2"), Input(id="bpi_enjoyment", placeholder="0–10", classes="bpi_sc2"), classes="bpi_pair"),
+            Horizontal(Label("Avg /7:", classes="bpi_lbl2"), Static("—", id="bpi_total", classes="bpi_total_disp"), classes="bpi_pair"),
             classes="bpi_row2",
         ),
     )
@@ -446,7 +459,11 @@ def _mount_pcs(body: Vertical) -> None:
 def _mount_pseq(body: Vertical) -> None:
     body.mount(
         Label("Score /60 — higher = stronger self-efficacy", classes="reference_note"),
-        Input(id="pseq_score", placeholder="/60"),
+        Horizontal(
+            Input(id="pseq_score", placeholder="/60", classes="om_score"),
+            CycleField("pseq_interp", _PSEQ_OPTIONS),
+            classes="om_row",
+        ),
         Static("", id="xref_om_pseq", classes="xref_badge"),
     )
 
@@ -516,27 +533,38 @@ class OutcomeMeasuresSection(BaseSection):
 
     Label { margin-bottom: 0; }
 
-    TextArea, Input { height: auto; min-height: 1; margin-bottom: 0; }
-
-    /* OutcomeBlock header — 2 rows deep for larger click target */
-    .ob_header { min-height: 2; }
-    .ob_label  { height: 1fr; }
+    /* Input visibility — distinct background so fields are clearly visible */
+    OutcomeMeasuresSection Input {
+        background: $surface-darken-2;
+        border: tall $primary 40%;
+        height: auto; min-height: 1; margin-bottom: 0;
+    }
+    OutcomeMeasuresSection TextArea {
+        height: auto; min-height: 1; margin-bottom: 0;
+    }
 
     /* Dense single-row layout (DASS, PCS) */
     .inline_row   { height: auto; margin-bottom: 0; }
     .inline_lbl   { width: auto; padding: 0 1; margin-bottom: 0; }
-    .inline_score { width: 5; margin-bottom: 0; }
+    .inline_score { width: 7; margin-bottom: 0; }
 
     /* BPI 2-column pairs */
-    .bpi_row2  { height: auto; margin-bottom: 0; }
-    .bpi_lbl2  { width: 1fr; margin-bottom: 0; }
-    .bpi_sc2   { width: 6; margin-bottom: 0; }
+    .bpi_row2    { height: auto; margin-bottom: 0; }
+    .bpi_pair    { width: 1fr; height: auto; margin-bottom: 0; }
+    .bpi_lbl2    { width: auto; padding-right: 1; margin-bottom: 0; }
+    .bpi_sc2     { width: 9; margin-bottom: 0; }
+    .bpi_total_disp {
+        width: auto; height: auto; padding: 0 1;
+        background: $surface-darken-1; color: $text-muted;
+        text-style: bold;
+    }
 
     /* Compact score row (PCL-5, PSEQ, Sleep) */
     .om_row   { height: auto; margin-bottom: 0; }
     .om_score { width: 10; margin-bottom: 0; }
 
     /* Hypothesis testing table */
+    #hyp_table      { height: auto; }
     .hyp_header_row { height: auto; margin-bottom: 0; }
     .hyp_header     { text-style: bold; color: $text-muted; margin-bottom: 0; }
     .hyp_measure    { width: 2fr; }
@@ -618,12 +646,13 @@ class OutcomeMeasuresSection(BaseSection):
 
     def _update_auto_interp(self) -> None:
         _auto = [
-            ("dass_dep_score", "dass_dep_interp", _interp_dass_dep),
-            ("dass_anx_score", "dass_anx_interp", _interp_dass_anx),
-            ("dass_str_score", "dass_str_interp", _interp_dass_str),
+            ("dass_dep_score",  "dass_dep_interp", _interp_dass_dep),
+            ("dass_anx_score",  "dass_anx_interp", _interp_dass_anx),
+            ("dass_str_score",  "dass_str_interp", _interp_dass_str),
             ("pcs_total_score", "pcs_total_risk",  _interp_pcs_total),
             ("pcl5_score",      "pcl5_interp",     _interp_pcl5),
             ("isi_score",       "isi_interp",      _interp_isi),
+            ("pseq_score",      "pseq_interp",     _interp_pseq),
         ]
         for score_id, interp_id, fn in _auto:
             try:
@@ -632,6 +661,21 @@ class OutcomeMeasuresSection(BaseSection):
                     self.query_one(f"#{interp_id}", CycleField).set_value(fn(int(raw)))
             except Exception:
                 pass
+        self._update_bpi_total()
+
+    def _update_bpi_total(self) -> None:
+        _fields = ["bpi_activity", "bpi_mood", "bpi_walking", "bpi_work",
+                   "bpi_relations", "bpi_sleep", "bpi_enjoyment"]
+        try:
+            values = []
+            for fid in _fields:
+                raw = self.query_one(f"#{fid}", Input).value.strip()
+                if raw.replace(".", "", 1).lstrip("-").isdigit():
+                    values.append(float(raw))
+            total = self.query_one("#bpi_total", Static)
+            total.update(f"{sum(values)/7:.1f}/10" if values else "—")
+        except Exception:
+            pass
 
     def _update_alerts(self) -> None:
         _checks = [
@@ -796,8 +840,18 @@ class OutcomeMeasuresSection(BaseSection):
                 for col in _HYP_COLS
             )
             if has_content:
-                self.query_one("#hyp_table").mount(HypRow(self._hyp_row_count))
+                new_idx = self._hyp_row_count
+                self.query_one("#hyp_table").mount(HypRow(new_idx))
                 self._hyp_row_count += 1
+                def _scroll():
+                    try:
+                        row = self.query_one(f"#hyp_row_{new_idx}")
+                        self.app.query_one("#section_content", ScrollableContainer).scroll_to_widget(
+                            row, animate=False
+                        )
+                    except Exception:
+                        pass
+                self.call_after_refresh(_scroll)
         except Exception:
             pass
 

@@ -285,6 +285,7 @@ _FIELD_LABELS: dict[str, tuple[str, str | None, str]] = {
     "pcs_help_score": ("05_outcome_measures", "om_pcs",       "PCS: Helplessness"),
     "pcs_total_score":("05_outcome_measures", "om_pcs",       "PCS: Total"),
     "pseq_score":    ("05_outcome_measures", "om_pseq",       "PSEQ score"),
+    "pseq_interp":   ("05_outcome_measures", "om_pseq",       "PSEQ interpretation"),
     "pcl5_score":    ("05_outcome_measures", "om_pseq",       "PCL-5 score"),
     "pcl5_action":   ("05_outcome_measures", "om_pseq",       "PCL-5 action"),
     "isi_score":     ("05_outcome_measures", "om_sleep",      "ISI score"),
