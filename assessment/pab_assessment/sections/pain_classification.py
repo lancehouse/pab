@@ -1,16 +1,20 @@
 """Pain Type Classification section (core/04)."""
 
 import json
+import logging
 from pathlib import Path
 
 from textual.app import ComposeResult, on
-from textual.containers import Horizontal, ScrollableContainer
+from textual.containers import Horizontal, Vertical, ScrollableContainer
 from textual.widgets import Button, Label, Input, TextArea, Static
 from textual.message import Message
 
 from .base import BaseSection
+
+logger = logging.getLogger(__name__)
 from ..widgets import CheckButton
 from .medical import LikelihoodField
+from .regional_differential import RegionalDifferentialPanel
 
 
 class PainTypeSelector(Static):
@@ -87,6 +91,10 @@ class PainTypeSelector(Static):
 class PainClassificationSection(BaseSection):
     """Pain Type Classification section (core/04)."""
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._diff_panels: dict[str, RegionalDifferentialPanel] = {}
+
     DEFAULT_CSS = """
     PainClassificationSection {
         width: 100%;
@@ -94,25 +102,18 @@ class PainClassificationSection(BaseSection):
         padding: 0 1;
     }
     .section_title { text-style: bold; color: $text; margin-bottom: 0; }
-    .subgroup_header { color: $text-muted; margin-top: 0; margin-bottom: 0; text-style: italic; }
+    .subgroup_header { color: $text-muted; margin-top: 0; margin-bottom: 0; text-style: bold italic; }
     .reference_note  { color: $text-muted; margin-bottom: 0; }
 
-    /* Two-column button rows */
     .btn_row { height: auto; width: 100%; margin-bottom: 0; }
-    .btn_row CheckButton { width: 1fr; height: 4; min-width: 0; margin: 0 1 0 0; }
-    .btn_row CheckButton:last-of-type { margin: 0; }
 
-    /* Full-width solo button */
-    .solo_btn { width: 100%; height: 4; margin-bottom: 0; }
+    CheckButton { width: auto; height: 3; min-width: 16; margin: 0 1 0 0; }
 
     /* Label + field row */
     .field_row { height: auto; width: 100%; margin: 0; padding: 0; }
     .field_row Label { width: 28; height: auto; padding: 0 1 0 0; }
     .field_row Input { width: 1fr; height: auto; padding: 0 1; }
     .field_row TextArea { width: 1fr; height: auto; min-height: 2; padding: 0 1; }
-
-    /* Standalone CheckButton (not in a row) */
-    CheckButton { width: auto; height: 3; min-width: 18; margin: 0 1 0 0; }
 
     TextArea { height: auto; min-height: 2; padding: 0 1; }
     Input    { height: auto; padding: 0 1; }
@@ -126,6 +127,11 @@ class PainClassificationSection(BaseSection):
     }
     #pc_mixed_reminder {
         width: 100%; padding: 0 1; color: $warning; margin-bottom: 0;
+    }
+    #pc_diff_region {
+        height: auto;
+        width: 100%;
+        margin-bottom: 1;
     }
     .xref_badge {
         width: 100%; height: auto; padding: 0 1; margin-bottom: 0;
@@ -173,17 +179,18 @@ class PainClassificationSection(BaseSection):
 
     def compose(self) -> ComposeResult:  # noqa: C901
         yield Label("Pain Type Classification", classes="section_title")
+        yield Vertical(id="pc_diff_region")
 
         # ── Inflammatory ────────────────────────────────────────────────
         yield Label("— Inflammatory Pain —", classes="subsection_header", id="pc_inflammatory")
         yield Label("Walker & Williamson 2008", classes="reference_note")
         with Horizontal(classes="btn_row"):
             yield CheckButton("Constant symptoms", id="infl_constant")
-            yield CheckButton("Increased morning pain\nand/or stiffness >30 min", id="infl_morning")
+            yield CheckButton("Morning pain/stiffness >30 min", id="infl_morning")
         yield Static("", id="xref_infl_morning", classes="xref_badge")
         with Horizontal(classes="btn_row"):
-            yield CheckButton("At least moderate sleep\ndisturbance due to pain", id="infl_sleep")
-            yield CheckButton("Symptoms improved with\nactivity compared to rest", id="infl_activity")
+            yield CheckButton("Sleep disturbance (moderate+)", id="infl_sleep")
+            yield CheckButton("Better with activity", id="infl_activity")
         yield Static("", id="xref_infl_sleep", classes="xref_badge")
         yield Static("Score: 0/4", id="pc_infl_score")
         yield Static("", id="pc_infl_alert")
@@ -195,25 +202,23 @@ class PainClassificationSection(BaseSection):
         yield Label("Smart et al 2010 — pain from actual or threatened non-neural tissue damage", classes="reference_note")
         yield Label("Subjective:", classes="subgroup_header")
         with Horizontal(classes="btn_row"):
-            yield CheckButton("Clear, proportionate mechanical/\nanatom agg and easing factors", id="noci_subj_mechanical")
-            yield CheckButton("Pain proportionate to trauma,\npathology, or movement dysfunction", id="noci_subj_trauma")
+            yield CheckButton("Mechanical agg/ease factors", id="noci_subj_mechanical")
+            yield CheckButton("Proportionate to trauma/pathology", id="noci_subj_trauma")
+            yield CheckButton("Localised ±somatic referral", id="noci_subj_localised")
         with Horizontal(classes="btn_row"):
-            yield CheckButton("Pain localised to area of injury\n(with/without somatic referral)", id="noci_subj_localised")
-            yield CheckButton("Usually resolving with expected\ntissue healing times", id="noci_subj_resolving")
+            yield CheckButton("Resolves in healing timeframes", id="noci_subj_resolving")
+            yield CheckButton("Responsive to analgesia/NSAIDs", id="noci_subj_analgesia")
+            yield CheckButton("No constant/unremitting pain", id="noci_subj_no_constant")
         yield Static("", id="xref_noci_resolving", classes="xref_badge")
         with Horizontal(classes="btn_row"):
-            yield CheckButton("Responsive to simple\nanalgesia / NSAIDs", id="noci_subj_analgesia")
-            yield CheckButton("Absence of constant\nor unremitting pain", id="noci_subj_no_constant")
-        with Horizontal(classes="btn_row"):
-            yield CheckButton("Pain in association with other\nsymptoms of inflammation", id="noci_subj_inflammation")
-            yield CheckButton("Pain of recent onset", id="noci_subj_recent")
+            yield CheckButton("Associated with inflammation", id="noci_subj_inflammation")
+            yield CheckButton("Recent onset", id="noci_subj_recent")
         yield Label("Examination:", classes="subgroup_header")
         with Horizontal(classes="btn_row"):
-            yield CheckButton("Clear, proportionate mechanical\npattern on movement / testing", id="noci_exam_mechanical")
-            yield CheckButton("Localised pain\non palpation", id="noci_exam_palpation")
-        with Horizontal(classes="btn_row"):
-            yield CheckButton("Absent or proportionate findings\nof hyperalgesia and/or allodynia", id="noci_exam_hyperalgesia")
-            yield CheckButton("Presence of antalgic postures\nor movement patterns", id="noci_exam_antalgic")
+            yield CheckButton("Mechanical pattern on testing", id="noci_exam_mechanical")
+            yield CheckButton("Localised on palpation", id="noci_exam_palpation")
+            yield CheckButton("Proportionate hyperalgesia", id="noci_exam_hyperalgesia")
+            yield CheckButton("Antalgic posture/movement", id="noci_exam_antalgic")
         yield LikelihoodField("Nociceptive likelihood:", field_id="noci_likelihood")
         yield Label("Interpretation:")
         yield TextArea(id="noci_interpretation", language="plain")
@@ -223,27 +228,25 @@ class PainClassificationSection(BaseSection):
         yield Label("Smart et al 2010 — pain from somatosensory nervous system lesion/disease", classes="reference_note")
         yield Label("Subjective:", classes="subgroup_header")
         with Horizontal(classes="btn_row"):
-            yield CheckButton("Burning, shooting, sharp,\nor electric shock-like quality", id="neuro_subj_quality")
-            yield CheckButton("History of nerve injury", id="neuro_subj_nerve_injury")
-        with Horizontal(classes="btn_row"):
-            yield CheckButton("Neurological symptoms\nincluding paraesthesia", id="neuro_subj_neurological")
-            yield CheckButton("Pain referred in dermatomal\nor cutaneous distribution", id="neuro_subj_dermatomal")
+            yield CheckButton("Burning/shooting/electric quality", id="neuro_subj_quality")
+            yield CheckButton("Hx of nerve injury", id="neuro_subj_nerve_injury")
+            yield CheckButton("Neurological Sx/paraesthesia", id="neuro_subj_neurological")
         yield Static("", id="xref_neuro_neurological", classes="xref_badge")
         with Horizontal(classes="btn_row"):
-            yield CheckButton("Less responsive to NSAIDs;\nmore responsive to anti-epileptic/AD", id="neuro_subj_medication")
-            yield CheckButton("High severity\nand irritability", id="neuro_subj_severity")
+            yield CheckButton("Dermatomal distribution", id="neuro_subj_dermatomal")
+            yield CheckButton("Anti-epileptic/AD responsive", id="neuro_subj_medication")
+            yield CheckButton("High severity/irritability", id="neuro_subj_severity")
         with Horizontal(classes="btn_row"):
-            yield CheckButton("Mechanical pattern loading\nor compressing neural tissue", id="neuro_subj_neural_loading")
-            yield CheckButton("Other dysaesthesias\n(burning, coldness, crawling)", id="neuro_subj_dysaesthesia")
-        yield CheckButton("Spontaneous (stimulus-independent)\nor paroxysmal pain", id="neuro_subj_spontaneous", classes="solo_btn")
+            yield CheckButton("Neural tissue loading pattern", id="neuro_subj_neural_loading")
+            yield CheckButton("Dysaesthesias (burn/cold/crawl)", id="neuro_subj_dysaesthesia")
+            yield CheckButton("Spontaneous/paroxysmal pain", id="neuro_subj_spontaneous")
         yield Label("Examination:", classes="subgroup_header")
         with Horizontal(classes="btn_row"):
-            yield CheckButton("Symptom provocation with\nprovocative neurodynamic tests", id="neuro_exam_neurodynamic")
-            yield CheckButton("Pain / symptom provocation on\npalpation of neural tissues", id="neuro_exam_neural_palpation")
-        with Horizontal(classes="btn_row"):
+            yield CheckButton("Provoc neurodynamic tests", id="neuro_exam_neurodynamic")
+            yield CheckButton("Neural tissue palpation +", id="neuro_exam_neural_palpation")
             yield CheckButton("Positive neurological findings", id="neuro_exam_neurology")
-            yield CheckButton("Antalgic posturing of\naffected limb / body part", id="neuro_exam_antalgic")
-        yield CheckButton("Positive hyperalgesia / allodynia\nwithin distribution of pain", id="neuro_exam_hyperalgesia", classes="solo_btn")
+            yield CheckButton("Antalgic limb posture", id="neuro_exam_antalgic")
+        yield CheckButton("Hyperalgesia/allodynia in distribution", id="neuro_exam_hyperalgesia")
         yield LikelihoodField("Neuropathic likelihood:", field_id="neuro_likelihood")
         yield Label("Interpretation:")
         yield TextArea(id="neuro_interpretation", language="plain")
@@ -253,34 +256,31 @@ class PainClassificationSection(BaseSection):
         yield Label("IASP — pain from altered nociception, no clear nociceptive/neuropathic cause", classes="reference_note")
         yield Label("Subjective:", classes="subgroup_header")
         with Horizontal(classes="btn_row"):
-            yield CheckButton("Disproportionate, non-mechanical,\nunpredictable pattern of provocation", id="nocip_subj_disproportionate")
-            yield CheckButton("Pain persisting beyond expected\nhealing / recovery times", id="nocip_subj_persistent")
+            yield CheckButton("Disproportionate/unpredictable", id="nocip_subj_disproportionate")
+            yield CheckButton("Beyond healing timeframes", id="nocip_subj_persistent")
+            yield CheckButton("Disproportionate to pathology", id="nocip_subj_disproportionate2")
         with Horizontal(classes="btn_row"):
-            yield CheckButton("Pain disproportionate to nature\nand extent of injury / pathology", id="nocip_subj_disproportionate2")
-            yield CheckButton("Widespread, non-anatomical\ndistribution of pain", id="nocip_subj_widespread")
-        with Horizontal(classes="btn_row"):
-            yield CheckButton("History of\nfailed interventions", id="nocip_subj_failed")
-            yield CheckButton("Strong association with\nunhelpful psychosocial factors", id="nocip_subj_psychosocial")
+            yield CheckButton("Widespread/non-anatomical", id="nocip_subj_widespread")
+            yield CheckButton("Failed interventions", id="nocip_subj_failed")
+            yield CheckButton("Psychosocial association", id="nocip_subj_psychosocial")
         yield Static("", id="xref_nocip_failed", classes="xref_badge")
         yield Static("", id="xref_nocip_psych", classes="xref_badge")
         with Horizontal(classes="btn_row"):
-            yield CheckButton("Unresponsive to NSAIDs;\nmore responsive to anti-epileptic/AD", id="nocip_subj_medication")
-            yield CheckButton("Spontaneous (stimulus-independent)\nor paroxysmal pain", id="nocip_subj_spontaneous")
+            yield CheckButton("Anti-epileptic/AD responsive", id="nocip_subj_medication")
+            yield CheckButton("Spontaneous/paroxysmal pain", id="nocip_subj_spontaneous")
+            yield CheckButton("High functional disability", id="nocip_subj_disability")
         with Horizontal(classes="btn_row"):
-            yield CheckButton("High levels of\nfunctional disability", id="nocip_subj_disability")
-            yield CheckButton("More constant /\nunremitting pain", id="nocip_subj_constant")
-        with Horizontal(classes="btn_row"):
-            yield CheckButton("At least moderate night pain\nor disturbed sleep", id="nocip_subj_night_pain")
-            yield CheckButton("Other dysaesthesias\n(burning, coldness, crawling)", id="nocip_subj_dysaesthesia")
+            yield CheckButton("Constant/unremitting pain", id="nocip_subj_constant")
+            yield CheckButton("Night pain/disturbed sleep", id="nocip_subj_night_pain")
+            yield CheckButton("Dysaesthesias (burn/cold/crawl)", id="nocip_subj_dysaesthesia")
         yield Static("", id="xref_nocip_night", classes="xref_badge")
-        yield CheckButton("High severity and irritability", id="nocip_subj_severity", classes="solo_btn")
+        yield CheckButton("High severity/irritability", id="nocip_subj_severity")
         yield Label("Examination:", classes="subgroup_header")
         with Horizontal(classes="btn_row"):
-            yield CheckButton("Disproportionate, inconsistent,\nnon-mechanical pain provocation", id="nocip_exam_disproportionate")
-            yield CheckButton("Positive secondary hyperalgesia /\nallodynia within pain distribution", id="nocip_exam_hyperalgesia")
-        with Horizontal(classes="btn_row"):
-            yield CheckButton("Diffuse / non-anatomic areas\nof pain / tenderness on palpation", id="nocip_exam_diffuse")
-            yield CheckButton("Positive psychosocial factors\n(catastrophisation, fear-avoidance)", id="nocip_exam_psychosocial")
+            yield CheckButton("Disproportionate provocation", id="nocip_exam_disproportionate")
+            yield CheckButton("Hyperalgesia/allodynia", id="nocip_exam_hyperalgesia")
+            yield CheckButton("Diffuse non-anatomic tenderness", id="nocip_exam_diffuse")
+            yield CheckButton("Psychosocial (catastroph/FA)", id="nocip_exam_psychosocial")
         yield LikelihoodField("Nociplastic likelihood:", field_id="nocip_likelihood")
         yield Static("", id="xref_nocip_dx", classes="xref_badge")
         yield Label("Interpretation:")
@@ -294,23 +294,21 @@ class PainClassificationSection(BaseSection):
         yield Static("", id="pc_csi_alert")
         yield Label("Additional CS features:", classes="subgroup_header")
         with Horizontal(classes="btn_row"):
-            yield CheckButton("Hypersensitivity\nto bright light", id="cs_light")
-            yield CheckButton("Hypersensitivity\nto touch", id="cs_touch")
+            yield CheckButton("Light sensitivity", id="cs_light")
+            yield CheckButton("Touch sensitivity", id="cs_touch")
+            yield CheckButton("Noise sensitivity", id="cs_noise")
+            yield CheckButton("Chemical sensitivity", id="cs_pesticides")
         with Horizontal(classes="btn_row"):
-            yield CheckButton("Hypersensitivity\nto noise", id="cs_noise")
-            yield CheckButton("Hypersensitivity to\npesticides / medication", id="cs_pesticides")
-        with Horizontal(classes="btn_row"):
-            yield CheckButton("Hypersensitivity to\nhigh / low temperature", id="cs_temperature")
+            yield CheckButton("Temperature sensitivity", id="cs_temperature")
             yield CheckButton("Fatigue", id="cs_fatigue")
+            yield CheckButton("Sleep disturbance", id="cs_sleep")
+            yield CheckButton("Concentration difficulty", id="cs_concentration")
         yield Static("", id="xref_cs_fatigue", classes="xref_badge")
-        with Horizontal(classes="btn_row"):
-            yield CheckButton("Sleep\ndisturbance", id="cs_sleep")
-            yield CheckButton("Concentration\ndifficulty", id="cs_concentration")
         yield Static("", id="xref_cs_sleep", classes="xref_badge")
         yield Static("", id="xref_cs_concentration", classes="xref_badge")
         with Horizontal(classes="btn_row"):
-            yield CheckButton("Feelings of swelling\nin limbs", id="cs_swelling")
-            yield CheckButton("Tingling and /\nor numbness", id="cs_tingling")
+            yield CheckButton("Limb swelling sensation", id="cs_swelling")
+            yield CheckButton("Tingling/numbness", id="cs_tingling")
         yield Static("", id="xref_cs_tingling", classes="xref_badge")
 
         # ── Summary ──────────────────────────────────────────────────────
@@ -321,6 +319,35 @@ class PainClassificationSection(BaseSection):
         yield TextArea(id="summary_contributing", language="plain")
         yield Label("Clinical reasoning:")
         yield TextArea(id="summary_reasoning", language="plain")
+
+    # ------------------------------------------------------------------
+    # Regional differential panel management
+    # ------------------------------------------------------------------
+
+    def set_active_regions(self, regions: list[str]) -> None:
+        """Mount/unmount regional differential panels to match active regions."""
+        logger.debug("RDP section05: set_active_regions(%s)", regions)
+        try:
+            container = self.query_one("#pc_diff_region", Vertical)
+        except Exception as e:
+            logger.warning("RDP section05: cannot find #pc_diff_region: %s", e)
+            return
+        current = set(self._diff_panels.keys())
+        logger.debug("RDP section05: current panels=%s", current)
+        for rid in current - set(regions):
+            panel = self._diff_panels.pop(rid)
+            panel.remove()
+        for rid in set(regions) - current:
+            logger.debug("RDP section05: mounting panel for %s", rid)
+            panel = RegionalDifferentialPanel(rid, id=f"pc_diff_{rid}")
+            self._diff_panels[rid] = panel
+            container.mount(panel)
+
+    def set_region_test_data(self, region_id: str, tests: dict) -> None:
+        """Push latest special test results to the matching regional panel."""
+        panel = self._diff_panels.get(region_id)
+        if panel:
+            panel.set_tests(tests)
 
     # ------------------------------------------------------------------
     # Navigation

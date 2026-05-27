@@ -3,7 +3,9 @@ Physiotherapy Assessment TUI using Textual framework.
 
 Integrates with GTK body chart via session JSON file watcher.
 Ctrl+B  — focus body chart (signal file → GTK raises its own window)
-Ctrl+E  — export session report to Markdown
+Ctrl+E  — export session report to Markdown (full)
+Ctrl+R  — toggle KB panel
+Ctrl+N  — toggle bottom notes overlay
 Ctrl+S  — manual save
 Ctrl+L  — return to session list
 """
@@ -27,12 +29,14 @@ from textual.binding import Binding
 from .watcher import BodyChartWatcher
 from .search import build_index
 from .search_widget import SearchModal
+from .report_modal import ReportModal
+from .objective.kb_panel import KBPanel
 from .storage import (
     load_assessment, save_assessment, list_sessions, create_new_session,
     read_gtk_pid, read_tui_socket, write_focus_signal, export_session_report,
     save_raw_report,
 )
-from .assessment_view import AssessmentView
+from .assessment_view import AssessmentView, NotesOverlay
 
 
 
@@ -449,9 +453,10 @@ class PhysioAssessmentTUI(Container):
         Binding("ctrl+b", "open_bodychart","Body Chart", show=True),
         Binding("ctrl+u", "reload_chart",  "Reload Chart", show=True),
         Binding("ctrl+e", "export",        "Export MD",  show=True),
-        Binding("ctrl+r", "export_raw",    "Raw Report", show=True),
-        Binding("ctrl+n", "scratchpad",    "Notes",      show=True),
-        Binding("ctrl+f",      "search",   "Search",     show=True,  priority=True),
+        Binding("ctrl+r", "toggle_kb",      "KB",         show=True,  priority=True),
+        Binding("ctrl+n", "toggle_notes",  "Notes",      show=True,  priority=True),
+        Binding("ctrl+k", "toggle_kb",     "KB",         show=False, priority=True),
+        Binding("ctrl+f", "search",        "Search",     show=True,  priority=True),
     ]
 
     DEFAULT_CSS = """
@@ -638,9 +643,30 @@ class PhysioAssessmentTUI(Container):
 
     def _execute_jump(self, entry) -> None:
         from .assessment_view import AssessmentView
+        from .objective.objective_view import ObjectiveAssessmentView
         from textual.containers import ScrollableContainer
         try:
             av = self.query_one("#assessment_view", AssessmentView)
+
+            # ── Objective sections (section_id prefixed with "obj:") ──────────
+            if entry.section_id.startswith("obj:"):
+                real_section = entry.section_id[4:]
+                av._show_section("04_objective")
+                obj_view = av._obj_view
+                if obj_view is None:
+                    return
+                obj_view._show_section(real_section)
+                if entry.widget_id:
+                    try:
+                        w = obj_view.query_one(f"#{entry.widget_id}")
+                        w.focus()
+                        sc = obj_view.query_one("#obj_section_content", ScrollableContainer)
+                        sc.scroll_to_widget(w, animate=False)
+                    except Exception:
+                        pass
+                return
+
+            # ── Assessment sections ───────────────────────────────────────────
             av._show_section(entry.section_id)
             section = av.sections.get(entry.section_id)
             if section is None:
@@ -737,33 +763,47 @@ class PhysioAssessmentTUI(Container):
         else:
             self._show_status("Export failed — check logs")
 
-    def action_export_raw(self) -> None:
-        """Ctrl+R — flush active section and regenerate raw report in session folder."""
+    def action_view_report(self) -> None:
+        """Ctrl+R — save, regenerate clean.md + raw.txt, then show markdown viewer."""
         if not self.current_session_file:
             self._show_status("No session loaded")
             return
 
-        async def _save_then_notify():
+        async def _save_then_show():
             assessment_view = self.query_one("#assessment_view", AssessmentView)
             await assessment_view._do_save()
-            out = save_raw_report(self.current_session_file)
-            if out:
-                self._show_status(f"Raw report → {Path(out).name}", seconds=4.0)
+            # Regenerate both report formats
+            clean_path = export_session_report(self.current_session_file, clean=True)
+            save_raw_report(self.current_session_file)
+            if not clean_path:
+                self._show_status("Report generation failed — check logs")
+                return
+            md_text = Path(clean_path).read_text(encoding="utf-8")
+            session_name = Path(self.current_session_file).stem
+            await self.app.push_screen(ReportModal(md_text))
+
+        asyncio.create_task(_save_then_show())
+
+    def action_toggle_notes(self) -> None:
+        """Ctrl+N — toggle the bottom notes overlay."""
+        try:
+            av = self.query_one("#assessment_view", AssessmentView)
+            overlay = av.query_one(NotesOverlay)
+            if overlay.display:
+                overlay.display = False
             else:
-                self._show_status("Raw report write failed — check logs")
+                overlay.display = True
+                overlay.call_after_refresh(lambda: overlay.query_one(TextArea).focus())
+        except Exception:
+            pass
 
-        asyncio.create_task(_save_then_notify())
-
-    def action_scratchpad(self) -> None:
-        """Ctrl+N — jump to the scratchpad section and place cursor at end."""
-        if not self.current_session_file:
-            self._show_status("No session loaded")
-            return
-        assessment_view = self.query_one("#assessment_view", AssessmentView)
-        assessment_view._show_section("scratchpad")
-        sp = assessment_view.sections.get("scratchpad")
-        if sp:
-            sp.focus_end()
+    def action_toggle_kb(self) -> None:
+        """Ctrl+K — toggle KB panel (global; panel lives inside objective view)."""
+        try:
+            panel = self.query_one(KBPanel)
+            panel.display = not panel.display
+        except Exception:
+            self._show_status("KB panel not available")
 
     # ------------------------------------------------------------------
     # Arrow-key scroll fallback — only when no widget is focused

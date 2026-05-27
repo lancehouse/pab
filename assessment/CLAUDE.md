@@ -223,6 +223,57 @@ Bilateral ROM rows (Flexion, Extension): only `_l` variants exist — `_r` colum
   bilateral data as aligned tables (L/R columns), not repeated label-per-side lines
 - Called automatically from `_do_save()` — never call manually unless testing
 
+## Keeping docs and search in sync — mandatory
+
+Any commit that adds, removes, or renames a field (`id`) **must** also update
+all three of these in the same commit:
+
+1. `docs/field-key-reference.md` — add/remove/rename the row in the relevant table
+2. `search.py` — add to `_FIELD_LABELS`, `_OBJ_KB_FIELDS`, `_SUBSECTIONS`, or
+   `_SECTION_SHORT`/`_SECTION_LABELS` as appropriate
+3. `docs/architecture.md` — only if the structural layer itself changes (new YAML
+   layer, new region, new KB file, etc.)
+
+This applies equally to YAML-driven field additions (`sections/yaml/*.yaml`) and
+hardcoded Python field additions. If the search index or reference doc drifts from
+the code, Ctrl+F navigation silently fails and the KB can't be linked correctly.
+
+## Development process rules
+
+1. **Never push without explicit instruction.** Only push to main or GitHub when the user says
+   "push to main", "push it", or equivalent. Do not push as part of bug fixes, feature
+   completion, or "cleanup" steps without a direct instruction in that same exchange.
+
+2. **Branch discipline — all dev on working branch, never main.**
+   - `pabd` runs the current working branch (may be broken).
+   - `pab` / `pabs` run `main` (must be stable and tested).
+   - All development work stays on the working branch until the user explicitly confirms it
+     works in `pabd` and asks to merge/push to main.
+   - Never commit directly to main. Never push a fix to main mid-debugging loop.
+
+3. **`asyncio.create_task` must always have an inner try/except.**
+   Exceptions raised inside a task are silently swallowed — they do not appear in Textual's
+   message log, only on stderr. Any `create_task` coroutine must wrap its body in
+   `try/except Exception as e: self._show_status(...)` so failures are visible in the TUI.
+
+4. **Audit all call sites when changing a function signature.**
+   When adding, removing, or renaming a parameter, grep for every caller in the same step and
+   update them in the same commit. Do not leave mismatched call sites. This applies to
+   `__init__`, action methods, message handlers, and utility functions alike.
+
+5. **Report rendering must stay in sync with the TUI.**
+   Any section field or widget change must include the corresponding `storage.py` update in
+   the same commit. Before marking a field-change commit done, explicitly confirm that both
+   `_render_objective_md` and `_render_objective_raw` (or the assessment equivalents) have
+   been checked and updated.
+
+6. **Always check the mirror half.**
+   The codebase has two parallel halves: assessment sections (subjective) and objective
+   sections. When changing a field, widget, hotkey, or behaviour in one half, ask whether the
+   other half needs the same change before closing the task. If unsure, ask rather than assume.
+
+---
+
 ## Planned — Phase 3 (not yet built)
 
 Right-panel clinical knowledge base:

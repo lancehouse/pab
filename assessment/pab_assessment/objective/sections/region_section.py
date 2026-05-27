@@ -27,10 +27,11 @@ from textual.containers import Container, Horizontal, Vertical
 from textual.message import Message
 from textual.widgets import Label, Static, TextArea
 
-from ...widgets import GridInput, RadioGroup
+from ...widgets import CycleButton, GridInput, RadioGroup
 from .active_movement import RangeCell, ROMRow
 from .cervical_tables import CervicalMuscleTables, CervicalPassiveTables, CervicalTables
 from .lumbar_tables import LumbarMuscleTables, LumbarPassiveTables, LumbarTables
+from .shoulder_tables import ShoulderMuscleTables, ShoulderPassiveTables, ShoulderTables
 
 
 _YAML_DIR = Path(__file__).parent / "yaml"
@@ -346,6 +347,137 @@ class SpecialTestsWidget(Static):
                 pass
 
 
+# ── Bilateral grid special tests widget ──────────────────────────────────────
+
+class BilateralGridSpecialTestsWidget(Static):
+    """Two-column bilateral special tests: pairs of tests per row, L/R CycleButtons.
+
+    YAML format (special_tests with groups key):
+        groups:
+          - label: "Impingement"
+            cluster_id: sh_impingement   # reserved for Phase 3 DDx — not used at runtime
+            rows:
+              - {id: hawkins, label: "Hawkins"}
+              - {id: neer,    label: "Neer"}
+
+    CycleButton outer IDs: st_{stem}_l / st_{stem}_r  (data keys, KB-resolver compatible).
+    Inner button IDs: st_{stem}_l_btn / st_{stem}_r_btn (handled by focus resolver patch).
+    Cycle states: blank (·) → Yes (red/error) → No (green/success).
+    """
+
+    DEFAULT_CSS = """
+    BilateralGridSpecialTestsWidget { width: 100%; height: auto; }
+    BilateralGridSpecialTestsWidget CycleButton        { width: 6; height: 3; }
+    BilateralGridSpecialTestsWidget CycleButton Button { width: 100%; height: 3; min-width: 0; }
+    BilateralGridSpecialTestsWidget .bg_grp_hdr {
+        height: auto; margin-top: 1; text-style: bold;
+    }
+    BilateralGridSpecialTestsWidget .bg_colhdr {
+        layout: horizontal; height: 1; width: 100%; color: $text-muted;
+    }
+    BilateralGridSpecialTestsWidget .bg_hentry { layout: horizontal; width: 1fr; height: 1; }
+    BilateralGridSpecialTestsWidget .bg_hspc   { width: 12; }
+    BilateralGridSpecialTestsWidget .bg_hcol   { width: 6; text-align: center; }
+    BilateralGridSpecialTestsWidget .bg_hgap   { width: 1; }
+    BilateralGridSpecialTestsWidget .bg_row    {
+        layout: horizontal; height: 3; width: 100%; margin-bottom: 0;
+    }
+    BilateralGridSpecialTestsWidget .bg_entry  { layout: horizontal; width: 1fr; height: 3; }
+    BilateralGridSpecialTestsWidget .bg_lbl    { width: 12; height: 3; content-align: left middle; }
+    BilateralGridSpecialTestsWidget .bg_gap    { width: 1; height: 3; }
+    BilateralGridSpecialTestsWidget TextArea   { height: auto; min-height: 2; padding: 0 1; }
+    BilateralGridSpecialTestsWidget Label      { height: auto; margin-top: 0; }
+    """
+
+    _STATES = [("Yes", "error"), ("No", "success")]
+
+    def __init__(self, section_def: dict, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self._groups: list[dict] = section_def.get("groups", [])
+        self._notes_id: str | None = section_def.get("notes_id")
+        self._grid: list[str] = []       # inner button IDs in tab order
+        self._grid_pos: dict[str, int] = {}
+
+    def compose(self) -> ComposeResult:
+        for group in self._groups:
+            yield Label(group["label"], classes="bg_grp_hdr")
+            with Horizontal(classes="bg_colhdr"):
+                for _ in range(2):
+                    with Horizontal(classes="bg_hentry"):
+                        yield Static("",  classes="bg_hspc")
+                        yield Static("L", classes="bg_hcol")
+                        yield Static("",  classes="bg_hgap")
+                        yield Static("R", classes="bg_hcol")
+            rows = group.get("rows", [])
+            for i in range(0, len(rows), 2):
+                left = rows[i]
+                right = rows[i + 1] if i + 1 < len(rows) else None
+                with Horizontal(classes="bg_row"):
+                    with Horizontal(classes="bg_entry"):
+                        yield Static(left["label"], classes="bg_lbl")
+                        yield CycleButton(self._STATES, id=f"st_{left['id']}_l")
+                        yield Static("", classes="bg_gap")
+                        yield CycleButton(self._STATES, id=f"st_{left['id']}_r")
+                    with Horizontal(classes="bg_entry"):
+                        if right:
+                            yield Static(right["label"], classes="bg_lbl")
+                            yield CycleButton(self._STATES, id=f"st_{right['id']}_l")
+                            yield Static("", classes="bg_gap")
+                            yield CycleButton(self._STATES, id=f"st_{right['id']}_r")
+        if self._notes_id:
+            yield Label("Notes:")
+            yield TextArea(id=self._notes_id, language="plain")
+
+    def on_mount(self) -> None:
+        for group in self._groups:
+            rows = group.get("rows", [])
+            for i in range(0, len(rows), 2):
+                left = rows[i]
+                right = rows[i + 1] if i + 1 < len(rows) else None
+                btn_ids = [f"st_{left['id']}_l_btn", f"st_{left['id']}_r_btn"]
+                if right:
+                    btn_ids += [f"st_{right['id']}_l_btn", f"st_{right['id']}_r_btn"]
+                for btn_id in btn_ids:
+                    self._grid_pos[btn_id] = len(self._grid)
+                    self._grid.append(btn_id)
+
+    def on_key(self, event) -> None:
+        focused = self.app.focused
+        fid = focused.id if focused else ""
+        if not fid or fid not in self._grid_pos:
+            return
+        if event.key not in ("up", "down"):
+            return
+        idx = self._grid_pos[fid]
+        target = idx - 1 if event.key == "up" else idx + 1
+        if 0 <= target < len(self._grid):
+            try:
+                self.query_one(f"#{self._grid[target]}").focus()
+                event.stop()
+            except Exception:
+                pass
+
+    def collect(self) -> dict:
+        data: dict = {}
+        for cb in self.query(CycleButton):
+            data[cb.id] = cb.value
+        if self._notes_id:
+            try:
+                data[self._notes_id] = self.query_one(f"#{self._notes_id}", TextArea).text
+            except Exception:
+                data[self._notes_id] = ""
+        return data
+
+    def load(self, data: dict) -> None:
+        for cb in self.query(CycleButton):
+            cb.set_value(data.get(cb.id))
+        if self._notes_id:
+            try:
+                self.query_one(f"#{self._notes_id}", TextArea).text = data.get(self._notes_id, "")
+            except Exception:
+                pass
+
+
 # ── RegionContainer ───────────────────────────────────────────────────────────
 
 class RegionContainer(Static):
@@ -429,17 +561,24 @@ class RegionContainer(Static):
                 yield TextArea(id=notes_id, language="plain")
 
         elif self._section_key == "special":
-            yield SpecialTestsWidget(
-                section_def, id=f"sptests_{self._region_id}"
-            )
+            if "groups" in section_def:
+                yield BilateralGridSpecialTestsWidget(
+                    section_def, id=f"sptests_{self._region_id}"
+                )
+            else:
+                yield SpecialTestsWidget(
+                    section_def, id=f"sptests_{self._region_id}"
+                )
 
     # ── Event handlers ────────────────────────────────────────────────────────
 
     @on(RadioGroup.Changed)
+    @on(CycleButton.Changed)
     @on(TextArea.Changed)
     @on(GridInput.Changed)
     @on(LumbarTables.Changed)
     @on(CervicalTables.Changed)
+    @on(ShoulderTables.Changed)
     def _on_any_field_changed(self) -> None:
         if not self._loading:
             self.post_message(self.FieldChanged())
@@ -448,7 +587,7 @@ class RegionContainer(Static):
 
     def collect(self) -> dict:
         data: dict = {}
-        for cls in (ROMGroupWidget, GradeGroupWidget, TrunkStrengthWidget, SpecialTestsWidget):
+        for cls in (ROMGroupWidget, GradeGroupWidget, TrunkStrengthWidget, SpecialTestsWidget, BilateralGridSpecialTestsWidget):
             for w in self.query(cls):
                 data.update(w.collect())
         for nid in self._notes_ids:
@@ -468,7 +607,7 @@ class RegionContainer(Static):
     def load(self, data: dict) -> None:
         self._loading = True
         try:
-            for cls in (ROMGroupWidget, GradeGroupWidget, TrunkStrengthWidget, SpecialTestsWidget):
+            for cls in (ROMGroupWidget, GradeGroupWidget, TrunkStrengthWidget, SpecialTestsWidget, BilateralGridSpecialTestsWidget):
                 for w in self.query(cls):
                     w.load(data)
             for nid in self._notes_ids:
@@ -577,4 +716,6 @@ REGION_EXTRAS: dict[tuple[str, str], Type] = {
     ("lumbar",    "muscle"):  LumbarMuscleTables,
     ("cervical",  "passive"): CervicalPassiveTables,
     ("cervical",  "muscle"):  CervicalMuscleTables,
+    ("shoulder",  "passive"): ShoulderPassiveTables,
+    ("shoulder",  "muscle"):  ShoulderMuscleTables,
 }

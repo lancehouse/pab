@@ -153,8 +153,8 @@
 |---|---|---|---|
 | ULNT1 (median nerve bias) | Right | | |
 | ULNT1 (median nerve bias) | Left | | |
-| ULNT2a (median nerve bias) | Right | | |
-| ULNT2a (median nerve bias) | Left | | |
+| ULNT2a (radial nerve bias) | Right | | |
+| ULNT2a (radial nerve bias) | Left | | |
 | ULNT3 (ulnar nerve bias) | Right | | |
 | ULNT3 (ulnar nerve bias) | Left | | |
 

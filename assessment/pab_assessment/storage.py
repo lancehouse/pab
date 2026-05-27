@@ -492,6 +492,58 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
             _maybe_table(sl, title, ["", "Ax L", "Ax R", "ReAx L", "ReAx R"], tbl_rows)
         for key, lbl in [("am_lx_notes","*Lumbar notes*"),("am_tx_notes","*Thoracic notes*")]:
             _maybe_note(sl, lbl, act.get(key, "").strip())
+        if any(k.startswith("cx_") or k.startswith("tx_cx_") for k in act):
+            def _cx_cell(p, s):
+                v  = act.get(f"{p}_{s}_range","") or ""
+                ps = act.get(f"{p}_{s}_ps") or ""
+                txt = f"{v}°" if v else "—"
+                return f"{txt} {ps}".strip() if ps else txt
+            for cx_title, cx_rows_def in [
+                ("Cervical ROM", [("Flexion","cx_flex",True),("Extension","cx_ext",True),
+                                  ("Lat Flex","cx_lf",False),("Rotation","cx_rot",False)]),
+                ("Thoracic ROM (Cx)", [("Flexion","tx_cx_flex",True),("Extension","tx_cx_ext",True),
+                                       ("Rotation","tx_cx_rot",False)]),
+            ]:
+                cx_tbl = []
+                for cx_lbl, cx_pfx, cx_bil in cx_rows_def:
+                    ax_l = _cx_cell(cx_pfx,"ax_l"); reax_l = _cx_cell(cx_pfx,"reax_l")
+                    if cx_bil:
+                        cx_tbl.append([cx_lbl, ax_l, "—", reax_l, "—"])
+                    else:
+                        cx_tbl.append([cx_lbl, ax_l, _cx_cell(cx_pfx,"ax_r"),
+                                       reax_l, _cx_cell(cx_pfx,"reax_r")])
+                _maybe_table(sl, cx_title, ["","Ax L","Ax R","ReAx L","ReAx R"], cx_tbl)
+            for key, lbl in [("am_cx_notes","*Cervical notes*"),
+                              ("am_tx_cx_notes","*Thoracic (Cx) notes*")]:
+                _maybe_note(sl, lbl, act.get(key, "").strip())
+        if any(k.startswith("sh_") or k.startswith("tx_sh_") for k in act):
+            def _sh_cell(p, s):
+                v  = act.get(f"{p}_{s}_range", "") or ""
+                ps = act.get(f"{p}_{s}_ps") or ""
+                txt = f"{v}°" if v else "—"
+                return f"{txt} {ps}".strip() if ps else txt
+            sh_rom_def = [("Flexion","sh_flex"),("Extension","sh_ext"),
+                          ("Abduction","sh_abd"),("Int Rotation","sh_ir"),
+                          ("Ext Rotation","sh_er"),("Horiz Add","sh_hadd"),
+                          ("Hand Bk Back","sh_hbb")]
+            sh_tbl = [[lbl, _sh_cell(p,"ax_l"), _sh_cell(p,"ax_r"),
+                            _sh_cell(p,"reax_l"), _sh_cell(p,"reax_r")]
+                      for lbl, p in sh_rom_def]
+            _maybe_table(sl, "Shoulder ROM", ["","Ax L","Ax R","ReAx L","ReAx R"], sh_tbl)
+            tx_sh_def = [("Flexion","tx_sh_flex",True),("Extension","tx_sh_ext",True),
+                         ("Rotation","tx_sh_rot",False)]
+            tx_sh_tbl = []
+            for sh_lbl, sh_pfx, sh_bil in tx_sh_def:
+                ax_l = _sh_cell(sh_pfx,"ax_l"); reax_l = _sh_cell(sh_pfx,"reax_l")
+                if sh_bil:
+                    tx_sh_tbl.append([sh_lbl, ax_l, "—", reax_l, "—"])
+                else:
+                    tx_sh_tbl.append([sh_lbl, ax_l, _sh_cell(sh_pfx,"ax_r"),
+                                      reax_l, _sh_cell(sh_pfx,"reax_r")])
+            _maybe_table(sl, "Thoracic ROM (Sh)", ["","Ax L","Ax R","ReAx L","ReAx R"], tx_sh_tbl)
+            for key, lbl in [("am_sh_notes","*Shoulder notes*"),
+                              ("am_tx_sh_notes","*Thoracic (Sh) notes*")]:
+                _maybe_note(sl, lbl, act.get(key, "").strip())
         _flush_section("### 02 Active Movement", sl)
 
     # ── 03 Passive Movement ───────────────────────────────────────────────────
@@ -512,11 +564,75 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         _maybe_table(sl, "PAIVMs", ["Level", "Central", "UL Left", "UL Right"], paivm_rows)
         for key, lbl in [("pm_op_notes","*OP notes*"),("pm_paivm_notes","*PAIVM notes*")]:
             _maybe_note(sl, lbl, pas.get(key, "").strip())
+        if any(k.startswith("cx_op_") or k.startswith("cx_pm_") for k in pas):
+            cx_op_def = [("Flexion","cx_op_flex"),("Extension","cx_op_ext"),
+                         ("Lat Fl L","cx_op_lf_l"),("Lat Fl R","cx_op_lf_r"),
+                         ("Rotation L","cx_op_rot_l"),("Rotation R","cx_op_rot_r"),
+                         ("Quadrant L","cx_op_quad_l"),("Quadrant R","cx_op_quad_r")]
+            cx_op_rows = [[lbl, pas.get(f"{p}_ef") or "—", pas.get(f"{p}_resp") or "—"]
+                          for lbl, p in cx_op_def]
+            _maybe_table(sl, "Cervical OP", ["Movement","End-feel","Response"], cx_op_rows)
+            cx_paivm_levels = [("C0/1","C0_1"),("C1/2","C1_2"),("C2","C2"),("C3","C3"),
+                               ("C4","C4"),("C5","C5"),("C6","C6"),("C7","C7"),
+                               ("T1","T1"),("T2","T2"),("T3","T3"),("T4","T4")]
+            cx_paivm_rows = [[lv, pas.get(f"cx_pm_{k}_ul_l") or "—",
+                                  pas.get(f"cx_pm_{k}_c") or "—",
+                                  pas.get(f"cx_pm_{k}_ul_r") or "—"]
+                             for lv, k in cx_paivm_levels]
+            _maybe_table(sl, "Cervical PAIVMs", ["Level","UL Left","Central","UL Right"], cx_paivm_rows)
+            for key, lbl in [("cx_pm_op_notes","*Cervical OP notes*"),
+                              ("cx_pm_paivm_notes","*Cervical PAIVM notes*")]:
+                _maybe_note(sl, lbl, pas.get(key, "").strip())
+        if any(k.startswith("sh_op_") or k.startswith("sh_acc_") or
+               k.startswith("sh_ac_pm") or k.startswith("sh_sc_pm") for k in pas):
+            sh_op_def = [("Flexion","sh_op_flex"),("Extension","sh_op_ext"),
+                         ("Abduction","sh_op_abd"),("Int Rot","sh_op_ir"),
+                         ("Ext Rot","sh_op_er"),("Horiz Add","sh_op_hadd"),
+                         ("Horiz Abd","sh_op_habd")]
+            sh_op_rows = [[lbl, pas.get(f"{p}_ef") or "—", pas.get(f"{p}_resp") or "—"]
+                          for lbl, p in sh_op_def]
+            _maybe_table(sl, "Shoulder OP", ["Movement","End-feel","Response"], sh_op_rows)
+            for side, side_lbl in (("l","Left"),("r","Right")):
+                acc_rows = [[dir_lbl,
+                             pas.get(f"sh_acc_{dk}_{side}_grade") or "—",
+                             pas.get(f"sh_acc_{dk}_{side}_resp") or "—"]
+                            for dir_lbl, dk in (("Inferior","inf"),("Posterior","post"),("Anterior","ant"))]
+                _maybe_table(sl, f"GH Accessory — {side_lbl}",
+                             ["Direction","Grade","Response"], acc_rows)
+            acsc_rows = [[lbl, pas.get(f"{pfx}_l") or "—", pas.get(f"{pfx}_r") or "—"]
+                         for lbl, pfx in (("AC Stress","sh_ac_pm_stress"),
+                                          ("AC Palp","sh_ac_pm_palp"),
+                                          ("SC Stress","sh_sc_pm_stress"))]
+            _maybe_table(sl, "AC / SC Joint", ["Test","Left","Right"], acsc_rows)
+            for key, lbl in [("sh_pm_op_notes","*Shoulder OP notes*"),
+                              ("sh_pm_acc_notes","*Accessory notes*")]:
+                _maybe_note(sl, lbl, pas.get(key, "").strip())
         _flush_section("### 03 Passive Movement & Overpressure", sl)
 
     # ── 04 Neurological ───────────────────────────────────────────────────────
     if neu:
         sl = []
+        ul_reflex_def = [("Biceps C5/6","nr_biceps"),("Brachiorad C6","nr_brad"),
+                         ("Triceps C7","nr_triceps")]
+        ul_reflex_rows = [[lbl, neu.get(f"{p}_l") or "—", neu.get(f"{p}_r") or "—"]
+                          for lbl, p in ul_reflex_def]
+        _maybe_table(sl, "UL Reflexes", ["Test", "Left", "Right"], ul_reflex_rows)
+        ul_myotome_def = [("C5 Shldr abd","nr_c5"),("C6 Wrist ext","nr_c6"),
+                          ("C7 Elbow ext","nr_c7"),("C8 Finger flx","nr_c8"),
+                          ("T1 Finger abd","nr_t1")]
+        ul_myotome_rows = [[lbl, neu.get(f"{p}_l") or "—", neu.get(f"{p}_r") or "—"]
+                           for lbl, p in ul_myotome_def]
+        _maybe_table(sl, "UL Myotomes", ["Level", "Left", "Right"], ul_myotome_rows)
+        ul_derm_def = [("C5 Lat arm/delt","sn_c5"),("C6 Thumb & index","sn_c6"),
+                       ("C7 Middle finger","sn_c7"),("C8 Little/ulnar","sn_c8"),
+                       ("T1 Med forearm","sn_t1")]
+        ul_derm_rows = [[lbl, neu.get(f"{p}_l") or "—", neu.get(f"{p}_r") or "—"]
+                        for lbl, p in ul_derm_def]
+        _maybe_table(sl, "UL Dermatomes", ["Level", "Left", "Right"], ul_derm_rows)
+        ulnt_def = [("ULNT1","nr_ulnt1"),("ULNT2a","nr_ulnt2a"),("ULNT3","nr_ulnt3")]
+        ulnt_rows = [[lbl, neu.get(f"{p}_l_resp","") or "—", neu.get(f"{p}_r_resp","") or "—"]
+                     for lbl, p in ulnt_def]
+        _maybe_table(sl, "Upper Limb Neurodynamics", ["Test", "L Response", "R Response"], ulnt_rows)
         neuro_def = [
             ("Knee jerk L3/4","nr_knee"),("Ankle jerk S1","nr_ankle"),("Plantar","nr_plantar"),
             ("L2 Hip flex","nr_l2"),("L3 Knee ext","nr_l3"),("L4 Ankle DF","nr_l4"),
@@ -524,13 +640,13 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         ]
         neuro_rows = [[lbl, neu.get(f"{p}_l") or "—", neu.get(f"{p}_r") or "—"]
                       for lbl, p in neuro_def]
-        _maybe_table(sl, "", ["Test", "Left", "Right"], neuro_rows)
+        _maybe_table(sl, "LL Reflexes & Myotomes", ["Test", "Left", "Right"], neuro_rows)
         _derm_def_nr = [("L2 Ant thigh","sn_l2"),("L3 Med knee","sn_l3"),
                         ("L4 Med leg","sn_l4"),("L5 Lat leg/GT","sn_l5"),
                         ("S1 Lat foot","sn_s1"),("S2 Post thigh","sn_s2")]
         derm_rows_nr = [[lbl, neu.get(f"{p}_l") or "—", neu.get(f"{p}_r") or "—"]
                         for lbl, p in _derm_def_nr]
-        _maybe_table(sl, "Dermatomes", ["Level", "Left", "Right"], derm_rows_nr)
+        _maybe_table(sl, "LL Dermatomes", ["Level", "Left", "Right"], derm_rows_nr)
         nd_def = [("SLR","nr_slr"),("Slump","nr_slump"),("PKF","nr_pkf")]
         nd_rows = []
         for lbl, p in nd_def:
@@ -538,7 +654,7 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
             rd = neu.get(f"{p}_r_deg","") or ""; rr = neu.get(f"{p}_r_resp","") or "—"
             nd_rows.append([lbl, f"{ld}°" if ld else "—", lr,
                                   f"{rd}°" if rd else "—", rr])
-        _maybe_table(sl, "Neurodynamics", ["Test", "L °", "L Resp", "R °", "R Resp"], nd_rows)
+        _maybe_table(sl, "LL Neurodynamics", ["Test", "L °", "L Resp", "R °", "R Resp"], nd_rows)
         umn_items = [("Hyperreflexia","nr_umn_hyper"),("Babinski +","nr_umn_bab"),
                      ("Clonus","nr_umn_clonus"),("Romberg +","nr_umn_romberg"),
                      ("Coord impaired","nr_umn_coord")]
@@ -612,7 +728,49 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         sij_rows = [[lbl, "Yes" if mus.get(sid) is True else "No" if mus.get(sid) is False else "*(not answered)*"]
                     for lbl, sid in sij_items]
         _maybe_table(sl, "SIJ Provocation", ["Test", "Result"], sij_rows)
+        cx_ml_def = [("Upper trapezius","ml_ut"),("Levator scapulae","ml_ls"),
+                     ("Pectorals","ml_pec"),("Scalenes","ml_scal")]
+        cx_ml_rows = [[lbl, mus.get(f"{p}_l") or "—", mus.get(f"{p}_r") or "—"]
+                      for lbl, p in cx_ml_def]
+        _maybe_table(sl, "Cervical Muscle Length", ["Test", "Left", "Right"], cx_ml_rows)
+        cx_ma_def = [("Deep cerv flexors","ma_dcf"),("Cervical extensors","ma_cx_ext"),
+                     ("Serratus anterior","ma_sa")]
+        cx_ma_rows = [[lbl, mus.get(mid) or "—"] for lbl, mid in cx_ma_def]
+        _maybe_table(sl, "Cervical Muscle Activation", ["Test", "Finding"], cx_ma_rows)
+        dcf_end = (mus.get("st_dcf_end") or "").strip()
+        if dcf_end:
+            sl.append(f"**DCF endurance:** {dcf_end} s")
+        elif not clean:
+            sl.append("**DCF endurance:** *(not recorded)* s")
+        if any(k.startswith("cx_neck_") for k in mus):
+            cx_neck_def = [("Neck flexion","cx_neck_flex"),("Neck extension","cx_neck_ext"),
+                           ("Neck lat flex","cx_neck_lf"),("Neck rotation","cx_neck_rot")]
+            cx_neck_rows = [[lbl, mus.get(f"{p}_l") or "—", mus.get(f"{p}_r") or "—"]
+                            for lbl, p in cx_neck_def]
+            _maybe_table(sl, "Neck Strength (kg)", ["Movement","Left","Right"], cx_neck_rows)
+        _maybe_note(sl, "*Cervical muscle notes:*", mus.get("mu_cx_notes", "").strip())
         _maybe_note(sl, "*Notes:*", mus.get("mu_notes", "").strip())
+        if any(k.startswith("sh_str_") or k.startswith("ml_pec_") or
+               k.startswith("ml_post_cap") or k.startswith("ma_lt_") or
+               k.startswith("ma_er_fc") for k in mus):
+            sh_ml_def = [("Pec minor","ml_pec_min"),("Pec maj sternal","ml_pec_st"),
+                         ("Pec maj clav","ml_pec_cl"),("Latissimus","ml_lat"),
+                         ("Post capsule","ml_post_cap")]
+            sh_ml_rows = [[lbl, mus.get(f"{p}_l") or "—", mus.get(f"{p}_r") or "—"]
+                          for lbl, p in sh_ml_def]
+            _maybe_table(sl, "Shoulder Muscle Length", ["Test","Left","Right"], sh_ml_rows)
+            sh_ma_def = [("Lower trap","ma_lt"),("Serratus ant","ma_sa"),
+                         ("ER force couple","ma_er_fc")]
+            sh_ma_rows = [[lbl, mus.get(f"{p}_l") or "—", mus.get(f"{p}_r") or "—"]
+                          for lbl, p in sh_ma_def]
+            _maybe_table(sl, "Shoulder Muscle Activation", ["Test","Left","Right"], sh_ma_rows)
+            sh_str_def = [("Flexion","sh_str_flex"),("Abduction","sh_str_abd"),
+                          ("Int Rot","sh_str_ir"),("Ext Rot","sh_str_er"),
+                          ("Scaption","sh_str_scap")]
+            sh_str_rows = [[lbl, mus.get(f"{p}_l") or "—", mus.get(f"{p}_r") or "—"]
+                           for lbl, p in sh_str_def]
+            _maybe_table(sl, "Shoulder Strength (kg or 0–5)", ["Movement","Left","Right"], sh_str_rows)
+            _maybe_note(sl, "*Shoulder muscle notes*", mus.get("mu_sh_notes", "").strip())
         _flush_section("### 06 Muscle Testing", sl)
 
     # ── 07 Functional ─────────────────────────────────────────────────────────
@@ -647,21 +805,52 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
     # ── 08 Special Tests ──────────────────────────────────────────────────────
     if spl:
         sl = []
-        st_def = [
-            ("SLR Left",          "st_slr_l"),
-            ("SLR Right",         "st_slr_r"),
-            ("Slump",             "st_slump"),
-            ("Femoral Stretch",   "st_femoral"),
-            ("FABER Left",        "st_faber_l"),
-            ("FABER Right",       "st_faber_r"),
-            ("FADIR Left",        "st_fadir_l"),
-            ("FADIR Right",       "st_fadir_r"),
-            ("Prone Instability", "st_prone_inst"),
-            ("Crossed SLR",       "st_crossed_slr"),
+        _LX_ST_GROUPS = [
+            ("Disc/Herniation",[("SLR","st_slr"),("Crossed SLR","st_crossed_slr")]),
+            ("Neurodynamics",  [("Slump","st_slump"),("Femoral","st_femoral")]),
+            ("Hip Screen",     [("FABER","st_faber"),("FADIR","st_fadir")]),
+            ("Instability",    [("Prone Inst","st_prone_inst")]),
         ]
-        st_rows = [[lbl, spl.get(sid) or "—"] for lbl, sid in st_def]
-        _maybe_table(sl, "", ["Test", "Result"], st_rows)
-        _maybe_note(sl, "*Notes:*", spl.get("st_lx_notes", "").strip())
+        if any(f"{sid}_l" in spl for _, rows in _LX_ST_GROUPS for _, sid in rows):
+            for grp_lbl, rows in _LX_ST_GROUPS:
+                lx_st_rows = [[lbl, spl.get(f"{sid}_l") or "—", spl.get(f"{sid}_r") or "—"]
+                              for lbl, sid in rows]
+                _maybe_table(sl, f"Lumbar — {grp_lbl}", ["Test","Left","Right"], lx_st_rows)
+        _CX_ST_GROUPS = [
+            ("Radiculopathy",  [("Spurling","st_spurling"),("Distraction","st_distraction")]),
+            ("Neurodynamics",  [("ULNT1","st_ulnt1"),("ULNT2a","st_ulnt2a"),("ULNT3","st_ulnt3")]),
+            ("CGH",            [("FRT","st_frt")]),
+            ("UC Instability", [("Sharp-Purser","st_sharp_purser"),("Ant Shear","st_ant_shear"),
+                                ("Alar Lig SF","st_alar_sf"),("Lat Trans","st_lat_trans")]),
+            ("VBI",            [("VBI Sus Rot","st_vbi_sus_rot")]),
+            ("Myelopathy",     [("Hoffman's","st_hoffman")]),
+        ]
+        if any(f"{sid}_l" in spl for _, rows in _CX_ST_GROUPS for _, sid in rows):
+            for grp_lbl, rows in _CX_ST_GROUPS:
+                cx_st_rows = [[lbl, spl.get(f"{sid}_l") or "—", spl.get(f"{sid}_r") or "—"]
+                              for lbl, sid in rows]
+                _maybe_table(sl, f"Cervical — {grp_lbl}", ["Test","Left","Right"], cx_st_rows)
+        for key, lbl in [("st_lx_notes","*Lumbar notes:*"),("st_cx_notes","*Cervical notes:*")]:
+            _maybe_note(sl, lbl, spl.get(key, "").strip())
+        _SH_ST_GROUPS = [
+            ("Impingement",  [("Hawkins","st_hawkins"),("Neer","st_neer"),
+                              ("Painful Arc","st_painful_arc")]),
+            ("Rotator Cuff", [("Empty Can","st_empty_can"),("Full Can","st_full_can"),
+                              ("ER Lag","st_er_lag"),("Lift-off","st_lift_off"),
+                              ("Belly Press","st_belly_press"),("Drop Arm","st_drop_arm")]),
+            ("AC Joint",     [("Cross-body","st_cross_body"),("AC Stress","st_ac_stress")]),
+            ("Biceps/SLAP",  [("Speed's","st_speeds"),("Yergason","st_yergason"),
+                              ("O'Brien","st_obrien")]),
+            ("Instability",  [("Apprehension","st_apprehension"),("Relocation","st_relocation"),
+                              ("Sulcus","st_sulcus")]),
+            ("Scapular",     [("Scap Assist","st_scap_assist"),("Wall Pushup","st_wall_pushup")]),
+        ]
+        if any(f"{sid}_l" in spl for _, rows in _SH_ST_GROUPS for _, sid in rows):
+            for grp_lbl, rows in _SH_ST_GROUPS:
+                sh_st_rows = [[lbl, spl.get(f"{sid}_l") or "—", spl.get(f"{sid}_r") or "—"]
+                              for lbl, sid in rows]
+                _maybe_table(sl, f"Shoulder — {grp_lbl}", ["Test","Left","Right"], sh_st_rows)
+            _maybe_note(sl, "*Shoulder test notes*", spl.get("st_sh_notes", "").strip())
         _flush_section("### 08 Special Tests", sl)
 
     if not lines:
@@ -797,6 +986,84 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
                 sl.append(f"  {lbl}: {v}")
             elif not clean:
                 sl.append(f"  {lbl}: (empty)")
+        if any(k.startswith("cx_") or k.startswith("tx_cx_") for k in act):
+            def _cx_cell_r(p, s):
+                v  = act.get(f"{p}_{s}_range","") or ""
+                ps = act.get(f"{p}_{s}_ps") or ""
+                t  = f"{v}°" if v else "-"
+                return f"{t} {ps}".strip() if ps else t
+            for cx_title, cx_rows_def in [
+                ("Cervical ROM", [("Flexion","cx_flex",True),("Extension","cx_ext",True),
+                                  ("Lat Flex","cx_lf",False),("Rotation","cx_rot",False)]),
+                ("Thoracic ROM (Cx)", [("Flexion","tx_cx_flex",True),("Extension","tx_cx_ext",True),
+                                       ("Rotation","tx_cx_rot",False)]),
+            ]:
+                cx_tbl = []
+                for cx_lbl, cx_pfx, cx_bil in cx_rows_def:
+                    ax_l = _cx_cell_r(cx_pfx,"ax_l"); reax_l = _cx_cell_r(cx_pfx,"reax_l")
+                    if cx_bil:
+                        cx_tbl.append([cx_lbl, ax_l, "-", reax_l, "-"])
+                    else:
+                        cx_tbl.append([cx_lbl, ax_l, _cx_cell_r(cx_pfx,"ax_r"),
+                                       reax_l, _cx_cell_r(cx_pfx,"reax_r")])
+                filtered = _filter_rows(cx_tbl)
+                if filtered:
+                    sl.append(f"  {cx_title}:")
+                    sl.extend(_raw_table(["", "Ax L", "Ax R", "ReAx L", "ReAx R"], filtered))
+                elif not clean:
+                    sl.append(f"  {cx_title}:")
+                    sl.extend(_raw_table(["", "Ax L", "Ax R", "ReAx L", "ReAx R"], cx_tbl))
+            for key, lbl in [("am_cx_notes","Cervical notes"),
+                              ("am_tx_cx_notes","Thoracic (Cx) notes")]:
+                v = act.get(key, "").strip()
+                if v:
+                    sl.append(f"  {lbl}: {v}")
+                elif not clean:
+                    sl.append(f"  {lbl}: (empty)")
+        if any(k.startswith("sh_") or k.startswith("tx_sh_") for k in act):
+            def _sh_cell_r(p, s):
+                v  = act.get(f"{p}_{s}_range", "") or ""
+                ps = act.get(f"{p}_{s}_ps") or ""
+                t  = f"{v}°" if v else "-"
+                return f"{t} {ps}".strip() if ps else t
+            sh_rom_def_r = [("Flexion","sh_flex"),("Extension","sh_ext"),
+                            ("Abduction","sh_abd"),("Int Rotation","sh_ir"),
+                            ("Ext Rotation","sh_er"),("Horiz Add","sh_hadd"),
+                            ("Hand Bk Back","sh_hbb")]
+            sh_tbl_r = [[lbl, _sh_cell_r(p,"ax_l"), _sh_cell_r(p,"ax_r"),
+                              _sh_cell_r(p,"reax_l"), _sh_cell_r(p,"reax_r")]
+                        for lbl, p in sh_rom_def_r]
+            filtered = _filter_rows(sh_tbl_r)
+            if filtered:
+                sl.append("  Shoulder ROM:")
+                sl.extend(_raw_table(["","Ax L","Ax R","ReAx L","ReAx R"], filtered))
+            elif not clean:
+                sl.append("  Shoulder ROM:")
+                sl.extend(_raw_table(["","Ax L","Ax R","ReAx L","ReAx R"], sh_tbl_r))
+            tx_sh_def_r = [("Flexion","tx_sh_flex",True),("Extension","tx_sh_ext",True),
+                           ("Rotation","tx_sh_rot",False)]
+            tx_sh_tbl_r = []
+            for sh_lbl, sh_pfx, sh_bil in tx_sh_def_r:
+                ax_l = _sh_cell_r(sh_pfx,"ax_l"); reax_l = _sh_cell_r(sh_pfx,"reax_l")
+                if sh_bil:
+                    tx_sh_tbl_r.append([sh_lbl, ax_l, "-", reax_l, "-"])
+                else:
+                    tx_sh_tbl_r.append([sh_lbl, ax_l, _sh_cell_r(sh_pfx,"ax_r"),
+                                        reax_l, _sh_cell_r(sh_pfx,"reax_r")])
+            filtered = _filter_rows(tx_sh_tbl_r)
+            if filtered:
+                sl.append("  Thoracic ROM (Sh):")
+                sl.extend(_raw_table(["","Ax L","Ax R","ReAx L","ReAx R"], filtered))
+            elif not clean:
+                sl.append("  Thoracic ROM (Sh):")
+                sl.extend(_raw_table(["","Ax L","Ax R","ReAx L","ReAx R"], tx_sh_tbl_r))
+            for key, lbl in [("am_sh_notes","Shoulder notes"),
+                              ("am_tx_sh_notes","Thoracic (Sh) notes")]:
+                v = act.get(key, "").strip()
+                if v:
+                    sl.append(f"  {lbl}: {v}")
+                elif not clean:
+                    sl.append(f"  {lbl}: (empty)")
         _flush_section("02 Active Movement", sl)
 
     # ── 03 Passive Movement ───────────────────────────────────────────────────
@@ -821,11 +1088,82 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
                 sl.append(f"  {lbl}: {v}")
             elif not clean:
                 sl.append(f"  {lbl}: (empty)")
+        if any(k.startswith("cx_op_") or k.startswith("cx_pm_") for k in pas):
+            cx_op_def_r = [("Flexion","cx_op_flex"),("Extension","cx_op_ext"),
+                           ("Lat Fl L","cx_op_lf_l"),("Lat Fl R","cx_op_lf_r"),
+                           ("Rotation L","cx_op_rot_l"),("Rotation R","cx_op_rot_r"),
+                           ("Quadrant L","cx_op_quad_l"),("Quadrant R","cx_op_quad_r")]
+            cx_op_rows_r = [[lbl, pas.get(f"{p}_ef") or "-", pas.get(f"{p}_resp") or "-"]
+                            for lbl, p in cx_op_def_r]
+            _maybe_table(sl, ["Cervical OP","End-feel","Response"], cx_op_rows_r)
+            cx_paivm_levels_r = [("C0/1","C0_1"),("C1/2","C1_2"),("C2","C2"),("C3","C3"),
+                                 ("C4","C4"),("C5","C5"),("C6","C6"),("C7","C7"),
+                                 ("T1","T1"),("T2","T2"),("T3","T3"),("T4","T4")]
+            cx_paivm_rows_r = [[lv, pas.get(f"cx_pm_{k}_ul_l") or "-",
+                                     pas.get(f"cx_pm_{k}_c") or "-",
+                                     pas.get(f"cx_pm_{k}_ul_r") or "-"]
+                                for lv, k in cx_paivm_levels_r]
+            _maybe_table(sl, ["Cervical PAIVMs","UL Left","Central","UL Right"], cx_paivm_rows_r)
+            for key, lbl in [("cx_pm_op_notes","Cervical OP notes"),
+                              ("cx_pm_paivm_notes","Cervical PAIVM notes")]:
+                v = pas.get(key, "").strip()
+                if v:
+                    sl.append(f"  {lbl}: {v}")
+                elif not clean:
+                    sl.append(f"  {lbl}: (empty)")
+        if any(k.startswith("sh_op_") or k.startswith("sh_acc_") or
+               k.startswith("sh_ac_pm") or k.startswith("sh_sc_pm") for k in pas):
+            sh_op_def_r = [("Flexion","sh_op_flex"),("Extension","sh_op_ext"),
+                           ("Abduction","sh_op_abd"),("Int Rot","sh_op_ir"),
+                           ("Ext Rot","sh_op_er"),("Horiz Add","sh_op_hadd"),
+                           ("Horiz Abd","sh_op_habd")]
+            sh_op_rows_r = [[lbl, pas.get(f"{p}_ef") or "-", pas.get(f"{p}_resp") or "-"]
+                            for lbl, p in sh_op_def_r]
+            _maybe_table(sl, ["Shoulder OP","End-feel","Response"], sh_op_rows_r)
+            for side, side_lbl in (("l","Left"),("r","Right")):
+                acc_rows_r = [[dir_lbl,
+                               pas.get(f"sh_acc_{dk}_{side}_grade") or "-",
+                               pas.get(f"sh_acc_{dk}_{side}_resp") or "-"]
+                              for dir_lbl, dk in (("Inferior","inf"),("Posterior","post"),("Anterior","ant"))]
+                _maybe_table(sl, [f"GH Accessory {side_lbl}","Grade","Response"], acc_rows_r)
+            acsc_rows_r = [[lbl, pas.get(f"{pfx}_l") or "-", pas.get(f"{pfx}_r") or "-"]
+                           for lbl, pfx in (("AC Stress","sh_ac_pm_stress"),
+                                            ("AC Palp","sh_ac_pm_palp"),
+                                            ("SC Stress","sh_sc_pm_stress"))]
+            _maybe_table(sl, ["AC / SC Joint","Left","Right"], acsc_rows_r)
+            for key, lbl in [("sh_pm_op_notes","Shoulder OP notes"),
+                              ("sh_pm_acc_notes","Accessory notes")]:
+                v = pas.get(key, "").strip()
+                if v:
+                    sl.append(f"  {lbl}: {v}")
+                elif not clean:
+                    sl.append(f"  {lbl}: (empty)")
         _flush_section("03 Passive Movement & Overpressure", sl)
 
     # ── 04 Neurological ───────────────────────────────────────────────────────
     if neu:
         sl = []
+        ul_reflex_def = [("Biceps C5/6","nr_biceps"),("Brachiorad C6","nr_brad"),
+                         ("Triceps C7","nr_triceps")]
+        ul_reflex_rows = [[lbl, neu.get(f"{p}_l") or "-", neu.get(f"{p}_r") or "-"]
+                          for lbl, p in ul_reflex_def]
+        _maybe_table(sl, ["UL Reflexes", "Left", "Right"], ul_reflex_rows)
+        ul_myotome_def = [("C5 Shldr abd","nr_c5"),("C6 Wrist ext","nr_c6"),
+                          ("C7 Elbow ext","nr_c7"),("C8 Finger flx","nr_c8"),
+                          ("T1 Finger abd","nr_t1")]
+        ul_myotome_rows = [[lbl, neu.get(f"{p}_l") or "-", neu.get(f"{p}_r") or "-"]
+                           for lbl, p in ul_myotome_def]
+        _maybe_table(sl, ["UL Myotomes", "Left", "Right"], ul_myotome_rows)
+        ul_derm_def = [("C5 Lat arm/delt","sn_c5"),("C6 Thumb & index","sn_c6"),
+                       ("C7 Middle finger","sn_c7"),("C8 Little/ulnar","sn_c8"),
+                       ("T1 Med forearm","sn_t1")]
+        ul_derm_rows = [[lbl, neu.get(f"{p}_l") or "-", neu.get(f"{p}_r") or "-"]
+                        for lbl, p in ul_derm_def]
+        _maybe_table(sl, ["UL Dermatomes", "Left", "Right"], ul_derm_rows)
+        ulnt_def = [("ULNT1","nr_ulnt1"),("ULNT2a","nr_ulnt2a"),("ULNT3","nr_ulnt3")]
+        ulnt_rows = [[lbl, neu.get(f"{p}_l_resp","") or "-", neu.get(f"{p}_r_resp","") or "-"]
+                     for lbl, p in ulnt_def]
+        _maybe_table(sl, ["UL Neurodynamics", "L Response", "R Response"], ulnt_rows)
         neuro_def = [("Knee jerk L3/4","nr_knee"),("Ankle jerk S1","nr_ankle"),
                      ("Plantar","nr_plantar"),
                      ("L2 Hip flex","nr_l2"),("L3 Knee ext","nr_l3"),
@@ -833,13 +1171,13 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
                      ("S1 PF/evert","nr_s1"),("S2 Ham/KF","nr_s2")]
         neuro_rows = [[lbl, neu.get(f"{p}_l") or "-", neu.get(f"{p}_r") or "-"]
                       for lbl, p in neuro_def]
-        _maybe_table(sl, ["Test", "Left", "Right"], neuro_rows)
+        _maybe_table(sl, ["LL Reflexes & Myotomes", "Left", "Right"], neuro_rows)
         _derm_raw = [("L2 Ant thigh","sn_l2"),("L3 Med knee","sn_l3"),
                      ("L4 Med leg","sn_l4"),("L5 Lat leg/GT","sn_l5"),
                      ("S1 Lat foot","sn_s1"),("S2 Post thigh","sn_s2")]
         derm_raw_rows = [[lbl, neu.get(f"{p}_l") or "-", neu.get(f"{p}_r") or "-"]
                          for lbl, p in _derm_raw]
-        _maybe_table(sl, ["Dermatome", "Left", "Right"], derm_raw_rows)
+        _maybe_table(sl, ["LL Dermatomes", "Left", "Right"], derm_raw_rows)
         nd_def = [("SLR","nr_slr"),("Slump","nr_slump"),("PKF","nr_pkf")]
         nd_rows = []
         for lbl, p in nd_def:
@@ -847,7 +1185,7 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
             rd = neu.get(f"{p}_r_deg","") or ""; rr = neu.get(f"{p}_r_resp","") or "-"
             nd_rows.append([lbl, f"{ld}°" if ld else "-", lr,
                                   f"{rd}°" if rd else "-", rr])
-        _maybe_table(sl, ["Neurodynamics","L°","L Resp","R°","R Resp"], nd_rows)
+        _maybe_table(sl, ["LL Neurodynamics","L°","L Resp","R°","R Resp"], nd_rows)
         umn_items = [("Hyperreflexia","nr_umn_hyper"),("Babinski +","nr_umn_bab"),
                      ("Clonus","nr_umn_clonus"),("Romberg +","nr_umn_romberg"),
                      ("Coord impaired","nr_umn_coord")]
@@ -931,11 +1269,57 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
             if clean and v is None:
                 continue
             sl.append(f"  SIJ {lbl}: {'✓ Yes' if v is True else '✗ No' if v is False else '(not answered)'}")
-        v = mus.get("mu_notes", "").strip()
-        if v:
-            sl.append(f"  Notes: {v}")
+        cx_ml_def = [("Upper trapezius","ml_ut"),("Levator scapulae","ml_ls"),
+                     ("Pectorals","ml_pec"),("Scalenes","ml_scal")]
+        cx_ml_rows = [[lbl, mus.get(f"{p}_l") or "-", mus.get(f"{p}_r") or "-"]
+                      for lbl, p in cx_ml_def]
+        _maybe_table(sl, ["Cervical Muscle Length", "Left", "Right"], cx_ml_rows)
+        cx_ma_def = [("Deep cerv flexors","ma_dcf"),("Cervical extensors","ma_cx_ext"),
+                     ("Serratus anterior","ma_sa")]
+        cx_ma_rows = [[lbl, mus.get(mid) or "-"] for lbl, mid in cx_ma_def]
+        _maybe_table(sl, ["Cervical Activation", "Finding"], cx_ma_rows)
+        dcf_end = (mus.get("st_dcf_end") or "").strip()
+        if dcf_end:
+            sl.append(f"  DCF endurance: {dcf_end} s")
         elif not clean:
-            sl.append("  Notes: (empty)")
+            sl.append("  DCF endurance: (not recorded) s")
+        if any(k.startswith("cx_neck_") for k in mus):
+            cx_neck_def_r = [("Neck flexion","cx_neck_flex"),("Neck extension","cx_neck_ext"),
+                             ("Neck lat flex","cx_neck_lf"),("Neck rotation","cx_neck_rot")]
+            cx_neck_rows_r = [[lbl, mus.get(f"{p}_l") or "-", mus.get(f"{p}_r") or "-"]
+                              for lbl, p in cx_neck_def_r]
+            _maybe_table(sl, ["Neck Strength (kg)","Left","Right"], cx_neck_rows_r)
+        for key, lbl in [("mu_cx_notes","Cervical muscle notes"),("mu_notes","Notes")]:
+            v = mus.get(key, "").strip()
+            if v:
+                sl.append(f"  {lbl}: {v}")
+            elif not clean:
+                sl.append(f"  {lbl}: (empty)")
+        if any(k.startswith("sh_str_") or k.startswith("ml_pec_") or
+               k.startswith("ml_post_cap") or k.startswith("ma_lt_") or
+               k.startswith("ma_er_fc") for k in mus):
+            sh_ml_def_r = [("Pec minor","ml_pec_min"),("Pec maj sternal","ml_pec_st"),
+                           ("Pec maj clav","ml_pec_cl"),("Latissimus","ml_lat"),
+                           ("Post capsule","ml_post_cap")]
+            sh_ml_rows_r = [[lbl, mus.get(f"{p}_l") or "-", mus.get(f"{p}_r") or "-"]
+                            for lbl, p in sh_ml_def_r]
+            _maybe_table(sl, ["Shoulder Muscle Length","Left","Right"], sh_ml_rows_r)
+            sh_ma_def_r = [("Lower trap","ma_lt"),("Serratus ant","ma_sa"),
+                           ("ER force couple","ma_er_fc")]
+            sh_ma_rows_r = [[lbl, mus.get(f"{p}_l") or "-", mus.get(f"{p}_r") or "-"]
+                            for lbl, p in sh_ma_def_r]
+            _maybe_table(sl, ["Shoulder Activation","Left","Right"], sh_ma_rows_r)
+            sh_str_def_r = [("Flexion","sh_str_flex"),("Abduction","sh_str_abd"),
+                            ("Int Rot","sh_str_ir"),("Ext Rot","sh_str_er"),
+                            ("Scaption","sh_str_scap")]
+            sh_str_rows_r = [[lbl, mus.get(f"{p}_l") or "-", mus.get(f"{p}_r") or "-"]
+                             for lbl, p in sh_str_def_r]
+            _maybe_table(sl, ["Shoulder Strength (kg/0-5)","Left","Right"], sh_str_rows_r)
+            v = mus.get("mu_sh_notes", "").strip()
+            if v:
+                sl.append(f"  Shoulder muscle notes: {v}")
+            elif not clean:
+                sl.append("  Shoulder muscle notes: (empty)")
         _flush_section("06 Muscle Testing", sl)
 
     # ── 07 Functional ─────────────────────────────────────────────────────────
@@ -974,25 +1358,60 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
     # ── 08 Special Tests ──────────────────────────────────────────────────────
     if spl:
         sl = []
-        st_def = [
-            ("SLR Left",          "st_slr_l"),
-            ("SLR Right",         "st_slr_r"),
-            ("Slump",             "st_slump"),
-            ("Femoral Stretch",   "st_femoral"),
-            ("FABER Left",        "st_faber_l"),
-            ("FABER Right",       "st_faber_r"),
-            ("FADIR Left",        "st_fadir_l"),
-            ("FADIR Right",       "st_fadir_r"),
-            ("Prone Instability", "st_prone_inst"),
-            ("Crossed SLR",       "st_crossed_slr"),
+        _LX_ST_GROUPS_R = [
+            ("Disc/Herniation",[("SLR","st_slr"),("Crossed SLR","st_crossed_slr")]),
+            ("Neurodynamics",  [("Slump","st_slump"),("Femoral","st_femoral")]),
+            ("Hip Screen",     [("FABER","st_faber"),("FADIR","st_fadir")]),
+            ("Instability",    [("Prone Inst","st_prone_inst")]),
         ]
-        st_rows = [[lbl, spl.get(sid) or "-"] for lbl, sid in st_def]
-        _maybe_table(sl, ["Test", "Result"], st_rows)
-        v = spl.get("st_lx_notes", "").strip()
-        if v:
-            sl.append(f"  Notes: {v}")
-        elif not clean:
-            sl.append("  Notes: (empty)")
+        if any(f"{sid}_l" in spl for _, rows in _LX_ST_GROUPS_R for _, sid in rows):
+            for grp_lbl, rows in _LX_ST_GROUPS_R:
+                lx_st_rows_r = [[lbl, spl.get(f"{sid}_l") or "-", spl.get(f"{sid}_r") or "-"]
+                                for lbl, sid in rows]
+                _maybe_table(sl, [f"Lumbar {grp_lbl}","Left","Right"], lx_st_rows_r)
+        _CX_ST_GROUPS_R = [
+            ("Radiculopathy",  [("Spurling","st_spurling"),("Distraction","st_distraction")]),
+            ("Neurodynamics",  [("ULNT1","st_ulnt1"),("ULNT2a","st_ulnt2a"),("ULNT3","st_ulnt3")]),
+            ("CGH",            [("FRT","st_frt")]),
+            ("UC Instability", [("Sharp-Purser","st_sharp_purser"),("Ant Shear","st_ant_shear"),
+                                ("Alar Lig SF","st_alar_sf"),("Lat Trans","st_lat_trans")]),
+            ("VBI",            [("VBI Sus Rot","st_vbi_sus_rot")]),
+            ("Myelopathy",     [("Hoffman's","st_hoffman")]),
+        ]
+        if any(f"{sid}_l" in spl for _, rows in _CX_ST_GROUPS_R for _, sid in rows):
+            for grp_lbl, rows in _CX_ST_GROUPS_R:
+                cx_st_rows_r = [[lbl, spl.get(f"{sid}_l") or "-", spl.get(f"{sid}_r") or "-"]
+                                for lbl, sid in rows]
+                _maybe_table(sl, [f"Cervical {grp_lbl}","Left","Right"], cx_st_rows_r)
+        for key, lbl in [("st_lx_notes","Lumbar notes"),("st_cx_notes","Cervical notes")]:
+            v = spl.get(key, "").strip()
+            if v:
+                sl.append(f"  {lbl}: {v}")
+            elif not clean:
+                sl.append(f"  {lbl}: (empty)")
+        _SH_ST_GROUPS_R = [
+            ("Impingement",  [("Hawkins","st_hawkins"),("Neer","st_neer"),
+                              ("Painful Arc","st_painful_arc")]),
+            ("Rotator Cuff", [("Empty Can","st_empty_can"),("Full Can","st_full_can"),
+                              ("ER Lag","st_er_lag"),("Lift-off","st_lift_off"),
+                              ("Belly Press","st_belly_press"),("Drop Arm","st_drop_arm")]),
+            ("AC Joint",     [("Cross-body","st_cross_body"),("AC Stress","st_ac_stress")]),
+            ("Biceps/SLAP",  [("Speed's","st_speeds"),("Yergason","st_yergason"),
+                              ("O'Brien","st_obrien")]),
+            ("Instability",  [("Apprehension","st_apprehension"),("Relocation","st_relocation"),
+                              ("Sulcus","st_sulcus")]),
+            ("Scapular",     [("Scap Assist","st_scap_assist"),("Wall Pushup","st_wall_pushup")]),
+        ]
+        if any(f"{sid}_l" in spl for _, rows in _SH_ST_GROUPS_R for _, sid in rows):
+            for grp_lbl, rows in _SH_ST_GROUPS_R:
+                sh_st_rows_r = [[lbl, spl.get(f"{sid}_l") or "-", spl.get(f"{sid}_r") or "-"]
+                                for lbl, sid in rows]
+                _maybe_table(sl, [f"Shoulder {grp_lbl}","Left","Right"], sh_st_rows_r)
+            v = spl.get("st_sh_notes", "").strip()
+            if v:
+                sl.append(f"  Shoulder test notes: {v}")
+            elif not clean:
+                sl.append("  Shoulder test notes: (empty)")
         _flush_section("08 Special Tests", sl)
 
 
@@ -1293,6 +1712,10 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     txt("easing_factors",          s)
     f("mood_influences",           s)
     txt("daily_pattern_comments",  s)
+    txt("hr24_am",                 s)
+    txt("hr24_day",                s)
+    txt("hr24_pm",                 s)
+    txt("hr24_nocte",              s)
 
     sub("Psychosocial")
     txt("social_situation",        s)
@@ -2051,55 +2474,6 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     f("custom_2_barrier",  br)
     f("custom_2_strategy", br)
 
-    sub("Treatment Plan Summary")
-    f("tx_pain_type",           br)
-    f("tx_debunk_radiology",    br)
-    f("tx_consent_explanation", br)
-    txt("tx_goal_orientation",  br)
-    txt("tx_formulation",       br)
-    txt("tx_program",           br)
-    txt("tx_home_program",      br)
-    txt("tx_psychosocial",      br)
-    txt("tx_medical",           br)
-    txt("tx_rtw",               br)
-
-    sub("Session 1 Treatment")
-    txt("s1_education",     br)
-    txt("s1_experiential",  br)
-    f("s1_consent_content", br)
-    f("s1_confidence_nrs",  br)
-    f("hw_online_module",   br)
-    f("hw_mindfulness",     br)
-    f("hw_goal_sheet",      br)
-    f("hw_activity_diary",  br)
-    f("hw_sleep_diary",     br)
-    txt("s1_hw_other",      br)
-    f("tx_email_obtained",  br)
-    f("tx_display_book",    br)
-
-    sub("Day 1 Checklist")
-    f("d1_explanation",       br)
-    f("d1_session2",          br)
-    f("d1_hypothesis",        br)
-    f("d1_diagnosis",         br)
-    f("d1_values",            br)
-    f("d1_evidence",          br)
-    f("d1_plan",              br)
-    f("d1_prognosis",         br)
-    f("d1_stakeholders",      br)
-    f("d1_confidence_tested", br)
-    f("d1_questionnaires",    br)
-
-    sub("Follow-Up Plan")
-    txt("fu_next_focus",   br)
-    txt("fu_monitoring",   br)
-    f("fu_om_schedule",    br)
-    f("ps_questionnaires", br)
-    f("ps_eppoc",          br)
-    f("ps_ptsd_scored",    br)
-    f("ps_isi_pbas",       br)
-    f("ps_csi",            br)
-    f("ps_audit_dudit",    br)
     _emit_yaml_subs_md("barriers", br, clean, _emit, sub)
 
     # ════════════════════════════════════════════════════════════════════════
@@ -2107,7 +2481,56 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     # ════════════════════════════════════════════════════════════════════════
     rp = a.get("rx_plan", {}) or {}
     sec("Section 8: Rx Plan")
-    _emit_yaml_subs_md("rx_plan", rp, clean, _emit, sub)
+
+    sub("Treatment Plan Summary")
+    f("tx_pain_type",           rp)
+    f("tx_debunk_radiology",    rp)
+    f("tx_consent_explanation", rp)
+    txt("tx_goal_orientation",  rp)
+    txt("tx_formulation",       rp)
+    txt("tx_program",           rp)
+    txt("tx_home_program",      rp)
+    txt("tx_psychosocial",      rp)
+    txt("tx_medical",           rp)
+    txt("tx_rtw",               rp)
+
+    sub("Session 1 Treatment")
+    txt("s1_education",     rp)
+    txt("s1_experiential",  rp)
+    f("s1_consent_content", rp)
+    f("s1_confidence_nrs",  rp)
+    f("hw_online_module",   rp)
+    f("hw_mindfulness",     rp)
+    f("hw_goal_sheet",      rp)
+    f("hw_activity_diary",  rp)
+    f("hw_sleep_diary",     rp)
+    txt("s1_hw_other",      rp)
+    f("tx_email_obtained",  rp)
+    f("tx_display_book",    rp)
+
+    sub("Day 1 Checklist")
+    f("d1_explanation",       rp)
+    f("d1_session2",          rp)
+    f("d1_hypothesis",        rp)
+    f("d1_diagnosis",         rp)
+    f("d1_values",            rp)
+    f("d1_evidence",          rp)
+    f("d1_plan",              rp)
+    f("d1_prognosis",         rp)
+    f("d1_stakeholders",      rp)
+    f("d1_confidence_tested", rp)
+    f("d1_questionnaires",    rp)
+
+    sub("Follow-Up Plan")
+    txt("fu_next_focus",   rp)
+    txt("fu_monitoring",   rp)
+    f("fu_om_schedule",    rp)
+    f("ps_questionnaires", rp)
+    f("ps_eppoc",          rp)
+    f("ps_ptsd_scored",    rp)
+    f("ps_isi_pbas",       rp)
+    f("ps_csi",            rp)
+    f("ps_audit_dudit",    rp)
 
     # ════════════════════════════════════════════════════════════════════════
     # SCRATCHPAD
@@ -2578,48 +3001,48 @@ LABELS: dict[str, str] = {
     "custom_1_strategy":                "Custom strategy 1",
     "custom_2_barrier":                 "Custom barrier 2",
     "custom_2_strategy":                "Custom strategy 2",
-    "tx_consent_explanation":           "Treatment: Consent/explanation given",
-    "s1_consent_content":               "Session 1: Consent content discussed",
-    "tx_email_obtained":                "Treatment: Email obtained",
-    "tx_display_book":                  "Treatment: Display book shown",
-    "hw_online_module":                 "Homework: Online module",
-    "hw_mindfulness":                   "Homework: Mindfulness",
-    "hw_goal_sheet":                    "Homework: Goal sheet",
-    "hw_activity_diary":                "Homework: Activity diary",
-    "hw_sleep_diary":                   "Homework: Sleep diary",
-    "d1_explanation":                   "Day 1: Explanation provided",
-    "d1_session2":                      "Day 1: Session 2 booked",
-    "d1_hypothesis":                    "Day 1: Hypothesis shared",
-    "d1_diagnosis":                     "Day 1: Diagnosis discussed",
-    "d1_values":                        "Day 1: Values explored",
-    "d1_evidence":                      "Day 1: Evidence discussed",
-    "d1_plan":                          "Day 1: Plan shared",
-    "d1_prognosis":                     "Day 1: Prognosis discussed",
-    "d1_stakeholders":                  "Day 1: Stakeholders identified",
-    "d1_confidence_tested":             "Day 1: Confidence tested",
-    "d1_questionnaires":                "Day 1: Questionnaires completed",
+    "tx_consent_explanation":           "Consent/explanation given",
+    "s1_consent_content":               "Consent content discussed",
+    "tx_email_obtained":                "Email obtained",
+    "tx_display_book":                  "Display book shown",
+    "hw_online_module":                 "Online module",
+    "hw_mindfulness":                   "Mindfulness",
+    "hw_goal_sheet":                    "Goal sheet",
+    "hw_activity_diary":                "Activity diary",
+    "hw_sleep_diary":                   "Sleep diary",
+    "d1_explanation":                   "Explanation provided",
+    "d1_session2":                      "Session 2 booked",
+    "d1_hypothesis":                    "Hypothesis shared",
+    "d1_diagnosis":                     "Diagnosis discussed",
+    "d1_values":                        "Values explored",
+    "d1_evidence":                      "Evidence discussed",
+    "d1_plan":                          "Plan shared",
+    "d1_prognosis":                     "Prognosis discussed",
+    "d1_stakeholders":                  "Stakeholders identified",
+    "d1_confidence_tested":             "Confidence tested",
+    "d1_questionnaires":                "Questionnaires completed",
     "ps_questionnaires":                "Post-session: Questionnaires saved",
     "ps_eppoc":                         "Post-session: EPPOC submitted",
     "ps_ptsd_scored":                   "Post-session: PTSD scored",
     "ps_isi_pbas":                      "Post-session: ISI/PBAS scored",
     "ps_csi":                           "Post-session: CSI scored",
     "ps_audit_dudit":                   "Post-session: AUDIT/DUDIT scored",
-    "s1_confidence_nrs":                "Session 1: Confidence NRS",
-    "fu_om_schedule":                   "Follow-up: OM schedule",
-    "tx_goal_orientation":              "Treatment: Goal orientation",
-    "tx_formulation":                   "Treatment: Formulation",
-    "tx_program":                       "Treatment: Program",
-    "tx_home_program":                  "Treatment: Home program",
-    "tx_psychosocial":                  "Treatment: Psychosocial strategies",
-    "tx_medical":                       "Treatment: Medical/referral plan",
-    "tx_rtw":                           "Treatment: RTW plan",
-    "tx_pain_type":                     "Treatment: Pain type (for debunking)",
-    "tx_debunk_radiology":              "Treatment: Debunk radiology",
-    "s1_education":                     "Session 1: Education provided",
-    "s1_experiential":                  "Session 1: Experiential learning",
-    "s1_hw_other":                      "Session 1: Homework other",
-    "fu_next_focus":                    "Follow-up: Next session focus",
-    "fu_monitoring":                    "Follow-up: Monitoring plan",
+    "s1_confidence_nrs":                "Confidence NRS",
+    "fu_om_schedule":                   "OM schedule",
+    "tx_goal_orientation":              "Goal orientation",
+    "tx_formulation":                   "Formulation",
+    "tx_program":                       "Program",
+    "tx_home_program":                  "Home program",
+    "tx_psychosocial":                  "Psychosocial strategies",
+    "tx_medical":                       "Medical/referral plan",
+    "tx_rtw":                           "RTW plan",
+    "tx_pain_type":                     "Pain type",
+    "tx_debunk_radiology":              "Debunk radiology",
+    "s1_education":                     "Education provided",
+    "s1_experiential":                  "Experiential learning",
+    "s1_hw_other":                      "Homework other",
+    "fu_next_focus":                    "Next session focus",
+    "fu_monitoring":                    "Monitoring plan",
 }
 
 
@@ -2839,6 +3262,10 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     txt("easing_factors",         s)
     f("mood_influences",          s)
     txt("daily_pattern_comments", s)
+    txt("hr24_am",                s)
+    txt("hr24_day",               s)
+    txt("hr24_pm",                s)
+    txt("hr24_nocte",             s)
 
     sub("Psychosocial")
     txt("social_situation",       s)
@@ -3599,55 +4026,6 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     f("custom_2_barrier",  br)
     f("custom_2_strategy", br)
 
-    sub("Treatment Plan Summary")
-    f("tx_pain_type",           br)
-    f("tx_debunk_radiology",    br)
-    f("tx_consent_explanation", br)
-    txt("tx_goal_orientation",  br)
-    txt("tx_formulation",       br)
-    txt("tx_program",           br)
-    txt("tx_home_program",      br)
-    txt("tx_psychosocial",      br)
-    txt("tx_medical",           br)
-    txt("tx_rtw",               br)
-
-    sub("Session 1 Treatment")
-    txt("s1_education",     br)
-    txt("s1_experiential",  br)
-    f("s1_consent_content", br)
-    f("s1_confidence_nrs",  br)
-    f("hw_online_module",   br)
-    f("hw_mindfulness",     br)
-    f("hw_goal_sheet",      br)
-    f("hw_activity_diary",  br)
-    f("hw_sleep_diary",     br)
-    txt("s1_hw_other",      br)
-    f("tx_email_obtained",  br)
-    f("tx_display_book",    br)
-
-    sub("Day 1 Checklist")
-    f("d1_explanation",       br)
-    f("d1_session2",          br)
-    f("d1_hypothesis",        br)
-    f("d1_diagnosis",         br)
-    f("d1_values",            br)
-    f("d1_evidence",          br)
-    f("d1_plan",              br)
-    f("d1_prognosis",         br)
-    f("d1_stakeholders",      br)
-    f("d1_confidence_tested", br)
-    f("d1_questionnaires",    br)
-
-    sub("Follow-Up Plan")
-    txt("fu_next_focus",    br)
-    txt("fu_monitoring",    br)
-    f("fu_om_schedule",     br)
-    f("ps_questionnaires",  br)
-    f("ps_eppoc",           br)
-    f("ps_ptsd_scored",     br)
-    f("ps_isi_pbas",        br)
-    f("ps_csi",             br)
-    f("ps_audit_dudit",     br)
     _emit_yaml_subs_raw("barriers", br, clean, _emit, sub)
 
     # ════════════════════════════════════════════════════════════════════════
@@ -3655,7 +4033,56 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     # ════════════════════════════════════════════════════════════════════════
     rp = a.get("rx_plan", {}) or {}
     sec("SECTION 8: RX PLAN")
-    _emit_yaml_subs_raw("rx_plan", rp, clean, _emit, sub)
+
+    sub("Treatment Plan Summary")
+    f("tx_pain_type",           rp)
+    f("tx_debunk_radiology",    rp)
+    f("tx_consent_explanation", rp)
+    txt("tx_goal_orientation",  rp)
+    txt("tx_formulation",       rp)
+    txt("tx_program",           rp)
+    txt("tx_home_program",      rp)
+    txt("tx_psychosocial",      rp)
+    txt("tx_medical",           rp)
+    txt("tx_rtw",               rp)
+
+    sub("Session 1 Treatment")
+    txt("s1_education",     rp)
+    txt("s1_experiential",  rp)
+    f("s1_consent_content", rp)
+    f("s1_confidence_nrs",  rp)
+    f("hw_online_module",   rp)
+    f("hw_mindfulness",     rp)
+    f("hw_goal_sheet",      rp)
+    f("hw_activity_diary",  rp)
+    f("hw_sleep_diary",     rp)
+    txt("s1_hw_other",      rp)
+    f("tx_email_obtained",  rp)
+    f("tx_display_book",    rp)
+
+    sub("Day 1 Checklist")
+    f("d1_explanation",       rp)
+    f("d1_session2",          rp)
+    f("d1_hypothesis",        rp)
+    f("d1_diagnosis",         rp)
+    f("d1_values",            rp)
+    f("d1_evidence",          rp)
+    f("d1_plan",              rp)
+    f("d1_prognosis",         rp)
+    f("d1_stakeholders",      rp)
+    f("d1_confidence_tested", rp)
+    f("d1_questionnaires",    rp)
+
+    sub("Follow-Up Plan")
+    txt("fu_next_focus",   rp)
+    txt("fu_monitoring",   rp)
+    f("fu_om_schedule",    rp)
+    f("ps_questionnaires", rp)
+    f("ps_eppoc",          rp)
+    f("ps_ptsd_scored",    rp)
+    f("ps_isi_pbas",       rp)
+    f("ps_csi",            rp)
+    f("ps_audit_dudit",    rp)
 
     # ════════════════════════════════════════════════════════════════════════
     # SCRATCHPAD

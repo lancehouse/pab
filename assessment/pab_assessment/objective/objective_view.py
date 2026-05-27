@@ -3,7 +3,9 @@
 import asyncio
 import logging
 
+from textual import events
 from textual.app import ComposeResult, on
+from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
 from textual.message import Message
 from textual.widgets import Button, Static
@@ -14,6 +16,8 @@ from .sections.sensory import SensorySection
 from .sections.functional import FunctionalSection
 from .sections.region_section import RegionTabContent
 from ..storage import objective_path, save_objective, save_raw_report, export_session_report
+from .kb_loader import get_registry
+from .kb_panel import KBPanel
 
 
 logger = logging.getLogger(__name__)
@@ -331,6 +335,13 @@ class ObjectiveAssessmentView(Container):
             self._pending_load = None
             self.load_session(self.session_file, data)
 
+        # Pre-load KB registry once (no-op if already loaded)
+        get_registry()
+        try:
+            self.app.query_one(KBPanel).show_placeholder()
+        except Exception:
+            pass
+
     def on_unmount(self) -> None:
         if self._save_task and not self._save_task.done():
             self._save_task.cancel()
@@ -435,6 +446,28 @@ class ObjectiveAssessmentView(Container):
 
     def _go_back(self) -> None:
         self.post_message(self.ExitRequested())
+
+    def on_descendant_focus(self, event: events.DescendantFocus) -> None:
+        widget = event.widget
+        wid = widget.id or ""
+        if not wid:
+            return
+        try:
+            panel = self.app.query_one(KBPanel)
+        except Exception:
+            return
+        if not panel.display:
+            return
+        # Strip _btn from CycleButton inner buttons; strip st_ prefix from special test fields
+        if wid.endswith("_btn"):
+            wid = wid[:-4]
+        field_id = wid[3:] if wid.startswith("st_") else wid
+        registry = get_registry()
+        for region in self._active_regions:
+            entry = registry.resolve(region, field_id)
+            if entry is not None:
+                panel.update(region, field_id)
+                return
 
     # ── Autosave ──────────────────────────────────────────────────────────────
 

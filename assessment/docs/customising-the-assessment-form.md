@@ -2,6 +2,10 @@
 
 This guide explains how to add, remove, or modify fields in the TUI assessment form without AI assistance. It covers the full data flow from UI widget → JSON storage → session file.
 
+**See also:**
+- [`architecture.md`](architecture.md) — overview of all YAML layers and how they relate
+- [`field-key-reference.md`](field-key-reference.md) — complete list of every field ID (use when writing KB entries)
+
 ---
 
 ## Overview: How a Field Works
