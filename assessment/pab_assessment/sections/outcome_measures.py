@@ -172,6 +172,19 @@ class CycleField(Static):
 
 _HYP_COLS = ["measure", "baseline", "interval", "rationale"]
 
+# Field-key prefixes owned by each block — used to filter _pending_data so
+# one block's stale pending data can't overwrite another block's live data.
+_BLOCK_PREFIXES: dict[str, list[str]] = {
+    "psfs":       ["psfs_"],
+    "bpi":        ["bpi_"],
+    "dass":       ["dass_"],
+    "pcs":        ["pcs_"],
+    "pseq":       ["pseq_"],
+    "pcl5":       ["pcl5_"],
+    "sleep":      ["isi_", "pbas_"],
+    "additional": ["add_"],
+}
+
 
 class HypRow(Horizontal):
     """One row in the hypothesis testing table."""
@@ -294,7 +307,13 @@ class OutcomeBlock(Vertical):
             except Exception:
                 pass
         if not self._mounted:
-            self._pending_data = dict(data)
+            # Only keep fields owned by this block — prevents stale pending data
+            # from overwriting another block's freshly-collected live values in collect().
+            prefixes = _BLOCK_PREFIXES.get(self._measure_id, [])
+            self._pending_data = {
+                k: v for k, v in data.items()
+                if any(k.startswith(p) for p in prefixes)
+            }
         else:
             self._apply_to_body(data)
 
