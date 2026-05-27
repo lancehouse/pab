@@ -2178,6 +2178,16 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     txt("add_epoc", om)
     txt("add_other", om)
 
+    sub("Planned Outcome Measures")
+    f("plan_psfs",       om)
+    f("plan_bpi",        om)
+    f("plan_dass",       om)
+    f("plan_pcs",        om)
+    f("plan_pseq",       om)
+    f("plan_pcl5",       om)
+    f("plan_sleep",      om)
+    f("plan_additional", om)
+
     sub("Hypothesis Testing")
     hyp_rows = []
     for i in range(3):
@@ -2893,6 +2903,14 @@ LABELS: dict[str, str] = {
     "add_dudit":                        "DUDIT administered",
     "add_epoc":                         "EPPOC notes",
     "add_other":                        "Additional measures notes",
+    "plan_psfs":                        "Plan: PSFS",
+    "plan_bpi":                         "Plan: BPI",
+    "plan_dass":                        "Plan: DASS-21",
+    "plan_pcs":                         "Plan: PCS",
+    "plan_pseq":                        "Plan: PSEQ",
+    "plan_pcl5":                        "Plan: PCL-5",
+    "plan_sleep":                       "Plan: Sleep measures",
+    "plan_additional":                  "Plan: Additional measures",
     # ── 06 Diagnosis ──────────────────────────────────────────────────────────
     "mechanism":                        "Mechanism",
     "primary_subtype":                  "Primary subtype",
@@ -3728,6 +3746,16 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     f("add_dudit",    om)
     txt("add_epoc",   om)
     txt("add_other",  om)
+
+    sub("Planned Outcome Measures")
+    f("plan_psfs",       om)
+    f("plan_bpi",        om)
+    f("plan_dass",       om)
+    f("plan_pcs",        om)
+    f("plan_pseq",       om)
+    f("plan_pcl5",       om)
+    f("plan_sleep",      om)
+    f("plan_additional", om)
 
     sub("Hypothesis Testing")
     for i in range(3):

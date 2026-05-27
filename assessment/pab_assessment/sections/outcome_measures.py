@@ -1,10 +1,10 @@
-"""Outcome Measures section (core/05)."""
+"""Outcome Measures section (core/05) — accordion layout with lazy body mounting."""
 
 import json
 from pathlib import Path
 
 from textual.app import ComposeResult, on
-from textual.containers import Horizontal, ScrollableContainer
+from textual.containers import Horizontal, ScrollableContainer, Vertical
 from textual.widgets import Label, Input, TextArea, Button, Static
 from textual.message import Message
 
@@ -31,13 +31,13 @@ _PCS_RISK_OPTIONS = [
 ]
 
 _PCL5_OPTIONS = [
-    ("Negative (<33)",        "success"),
-    ("Positive — PTSD likely","error"),
+    ("Negative (<33)",         "success"),
+    ("Positive — PTSD likely", "error"),
 ]
 
 _ISI_OPTIONS = [
-    ("No insomnia (<10)",             "success"),
-    ("Clinically significant (≥10)",  "error"),
+    ("No insomnia (<10)",            "success"),
+    ("Clinically significant (≥10)", "error"),
 ]
 
 _PBAS_OPTIONS = [
@@ -118,15 +118,21 @@ class CycleField(Static):
     }
     """
 
-    def __init__(self, field_id: str, options: list[tuple[str, str]], **kwargs):
+    def __init__(self, field_id: str, options: list[tuple[str, str]],
+                 initial_value: str | None = None, **kwargs):
         super().__init__(**kwargs)
         self.id = field_id
         self._field_id = field_id
         self._options = [(None, "default")] + list(options)
         self._idx = 0
+        self._initial_value = initial_value
 
     def compose(self) -> ComposeResult:
         yield Button("?", id=f"{self._field_id}_btn", variant="default")
+
+    def on_mount(self) -> None:
+        if self._initial_value is not None:
+            self.set_value(self._initial_value)
 
     def get_value(self) -> str | None:
         return self._options[self._idx][0]
@@ -175,10 +181,321 @@ class HypRow(Horizontal):
         self._row_idx = row_idx
 
     def compose(self) -> ComposeResult:
-        yield Input(id=f"hyp_{self._row_idx}_measure",  classes="hyp_measure",  placeholder="Measure")
-        yield Input(id=f"hyp_{self._row_idx}_baseline", classes="hyp_baseline", placeholder="Baseline")
-        yield Input(id=f"hyp_{self._row_idx}_interval", classes="hyp_interval", placeholder="Interval")
-        yield Input(id=f"hyp_{self._row_idx}_rationale",classes="hyp_rationale",placeholder="Rationale")
+        yield Input(id=f"hyp_{self._row_idx}_measure",   classes="hyp_measure",   placeholder="Measure")
+        yield Input(id=f"hyp_{self._row_idx}_baseline",  classes="hyp_baseline",  placeholder="Baseline")
+        yield Input(id=f"hyp_{self._row_idx}_interval",  classes="hyp_interval",  placeholder="Interval")
+        yield Input(id=f"hyp_{self._row_idx}_rationale", classes="hyp_rationale", placeholder="Rationale")
+
+
+# ---------------------------------------------------------------------------
+# OutcomeBlock — collapsible accordion block with lazy body mounting
+# ---------------------------------------------------------------------------
+
+class _CollapseBtn(Static):
+    """Clickable header label that walks up to OutcomeBlock and toggles it."""
+
+    def on_click(self) -> None:
+        node = self.parent
+        while node is not None:
+            if isinstance(node, OutcomeBlock):
+                node._toggle()
+                return
+            node = getattr(node, "parent", None)
+
+
+class OutcomeBlock(Vertical):
+    """
+    Accordion block for one outcome measure.
+
+    Always-visible header contains the plan checkbox + clickable title.
+    Body is empty until first expand — widgets mounted lazily via mount_fn.
+    """
+
+    class Toggled(Message):
+        def __init__(self, block: "OutcomeBlock", expanded: bool) -> None:
+            super().__init__()
+            self.block = block
+            self.expanded = expanded
+
+    DEFAULT_CSS = """
+    OutcomeBlock {
+        height: auto; width: 100%;
+        border-bottom: tall $surface-lighten-1;
+        margin-bottom: 0;
+    }
+    .ob_header {
+        height: auto; width: 100%;
+        background: $surface-lighten-1;
+        padding: 0;
+    }
+    .ob_plan_btn {
+        width: auto; min-width: 8; height: auto;
+        margin: 0; padding: 0 1;
+    }
+    .ob_label {
+        width: 1fr; height: auto;
+        color: $accent; text-style: bold;
+        padding: 0 1;
+    }
+    .ob_label:hover { background: $boost; }
+    .ob_body {
+        height: auto; width: 100%;
+        padding: 0 1;
+    }
+    """
+
+    def __init__(self, measure_id: str, title: str, mount_fn, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self._measure_id = measure_id
+        self._title = title
+        self._mount_fn = mount_fn
+        self._mounted = False
+        self._expanded = False
+        self._pending_data: dict = {}
+
+    def compose(self) -> ComposeResult:
+        with Horizontal(classes="ob_header"):
+            yield CheckButton("Plan", id=f"plan_{self._measure_id}", classes="ob_plan_btn")
+            yield _CollapseBtn(
+                f"▶ {self._title}",
+                id=f"ob_label_{self._measure_id}",
+                classes="ob_label",
+            )
+        yield Vertical(id=f"ob_body_{self._measure_id}", classes="ob_body")
+
+    def on_mount(self) -> None:
+        self.query_one(f"#ob_body_{self._measure_id}").display = False
+
+    def _toggle(self) -> None:
+        self._expanded = not self._expanded
+        body = self.query_one(f"#ob_body_{self._measure_id}")
+        if self._expanded and not self._mounted:
+            self._mount_fn(body)
+            self._mounted = True
+        body.display = self._expanded
+        self._update_label()
+        self.post_message(self.Toggled(self, self._expanded))
+
+    def _update_label(self) -> None:
+        arrow = "▼" if self._expanded else "▶"
+        try:
+            self.query_one(f"#ob_label_{self._measure_id}", _CollapseBtn).update(
+                f"{arrow} {self._title}"
+            )
+        except Exception:
+            pass
+
+    def store_data(self, data: dict) -> None:
+        """Called by section load() — store plan checkbox always; defer rest if unmounted."""
+        plan_key = f"plan_{self._measure_id}"
+        if plan_key in data:
+            try:
+                self.query_one(f"#{plan_key}", CheckButton).set_value(data[plan_key])
+            except Exception:
+                pass
+        if not self._mounted:
+            self._pending_data = dict(data)
+        else:
+            self._apply_to_body(data)
+
+    def drain_pending(self) -> None:
+        """Apply pending data to mounted body widgets. Call under section._loading=True."""
+        if self._pending_data:
+            self._apply_to_body(self._pending_data)
+            self._pending_data = {}
+
+    def _apply_to_body(self, data: dict) -> None:
+        try:
+            body = self.query_one(f"#ob_body_{self._measure_id}")
+        except Exception:
+            return
+        for inp in body.query(Input):
+            if inp.id in data:
+                inp.value = data[inp.id]
+        for ta in body.query(TextArea):
+            if ta.id in data:
+                ta.load_text(data[ta.id])
+        for cf in body.query(CycleField):
+            if cf.id in data:
+                cf.set_value(data[cf.id])
+        for cb in body.query(CheckButton):
+            if cb.id in data:
+                cb.set_value(data[cb.id])
+
+    def collect_data(self) -> dict:
+        """Return all field values — plan checkbox always, body fields from pending or widgets."""
+        data = {}
+        plan_key = f"plan_{self._measure_id}"
+        try:
+            data[plan_key] = self.query_one(f"#{plan_key}", CheckButton).value
+        except Exception:
+            data[plan_key] = None
+
+        if not self._mounted:
+            for k, v in self._pending_data.items():
+                if k != plan_key:
+                    data[k] = v
+        else:
+            try:
+                body = self.query_one(f"#ob_body_{self._measure_id}")
+                for inp in body.query(Input):
+                    data[inp.id] = inp.value
+                for ta in body.query(TextArea):
+                    data[ta.id] = ta.text
+                for cf in body.query(CycleField):
+                    data[cf.id] = cf.get_value()
+                for cb in body.query(CheckButton):
+                    data[cb.id] = cb.value
+            except Exception:
+                pass
+        return data
+
+
+# ---------------------------------------------------------------------------
+# Body mount functions — one per measure
+# ---------------------------------------------------------------------------
+
+def _mount_psfs(body: Vertical) -> None:
+    body.mount(
+        Label("Score /80:"),
+        Horizontal(
+            Input(id="psfs_score", placeholder="/80", classes="om_score"),
+            CycleField("psfs_interp", _PSFS_INTERP_OPTIONS),
+            classes="om_row",
+        ),
+        Label("Activities listed:"),
+        Input(id="psfs_act_1", placeholder="1."),
+        Input(id="psfs_act_2", placeholder="2."),
+        Input(id="psfs_act_3", placeholder="3."),
+        Input(id="psfs_act_4", placeholder="4."),
+        Input(id="psfs_act_5", placeholder="5."),
+    )
+
+
+def _mount_bpi(body: Vertical) -> None:
+    body.mount(
+        Label("Scores /10 — higher = greater impairment due to pain", classes="reference_note"),
+        Horizontal(Label("General activity:", classes="bpi_label"),
+                   Input(id="bpi_activity", placeholder="/10", classes="bpi_score"),
+                   classes="bpi_row"),
+        Horizontal(Label("Mood:", classes="bpi_label"),
+                   Input(id="bpi_mood", placeholder="/10", classes="bpi_score"),
+                   classes="bpi_row"),
+        Horizontal(Label("Walking ability:", classes="bpi_label"),
+                   Input(id="bpi_walking", placeholder="/10", classes="bpi_score"),
+                   classes="bpi_row"),
+        Horizontal(Label("Normal work:", classes="bpi_label"),
+                   Input(id="bpi_work", placeholder="/10", classes="bpi_score"),
+                   classes="bpi_row"),
+        Horizontal(Label("Relations with other people:", classes="bpi_label"),
+                   Input(id="bpi_relations", placeholder="/10", classes="bpi_score"),
+                   classes="bpi_row"),
+        Horizontal(Label("Sleep:", classes="bpi_label"),
+                   Input(id="bpi_sleep", placeholder="/10", classes="bpi_score"),
+                   classes="bpi_row"),
+        Horizontal(Label("Enjoyment of life:", classes="bpi_label"),
+                   Input(id="bpi_enjoyment", placeholder="/10", classes="bpi_score"),
+                   classes="bpi_row"),
+    )
+
+
+def _mount_dass(body: Vertical) -> None:
+    body.mount(
+        Static("", id="xref_om_dass", classes="xref_badge"),
+        Horizontal(Label("Depression:", classes="dass_label"),
+                   Input(id="dass_dep_score", placeholder="0–42", classes="dass_score"),
+                   CycleField("dass_dep_interp", _DASS_OPTIONS),
+                   classes="dass_row"),
+        Horizontal(Label("Anxiety:", classes="dass_label"),
+                   Input(id="dass_anx_score", placeholder="0–42", classes="dass_score"),
+                   CycleField("dass_anx_interp", _DASS_OPTIONS),
+                   classes="dass_row"),
+        Horizontal(Label("Stress:", classes="dass_label"),
+                   Input(id="dass_str_score", placeholder="0–42", classes="dass_score"),
+                   CycleField("dass_str_interp", _DASS_OPTIONS),
+                   classes="dass_row"),
+    )
+
+
+def _mount_pcs(body: Vertical) -> None:
+    body.mount(
+        Static("", id="xref_om_pcs", classes="xref_badge"),
+        Horizontal(Label("Rumination:", classes="pcs_label"),
+                   Label("/16", classes="pcs_max"),
+                   Input(id="pcs_rum_score", placeholder="0–16", classes="pcs_score"),
+                   CycleField("pcs_rum_risk", _PCS_RISK_OPTIONS),
+                   classes="pcs_row"),
+        Horizontal(Label("Magnification:", classes="pcs_label"),
+                   Label("/12", classes="pcs_max"),
+                   Input(id="pcs_mag_score", placeholder="0–12", classes="pcs_score"),
+                   CycleField("pcs_mag_risk", _PCS_RISK_OPTIONS),
+                   classes="pcs_row"),
+        Horizontal(Label("Helplessness:", classes="pcs_label"),
+                   Label("/24", classes="pcs_max"),
+                   Input(id="pcs_help_score", placeholder="0–24", classes="pcs_score"),
+                   CycleField("pcs_help_risk", _PCS_RISK_OPTIONS),
+                   classes="pcs_row"),
+        Horizontal(Label("Total:", classes="pcs_label"),
+                   Label("/52", classes="pcs_max"),
+                   Input(id="pcs_total_score", placeholder="0–52", classes="pcs_score"),
+                   CycleField("pcs_total_risk", _PCS_RISK_OPTIONS),
+                   classes="pcs_row"),
+        Static("", id="om_pcs_alert", classes="om_alert"),
+    )
+
+
+def _mount_pseq(body: Vertical) -> None:
+    body.mount(
+        Label("Score /60 — higher = stronger self-efficacy", classes="reference_note"),
+        Input(id="pseq_score", placeholder="/60"),
+        Static("", id="xref_om_pseq", classes="xref_badge"),
+    )
+
+
+def _mount_pcl5(body: Vertical) -> None:
+    body.mount(
+        Label("Score /80:"),
+        Horizontal(
+            Input(id="pcl5_score", placeholder="/80", classes="om_score"),
+            CycleField("pcl5_interp", _PCL5_OPTIONS),
+            classes="om_row",
+        ),
+        Static("", id="om_pcl5_alert", classes="om_alert"),
+        Static("", id="xref_om_pcl5", classes="xref_badge_urgent"),
+        Label("Action if positive:"),
+        TextArea(id="pcl5_action", language="plain"),
+    )
+
+
+def _mount_sleep(body: Vertical) -> None:
+    body.mount(
+        Static("", id="xref_om_sleep", classes="xref_badge"),
+        Label("Insomnia Severity Index (ISI) — score /28:"),
+        Horizontal(
+            Input(id="isi_score", placeholder="/28", classes="om_score"),
+            CycleField("isi_interp", _ISI_OPTIONS),
+            classes="om_row",
+        ),
+        Static("", id="om_isi_alert", classes="om_alert"),
+        Label("Pain-Related Beliefs and Attitudes About Sleep (PBAS) — score /10:"),
+        Horizontal(
+            Input(id="pbas_score", placeholder="/10", classes="om_score"),
+            CycleField("pbas_interp", _PBAS_OPTIONS),
+            classes="om_row",
+        ),
+    )
+
+
+def _mount_additional(body: Vertical) -> None:
+    body.mount(
+        CheckButton("AUDIT (alcohol use) — administered?", id="add_audit", classes="add_btn"),
+        Static("", id="xref_om_audit", classes="xref_badge"),
+        CheckButton("DUDIT (drug use) — administered?", id="add_dudit", classes="add_btn"),
+        Label("ePPOC components (specify):"),
+        TextArea(id="add_epoc", language="plain"),
+        Label("Other:"),
+        TextArea(id="add_other", language="plain"),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -186,27 +503,6 @@ class HypRow(Horizontal):
 # ---------------------------------------------------------------------------
 
 _HYP_ROWS = 3
-
-_SCORE_FIELDS = [
-    "psfs_score",
-    "psfs_act_1", "psfs_act_2", "psfs_act_3", "psfs_act_4", "psfs_act_5",
-    "bpi_activity", "bpi_mood", "bpi_walking", "bpi_work",
-    "bpi_relations", "bpi_sleep", "bpi_enjoyment",
-    "dass_dep_score", "dass_anx_score", "dass_str_score",
-    "pcs_rum_score", "pcs_mag_score", "pcs_help_score", "pcs_total_score",
-    "pseq_score", "pcl5_score", "isi_score", "pbas_score",
-]
-
-_CYCLE_FIELDS = [
-    "psfs_interp",
-    "dass_dep_interp", "dass_anx_interp", "dass_str_interp",
-    "pcs_rum_risk", "pcs_mag_risk", "pcs_help_risk", "pcs_total_risk",
-    "pcl5_interp", "isi_interp", "pbas_interp",
-]
-
-_TOGGLE_FIELDS = ["add_audit", "add_dudit"]
-
-_TEXT_FIELDS = ["pcl5_action", "add_epoc", "add_other"]
 
 
 class OutcomeMeasuresSection(BaseSection):
@@ -260,18 +556,19 @@ class OutcomeMeasuresSection(BaseSection):
     .om_alert {
         width: 100%; padding: 0 1; text-style: bold;
         color: $warning; background: $warning 20%;
-        margin-bottom: 0;
+        margin-bottom: 0; display: none;
     }
 
     /* Cross-ref badges */
     .xref_badge {
         width: 100%; height: auto; padding: 0 1;
         margin-bottom: 0; color: $accent; background: $accent 12%;
+        display: none;
     }
     .xref_badge_urgent {
         width: 100%; height: auto; padding: 0 1;
         margin-bottom: 0; color: $warning; background: $warning 20%;
-        text-style: bold;
+        text-style: bold; display: none;
     }
 
     /* Additional measures toggle buttons */
@@ -284,129 +581,21 @@ class OutcomeMeasuresSection(BaseSection):
 
     def compose(self) -> ComposeResult:
         yield Label("Outcome Measures", classes="section_title")
+        yield OutcomeBlock("psfs",       "PSFS — Patient Specific Functional Scale", _mount_psfs)
+        yield OutcomeBlock("bpi",        "BPI — Brief Pain Inventory",                _mount_bpi)
+        yield OutcomeBlock("dass",       "DASS-21",                                   _mount_dass)
+        yield OutcomeBlock("pcs",        "PCS — Pain Catastrophising Scale",          _mount_pcs)
+        yield OutcomeBlock("pseq",       "PSEQ — Pain Self-Efficacy Questionnaire",   _mount_pseq)
+        yield OutcomeBlock("pcl5",       "PCL-5 — PTSD Checklist",                   _mount_pcl5)
+        yield OutcomeBlock("sleep",      "Sleep Outcome Measures",                    _mount_sleep)
+        yield OutcomeBlock("additional", "Additional Measures",                       _mount_additional)
 
-        # ── PSFS ──────────────────────────────────────────────
-        yield Label("— Patient Specific Functional Scale (PSFS) —", classes="subsection_header", id="om_psfs")
-        yield Label("Score /80:")
-        with Horizontal(classes="om_row"):
-            yield Input(id="psfs_score", placeholder="/80", classes="om_score")
-            yield CycleField("psfs_interp", _PSFS_INTERP_OPTIONS)
-        yield Label("Activities listed:")
-        yield Input(id="psfs_act_1", placeholder="1.")
-        yield Input(id="psfs_act_2", placeholder="2.")
-        yield Input(id="psfs_act_3", placeholder="3.")
-        yield Input(id="psfs_act_4", placeholder="4.")
-        yield Input(id="psfs_act_5", placeholder="5.")
-
-        # ── BPI ───────────────────────────────────────────────
-        yield Label("— Brief Pain Inventory (BPI) —", classes="subsection_header", id="om_bpi")
-        yield Label("Scores /10 — higher = greater impairment due to pain", classes="reference_note")
-        with Horizontal(classes="bpi_row"):
-            yield Label("General activity:", classes="bpi_label")
-            yield Input(id="bpi_activity", placeholder="/10", classes="bpi_score")
-        with Horizontal(classes="bpi_row"):
-            yield Label("Mood:", classes="bpi_label")
-            yield Input(id="bpi_mood", placeholder="/10", classes="bpi_score")
-        with Horizontal(classes="bpi_row"):
-            yield Label("Walking ability:", classes="bpi_label")
-            yield Input(id="bpi_walking", placeholder="/10", classes="bpi_score")
-        with Horizontal(classes="bpi_row"):
-            yield Label("Normal work:", classes="bpi_label")
-            yield Input(id="bpi_work", placeholder="/10", classes="bpi_score")
-        with Horizontal(classes="bpi_row"):
-            yield Label("Relations with other people:", classes="bpi_label")
-            yield Input(id="bpi_relations", placeholder="/10", classes="bpi_score")
-        with Horizontal(classes="bpi_row"):
-            yield Label("Sleep:", classes="bpi_label")
-            yield Input(id="bpi_sleep", placeholder="/10", classes="bpi_score")
-        with Horizontal(classes="bpi_row"):
-            yield Label("Enjoyment of life:", classes="bpi_label")
-            yield Input(id="bpi_enjoyment", placeholder="/10", classes="bpi_score")
-
-        # ── DASS-21 ───────────────────────────────────────────
-        yield Label("— DASS-21 —", classes="subsection_header", id="om_dass")
-        yield Static("", id="xref_om_dass", classes="xref_badge")
-        with Horizontal(classes="dass_row"):
-            yield Label("Depression:",   classes="dass_label")
-            yield Input(id="dass_dep_score", placeholder="0–42", classes="dass_score")
-            yield CycleField("dass_dep_interp", _DASS_OPTIONS)
-        with Horizontal(classes="dass_row"):
-            yield Label("Anxiety:",      classes="dass_label")
-            yield Input(id="dass_anx_score", placeholder="0–42", classes="dass_score")
-            yield CycleField("dass_anx_interp", _DASS_OPTIONS)
-        with Horizontal(classes="dass_row"):
-            yield Label("Stress:",       classes="dass_label")
-            yield Input(id="dass_str_score", placeholder="0–42", classes="dass_score")
-            yield CycleField("dass_str_interp", _DASS_OPTIONS)
-
-        # ── PCS ───────────────────────────────────────────────
-        yield Label("— Pain Catastrophising Scale (PCS) —", classes="subsection_header", id="om_pcs")
-        yield Static("", id="xref_om_pcs", classes="xref_badge")
-        with Horizontal(classes="pcs_row"):
-            yield Label("Rumination:",   classes="pcs_label")
-            yield Label("/16", classes="pcs_max")
-            yield Input(id="pcs_rum_score",  placeholder="0–16",  classes="pcs_score")
-            yield CycleField("pcs_rum_risk",  _PCS_RISK_OPTIONS)
-        with Horizontal(classes="pcs_row"):
-            yield Label("Magnification:", classes="pcs_label")
-            yield Label("/12", classes="pcs_max")
-            yield Input(id="pcs_mag_score",  placeholder="0–12",  classes="pcs_score")
-            yield CycleField("pcs_mag_risk",  _PCS_RISK_OPTIONS)
-        with Horizontal(classes="pcs_row"):
-            yield Label("Helplessness:", classes="pcs_label")
-            yield Label("/24", classes="pcs_max")
-            yield Input(id="pcs_help_score", placeholder="0–24",  classes="pcs_score")
-            yield CycleField("pcs_help_risk", _PCS_RISK_OPTIONS)
-        with Horizontal(classes="pcs_row"):
-            yield Label("Total:",        classes="pcs_label")
-            yield Label("/52", classes="pcs_max")
-            yield Input(id="pcs_total_score", placeholder="0–52", classes="pcs_score")
-            yield CycleField("pcs_total_risk", _PCS_RISK_OPTIONS)
-        yield Static("", id="om_pcs_alert", classes="om_alert")
-
-        # ── PSEQ ──────────────────────────────────────────────
-        yield Label("— Pain Self-Efficacy Questionnaire (PSEQ) —", classes="subsection_header", id="om_pseq")
-        yield Label("Score /60 — higher = stronger self-efficacy", classes="reference_note")
-        yield Input(id="pseq_score", placeholder="/60")
-        yield Static("", id="xref_om_pseq", classes="xref_badge")
-
-        # ── PCL-5 ─────────────────────────────────────────────
-        yield Label("— Post-Traumatic Stress Disorder Checklist (PCL-5) —", classes="subsection_header")
-        yield Label("Score /80:")
-        with Horizontal(classes="om_row"):
-            yield Input(id="pcl5_score", placeholder="/80", classes="om_score")
-            yield CycleField("pcl5_interp", _PCL5_OPTIONS)
-        yield Static("", id="om_pcl5_alert", classes="om_alert")
-        yield Static("", id="xref_om_pcl5", classes="xref_badge_urgent")
-        yield Label("Action if positive:")
-        yield TextArea(id="pcl5_action", language="plain")
-
-        # ── Sleep ─────────────────────────────────────────────
-        yield Label("— Sleep Outcome Measures —", classes="subsection_header", id="om_sleep")
-        yield Static("", id="xref_om_sleep", classes="xref_badge")
-        yield Label("Insomnia Severity Index (ISI) — score /28:")
-        with Horizontal(classes="om_row"):
-            yield Input(id="isi_score", placeholder="/28", classes="om_score")
-            yield CycleField("isi_interp", _ISI_OPTIONS)
-        yield Static("", id="om_isi_alert", classes="om_alert")
-        yield Label("Pain-Related Beliefs and Attitudes About Sleep (PBAS) — score /10:")
-        with Horizontal(classes="om_row"):
-            yield Input(id="pbas_score", placeholder="/10", classes="om_score")
-            yield CycleField("pbas_interp", _PBAS_OPTIONS)
-
-        # ── Additional ────────────────────────────────────────
-        yield Label("— Additional Measures —", classes="subsection_header", id="om_additional")
-        yield CheckButton("AUDIT (alcohol use) — administered?", id="add_audit", classes="add_btn")
-        yield Static("", id="xref_om_audit", classes="xref_badge")
-        yield CheckButton("DUDIT (drug use) — administered?", id="add_dudit", classes="add_btn")
-        yield Label("ePPOC components (specify):")
-        yield TextArea(id="add_epoc", language="plain")
-        yield Label("Other:")
-        yield TextArea(id="add_other", language="plain")
-
-        # ── Hypothesis testing ────────────────────────────────
-        yield Label("— Measures Selected for Ongoing Hypothesis Testing —", classes="subsection_header", id="om_hypothesis")
-        yield Label("Individualise questionnaire set to test your clinical hypothesis for this patient.", classes="reference_note")
+        yield Label("— Measures Selected for Ongoing Hypothesis Testing —",
+                    classes="subsection_header", id="om_hypothesis")
+        yield Label(
+            "Individualise questionnaire set to test your clinical hypothesis for this patient.",
+            classes="reference_note",
+        )
         with Horizontal(classes="hyp_header_row"):
             yield Label("Measure",   classes="hyp_measure hyp_header")
             yield Label("Baseline",  classes="hyp_baseline hyp_header")
@@ -414,7 +603,8 @@ class OutcomeMeasuresSection(BaseSection):
             yield Label("Rationale", classes="hyp_rationale hyp_header")
         for i in range(_HYP_ROWS):
             yield HypRow(i)
-        yield Label("Administer questionnaires same day where possible. Score before next session.", classes="reference_note")
+        yield Label("Administer questionnaires same day where possible. Score before next session.",
+                    classes="reference_note")
 
     # ------------------------------------------------------------------
     # Navigation
@@ -423,7 +613,9 @@ class OutcomeMeasuresSection(BaseSection):
     def _jump_to(self, anchor_id: str) -> None:
         try:
             target = self.query_one(f"#{anchor_id}")
-            self.app.query_one("#section_content", ScrollableContainer).scroll_to_widget(target, top=True, animate=False)
+            self.app.query_one("#section_content", ScrollableContainer).scroll_to_widget(
+                target, top=True, animate=False
+            )
         except Exception:
             pass
 
@@ -432,14 +624,13 @@ class OutcomeMeasuresSection(BaseSection):
     # ------------------------------------------------------------------
 
     def _update_auto_interp(self) -> None:
-        """Set interpretation labels from score inputs using published thresholds."""
         _auto = [
             ("dass_dep_score", "dass_dep_interp", _interp_dass_dep),
             ("dass_anx_score", "dass_anx_interp", _interp_dass_anx),
             ("dass_str_score", "dass_str_interp", _interp_dass_str),
-            ("pcs_total_score","pcs_total_risk",  _interp_pcs_total),
-            ("pcl5_score",     "pcl5_interp",     _interp_pcl5),
-            ("isi_score",      "isi_interp",      _interp_isi),
+            ("pcs_total_score", "pcs_total_risk",  _interp_pcs_total),
+            ("pcl5_score",      "pcl5_interp",     _interp_pcl5),
+            ("isi_score",       "isi_interp",      _interp_isi),
         ]
         for score_id, interp_id, fn in _auto:
             try:
@@ -450,7 +641,6 @@ class OutcomeMeasuresSection(BaseSection):
                 pass
 
     def _update_alerts(self) -> None:
-        """Show/hide threshold alerts for PCS, PCL-5, ISI."""
         _checks = [
             ("pcs_total_score", 30, "om_pcs_alert",  "⚠ PCS total ≥30 — high catastrophising: consider psychology referral"),
             ("pcl5_score",      33, "om_pcl5_alert", "⚠ PCL-5 ≥33 — PTSD likely: document action above"),
@@ -473,7 +663,6 @@ class OutcomeMeasuresSection(BaseSection):
     # ------------------------------------------------------------------
 
     def update_cross_refs(self) -> None:
-        """Read sibling section data from session JSON and update inline badges."""
         if not self.session_file:
             return
         try:
@@ -488,7 +677,7 @@ class OutcomeMeasuresSection(BaseSection):
         med  = _sec("medical")
         subj = _sec("subjective")
 
-        def _set(badge_id: str, lines: list[str], urgent: bool = False) -> None:
+        def _set(badge_id: str, lines: list[str]) -> None:
             try:
                 w = self.query_one(f"#{badge_id}", Static)
                 if lines:
@@ -499,7 +688,6 @@ class OutcomeMeasuresSection(BaseSection):
             except Exception:
                 pass
 
-        # DASS — mental health comorbidity + psychological distress
         lines = []
         if med.get("comorbid_mental_health") is True:
             lines.append("Med: mental health condition (comorbidity)")
@@ -511,20 +699,17 @@ class OutcomeMeasuresSection(BaseSection):
             lines.append("Subj: screening tool recorded")
         _set("xref_om_dass", lines)
 
-        # PCS — psychological distress from Subjective
         lines = []
         if subj.get("psychological_distress", "").strip():
             lines.append("Subj: psychological distress recorded")
         _set("xref_om_pcs", lines)
 
-        # PSEQ — confidence score from Subjective (show numeric value)
         lines = []
         conf = subj.get("confidence_score", "").strip()
         if conf:
             lines.append(f"Subj: confidence score = {conf}/10")
         _set("xref_om_pseq", lines)
 
-        # PCL-5 — self-harm risk from Subjective (urgent treatment)
         lines = []
         if subj.get("self_harm_risk") is True:
             lines.append("Subj: self-harm/suicide risk — POSITIVE")
@@ -532,9 +717,8 @@ class OutcomeMeasuresSection(BaseSection):
             lines.append("Subj: self-harm/suicide risk — cleared")
         if subj.get("harm_plan", "").strip():
             lines.append("Subj: harm plan documented")
-        _set("xref_om_pcl5", lines, urgent=True)
+        _set("xref_om_pcl5", lines)
 
-        # Sleep — sleep fields from Subjective
         lines = []
         if subj.get("sleep_difficulty") is True:
             lines.append("Subj: sleep difficulty")
@@ -545,7 +729,6 @@ class OutcomeMeasuresSection(BaseSection):
             lines.append(f"Subj: {total_sleep} hrs/night")
         _set("xref_om_sleep", lines)
 
-        # AUDIT/DUDIT — drug/alcohol comorbidity from Medical
         lines = []
         if med.get("comorbid_drug_alcohol") is True:
             lines.append("Med: drug/alcohol issues (comorbidity)")
@@ -557,26 +740,8 @@ class OutcomeMeasuresSection(BaseSection):
 
     def collect(self) -> dict:
         data = {}
-        for fid in _SCORE_FIELDS:
-            try:
-                data[fid] = self.query_one(f"#{fid}", Input).value
-            except Exception:
-                data[fid] = ""
-        for fid in _CYCLE_FIELDS:
-            try:
-                data[fid] = self.query_one(f"#{fid}", CycleField).get_value()
-            except Exception:
-                data[fid] = None
-        for fid in _TOGGLE_FIELDS:
-            try:
-                data[fid] = self.query_one(f"#{fid}", CheckButton).value
-            except Exception:
-                data[fid] = None
-        for fid in _TEXT_FIELDS:
-            try:
-                data[fid] = self.query_one(f"#{fid}", TextArea).text
-            except Exception:
-                data[fid] = ""
+        for block in self.query(OutcomeBlock):
+            data.update(block.collect_data())
         for i in range(_HYP_ROWS):
             for col in _HYP_COLS:
                 fid = f"hyp_{i}_{col}"
@@ -590,30 +755,8 @@ class OutcomeMeasuresSection(BaseSection):
         self._loading = True
         try:
             om = data if isinstance(data, dict) else {}
-            for fid in _SCORE_FIELDS:
-                if fid in om:
-                    try:
-                        self.query_one(f"#{fid}", Input).value = om[fid]
-                    except Exception:
-                        pass
-            for fid in _CYCLE_FIELDS:
-                if fid in om:
-                    try:
-                        self.query_one(f"#{fid}", CycleField).set_value(om[fid])
-                    except Exception:
-                        pass
-            for fid in _TOGGLE_FIELDS:
-                if fid in om:
-                    try:
-                        self.query_one(f"#{fid}", CheckButton).set_value(om[fid])
-                    except Exception:
-                        pass
-            for fid in _TEXT_FIELDS:
-                if fid in om:
-                    try:
-                        self.query_one(f"#{fid}", TextArea).text = om[fid]
-                    except Exception:
-                        pass
+            for block in self.query(OutcomeBlock):
+                block.store_data(om)
             for i in range(_HYP_ROWS):
                 for col in _HYP_COLS:
                     fid = f"hyp_{i}_{col}"
@@ -624,19 +767,31 @@ class OutcomeMeasuresSection(BaseSection):
                             pass
         finally:
             self._loading = False
-            self._update_auto_interp()
-            self._update_alerts()
             self.update_cross_refs()
 
     def is_complete(self) -> bool:
         d = self.collect()
         main_scores = ["psfs_score", "bpi_activity", "dass_dep_score",
                        "pcs_total_score", "pseq_score", "pcl5_score", "isi_score"]
-        return any(d.get(f, "").strip() for f in main_scores)
+        return any(d.get(f, "").strip() for f in main_scores if isinstance(d.get(f), str))
 
     # ------------------------------------------------------------------
     # Events
     # ------------------------------------------------------------------
+
+    def on_outcome_block_toggled(self, event: OutcomeBlock.Toggled) -> None:
+        if event.expanded:
+            block = event.block
+            def _drain():
+                self._loading = True
+                try:
+                    block.drain_pending()
+                finally:
+                    self._loading = False
+                self._update_auto_interp()
+                self._update_alerts()
+                self.update_cross_refs()
+            block.call_after_refresh(_drain)
 
     @on(CheckButton.Changed)
     @on(CycleField.Changed)
