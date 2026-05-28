@@ -642,7 +642,8 @@ class OutcomeMeasuresSection(BaseSection):
         yield Label("Administer questionnaires same day where possible. Score before next session.",
                     classes="reference_note")
 
-    def on_mount(self) -> None:
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
         self._hyp_row_count: int = 1
         self._hyp_pending: dict = {}
 

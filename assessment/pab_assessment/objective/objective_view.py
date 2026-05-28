@@ -301,7 +301,7 @@ class ObjectiveAssessmentView(Container):
                 id="obj_section_content",
             )
 
-    def on_mount(self) -> None:
+    async def on_mount(self) -> None:
         # Build generic sections
         generic_instances = {
             "01_general":      GeneralSection(id="obj_section_01_general"),
@@ -320,10 +320,17 @@ class ObjectiveAssessmentView(Container):
         self.sections = {**generic_instances, **variable_instances}
 
         content = self.query_one("#obj_section_content_inner", Vertical)
+        sections_to_mount = []
         for section_id, section in self.sections.items():
             if section_id != self.active_section_id:
                 section.display = False
-            content.mount(section)
+            sections_to_mount.append(section)
+
+        # Await so sections are fully composed before _mounted = True is set.
+        # Without await the mounts are queued async; any load_session() call
+        # that arrives before the queue drains would call section.load() on
+        # un-composed widgets and silently lose all field data.
+        await content.mount(*sections_to_mount)
 
         # Pre-activate default regions into variable tabs
         for region_id in self._active_regions:
