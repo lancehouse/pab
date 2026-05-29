@@ -68,6 +68,62 @@ static void render_all_views_export(AppState *app, cairo_t *cr)
     }
 }
 
+/* Focus dims: quad uses fixed export size; single uses actual widget pixels.
+ * Falls back to SINGLE_W/H if the widget is gone or sized to 0 (e.g. on destroy). */
+static void focus_dims(AppState *app, double *out_w, double *out_h)
+{
+    if (app->layout_mode == LAYOUT_QUAD) {
+        *out_w = EXPORT_W; *out_h = EXPORT_H;
+    } else {
+        int slot = (int)app->layout_mode - 1;
+        GtkWidget *da = app->single_da[slot];
+        double dw = da ? (double)gtk_widget_get_width(da)  : 0.0;
+        double dh = da ? (double)gtk_widget_get_height(da) : 0.0;
+        *out_w = dw > 0.0 ? dw : SINGLE_W;
+        *out_h = dh > 0.0 ? dh : SINGLE_H;
+    }
+}
+
+/* Focus render: live zoom/pan with actual widget size in single-view mode. */
+static void render_all_views_focus(AppState *app, cairo_t *cr)
+{
+    cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
+    cairo_paint(cr);
+
+    if (app->layout_mode == LAYOUT_QUAD) {
+        ExportSlot slots[4] = {
+            { VIEW_ANTERIOR,              0,    0,    EU,   EU*2, 0 },
+            { VIEW_POSTERIOR,             EU,   0,    EU,   EU*2, 1 },
+            { app->right_slot_views[0],   EU*2, 0,    EU/2, EU,   2 },
+            { app->right_slot_views[1],   EU*2, EU,   EU/2, EU,   3 },
+        };
+        for (int i = 0; i < 4; i++) {
+            cairo_save(cr);
+            cairo_translate(cr, slots[i].x, slots[i].y);
+            cairo_rectangle(cr, 0, 0, slots[i].w, slots[i].h);
+            cairo_clip(cr);
+            canvas_render_view(app, cr, slots[i].view,
+                               slots[i].w, slots[i].h,
+                               app->col_zoom[slots[i].col_idx],
+                               app->col_pan_x[slots[i].col_idx],
+                               app->col_pan_y[slots[i].col_idx]);
+            cairo_restore(cr);
+        }
+    } else {
+        int slot = (int)app->layout_mode - 1;
+        GtkWidget *da = app->single_da[slot];
+        double dw = da ? (double)gtk_widget_get_width(da)  : 0.0;
+        double dh = da ? (double)gtk_widget_get_height(da) : 0.0;
+        double w = dw > 0.0 ? dw : SINGLE_W;
+        double h = dh > 0.0 ? dh : SINGLE_H;
+        canvas_render_view(app, cr, SINGLE_VIEWS[slot],
+                           w, h,
+                           app->single_zoom[slot],
+                           app->single_pan_x[slot],
+                           app->single_pan_y[slot]);
+    }
+}
+
 /* Live render (uses current zoom/pan — kept for SVG export). */
 static void render_all_views_live(AppState *app, cairo_t *cr)
 {
@@ -257,6 +313,124 @@ gboolean session_export_combined_png(AppState *app)
     return TRUE;
 }
 
+gboolean session_export_subj_focus_png(AppState *app)
+{
+    if (!app->session_dir[0] || !app->session_name[0]) return FALSE;
+    char path[1024];
+    session_build_path(app, "subj_focus.png", path, sizeof(path));
+
+    AppMode saved_mode = app->current_mode;
+    app->current_mode = APP_MODE_SUBJECTIVE;
+
+    double w, h;
+    focus_dims(app, &w, &h);
+    cairo_surface_t *surf = cairo_image_surface_create(
+        CAIRO_FORMAT_RGB24, (int)w, (int)h);
+    cairo_t *cr = cairo_create(surf);
+    render_all_views_focus(app, cr);
+    cairo_destroy(cr);
+    cairo_status_t st = cairo_surface_write_to_png(surf, path);
+    cairo_surface_destroy(surf);
+
+    app->current_mode = saved_mode;
+
+    if (st != CAIRO_STATUS_SUCCESS) {
+        fprintf(stderr, "session_export_subj_focus_png: failed: %s\n",
+                cairo_status_to_string(st));
+        return FALSE;
+    }
+    fprintf(stderr, "session_export_subj_focus_png: %s\n", path);
+    return TRUE;
+}
+
+gboolean session_export_obj_focus_png(AppState *app)
+{
+    if (!app->session_dir[0] || !app->session_name[0]) return FALSE;
+    char path[1024];
+    session_build_path(app, "obj_focus.png", path, sizeof(path));
+
+    AppMode saved_mode = app->current_mode;
+    app->current_mode = APP_MODE_OBJECTIVE;
+
+    double w, h;
+    focus_dims(app, &w, &h);
+    cairo_surface_t *surf = cairo_image_surface_create(
+        CAIRO_FORMAT_RGB24, (int)w, (int)h);
+    cairo_t *cr = cairo_create(surf);
+    render_all_views_focus(app, cr);
+    cairo_destroy(cr);
+    cairo_status_t st = cairo_surface_write_to_png(surf, path);
+    cairo_surface_destroy(surf);
+
+    app->current_mode = saved_mode;
+
+    if (st != CAIRO_STATUS_SUCCESS) {
+        fprintf(stderr, "session_export_obj_focus_png: failed: %s\n",
+                cairo_status_to_string(st));
+        return FALSE;
+    }
+    fprintf(stderr, "session_export_obj_focus_png: %s\n", path);
+    return TRUE;
+}
+
+gboolean session_export_combined_focus_png(AppState *app)
+{
+    if (!app->session_dir[0] || !app->session_name[0]) return FALSE;
+    char path[1024];
+    session_build_path(app, "combined_focus.png", path, sizeof(path));
+
+    AppMode saved_mode = app->current_mode;
+    double w, h;
+    focus_dims(app, &w, &h);
+
+    cairo_surface_t *surf_sx = cairo_image_surface_create(
+        CAIRO_FORMAT_RGB24, (int)w, (int)h);
+    cairo_t *cr_sx = cairo_create(surf_sx);
+    app->current_mode = APP_MODE_SUBJECTIVE;
+    render_all_views_focus(app, cr_sx);
+    cairo_destroy(cr_sx);
+
+    cairo_surface_t *surf_obj = cairo_image_surface_create(
+        CAIRO_FORMAT_RGB24, (int)w, (int)h);
+    cairo_t *cr_obj = cairo_create(surf_obj);
+    app->current_mode = APP_MODE_OBJECTIVE;
+    render_all_views_focus(app, cr_obj);
+    cairo_destroy(cr_obj);
+
+    cairo_surface_t *surf = cairo_image_surface_create(
+        CAIRO_FORMAT_RGB24, (int)w, (int)(h * 2));
+    cairo_t *cr = cairo_create(surf);
+
+    cairo_set_source_surface(cr, surf_sx, 0, 0);
+    cairo_paint(cr);
+    cairo_set_source_surface(cr, surf_obj, 0, h);
+    cairo_paint(cr);
+
+    cairo_set_font_size(cr, 16.0);
+    cairo_set_source_rgb(cr, 0.1, 0.1, 0.1);
+    cairo_move_to(cr, 10.0, 20.0);
+    cairo_show_text(cr, "Subjective");
+    cairo_move_to(cr, 10.0, h + 20.0);
+    cairo_show_text(cr, "Objective");
+
+    cairo_destroy(cr);
+
+    cairo_status_t st = cairo_surface_write_to_png(surf, path);
+    cairo_surface_destroy(surf);
+    cairo_surface_destroy(surf_sx);
+    cairo_surface_destroy(surf_obj);
+
+    app->current_mode = saved_mode;
+
+    if (st != CAIRO_STATUS_SUCCESS) {
+        fprintf(stderr, "session_export_combined_focus_png: failed: %s\n",
+                cairo_status_to_string(st));
+        return FALSE;
+    }
+    fprintf(stderr, "session_export_combined_focus_png: %s\n", path);
+    return TRUE;
+}
+
 gboolean session_export_combined_pdf(AppState *app)
 {
     if (!app->session_dir[0] || !app->session_name[0]) return FALSE;
@@ -272,6 +446,24 @@ gboolean session_export_combined_pdf(AppState *app)
         return FALSE;
     }
     fprintf(stderr, "session_export_combined_pdf: PDF written for %s\n", png_path);
+    return TRUE;
+}
+
+gboolean session_export_combined_focus_pdf(AppState *app)
+{
+    if (!app->session_dir[0] || !app->session_name[0]) return FALSE;
+    char png_path[1024];
+    session_build_path(app, "combined_focus.png", png_path, sizeof(png_path));
+
+    const char *home = g_get_home_dir();
+    char cmd[2048];
+    snprintf(cmd, sizeof(cmd), "\"%s/.local/bin/placepdf\" \"%s\"", home, png_path);
+    int ret = system(cmd);
+    if (ret != 0) {
+        fprintf(stderr, "session_export_combined_focus_pdf: placepdf failed (exit %d)\n", ret);
+        return FALSE;
+    }
+    fprintf(stderr, "session_export_combined_focus_pdf: PDF written for %s\n", png_path);
     return TRUE;
 }
 

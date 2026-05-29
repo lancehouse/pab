@@ -535,6 +535,9 @@ void window_autosave(AppState *app)
     if (ok) ok = session_export_subj_png(app);
     if (ok) ok = session_export_obj_png(app);
     if (ok) ok = session_export_combined_png(app);
+    if (ok) ok = session_export_subj_focus_png(app);
+    if (ok) ok = session_export_obj_focus_png(app);
+    if (ok) ok = session_export_combined_focus_png(app);
     persistence_write_session_current(app);
     if (g_save_indicator) {
         gtk_label_set_text(GTK_LABEL(g_save_indicator), ok ? "✓" : "✗");
@@ -1955,6 +1958,7 @@ static void on_main_window_close(GtkWidget *w, gpointer data)
     persistence_monitor_stop(app);
     window_autosave(app);
     session_export_combined_pdf(app);
+    session_export_combined_focus_pdf(app);
 }
 
 void window_create(AppState *app, GtkApplication *gtk_app)

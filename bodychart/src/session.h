@@ -24,8 +24,16 @@ gboolean session_export_obj_png(AppState *app);
 /* Render both subjective (top) and objective (bottom) in one image with labels. */
 gboolean session_export_combined_png(AppState *app);
 
+/* Focus variants: render with the current live zoom/pan and layout mode. */
+gboolean session_export_subj_focus_png(AppState *app);
+gboolean session_export_obj_focus_png(AppState *app);
+gboolean session_export_combined_focus_png(AppState *app);
+
 /* Place the combined PNG onto ~/.local/bin/template.pdf and save as combined.pdf. */
 gboolean session_export_combined_pdf(AppState *app);
+
+/* Place the combined_focus PNG onto the same PDF template and save as combined_focus.pdf. */
+gboolean session_export_combined_focus_pdf(AppState *app);
 
 /* Render to an arbitrary path (for legacy keyboard shortcut exports). */
 gboolean session_export_png(AppState *app, const char *path);
