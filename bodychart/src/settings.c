@@ -89,7 +89,7 @@ void settings_load(AppState *app)
 
         if (strcmp(key, "pen_gamma") == 0) {
             float v = (float)atof(val);
-            if (v >= 0.1f && v <= 2.0f) app->pen_gamma = v;
+            if (v >= 0.3f && v <= 4.0f) app->pen_gamma = v;
         } else if (strcmp(key, "pen_wide_mode") == 0) {
             app->pen_wide_mode = atoi(val) != 0;
         } else if (strcmp(key, "palm_reject") == 0) {
@@ -142,7 +142,7 @@ void settings_apply_args(AppState *app, int *argc, char **argv)
     for (int i = 1; i < *argc; i++) {
         if (strncmp(argv[i], "--pen-gamma=", 12) == 0) {
             float v = (float)atof(argv[i] + 12);
-            if (v >= 0.1f && v <= 2.0f) app->pen_gamma = v;
+            if (v >= 0.3f && v <= 4.0f) app->pen_gamma = v;
         } else if (strcmp(argv[i], "--wide") == 0) {
             app->pen_wide_mode = TRUE;
         } else if (strcmp(argv[i], "--no-palm-reject") == 0) {

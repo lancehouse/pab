@@ -562,6 +562,103 @@ static void on_mode_clicked(GtkButton *btn, gpointer data)
     canvas_invalidate(app);
 }
 
+/* ── Symptom indicator strip draw function ───────────────────────────────── */
+static void draw_symptom_indicator(GtkDrawingArea *da, cairo_t *cr,
+                                    int w, int h, gpointer data)
+{
+    (void)da;
+    SymptomType stype = (SymptomType)(gintptr)data;
+    const SymptomDef *sd = &SYMPTOM_DEFS[stype];
+    double cy = h / 2.0;
+
+    cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 0.95);
+
+    switch (sd->pattern) {
+    case FILL_SOLID:
+        cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+        cairo_set_line_width(cr, 3.5);
+        cairo_move_to(cr, 4, cy); cairo_line_to(cr, w - 4, cy);
+        cairo_stroke(cr);
+        break;
+    case FILL_DASHED: {
+        double dashes[] = { 5.0, 3.5 };
+        cairo_set_dash(cr, dashes, 2, 0);
+        cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+        cairo_set_line_width(cr, 2.5);
+        cairo_move_to(cr, 4, cy); cairo_line_to(cr, w - 4, cy);
+        cairo_stroke(cr);
+        cairo_set_dash(cr, NULL, 0, 0);
+        break;
+    }
+    case FILL_DOTS_SPACED:
+        for (int x = 6; x < w - 3; x += 9) {
+            cairo_new_sub_path(cr);
+            cairo_arc(cr, x, cy, 2.5, 0, 2 * G_PI);
+        }
+        cairo_fill(cr);
+        break;
+    case FILL_H_STROKES:
+        cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+        cairo_set_line_width(cr, 1.5);
+        for (int x = 6; x < w - 3; x += 9) {
+            cairo_move_to(cr, x - 3, cy);
+            cairo_line_to(cr, x + 3, cy);
+        }
+        cairo_stroke(cr);
+        break;
+    case FILL_XMARKS:
+        cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+        cairo_set_line_width(cr, 1.5);
+        for (int x = 7; x < w - 3; x += 11) {
+            cairo_move_to(cr, x - 3, cy - 3); cairo_line_to(cr, x + 3, cy + 3);
+            cairo_move_to(cr, x + 3, cy - 3); cairo_line_to(cr, x - 3, cy + 3);
+        }
+        cairo_stroke(cr);
+        break;
+    case FILL_TICK:
+        cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+        cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+        cairo_set_line_width(cr, 1.5);
+        cairo_move_to(cr, w / 2 - 5, cy);
+        cairo_line_to(cr, w / 2 - 1, cy + 3);
+        cairo_line_to(cr, w / 2 + 6, cy - 3);
+        cairo_stroke(cr);
+        break;
+    case FILL_PENCIL:
+        cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+        cairo_set_line_width(cr, 1.5);
+        cairo_move_to(cr, 4, cy); cairo_line_to(cr, w - 4, cy);
+        cairo_stroke(cr);
+        break;
+    }
+}
+
+/* ── Symptom button factory (label + pattern/colour strip) ───────────────── */
+static GtkWidget *make_symptom_btn(const char *label, SymptomType stype)
+{
+    GtkWidget *btn  = gtk_button_new();
+    gtk_widget_set_size_request(btn, -1, 44);
+
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_widget_set_margin_top(vbox, 3);
+    gtk_widget_set_margin_bottom(vbox, 3);
+
+    GtkWidget *lbl = gtk_label_new(label);
+    gtk_widget_set_vexpand(lbl, TRUE);
+    gtk_box_append(GTK_BOX(vbox), lbl);
+
+    GtkWidget *strip = gtk_drawing_area_new();
+    gtk_widget_set_size_request(strip, -1, 9);
+    gtk_widget_set_can_target(strip, FALSE);   /* don't absorb button clicks */
+    gtk_drawing_area_set_draw_func(GTK_DRAWING_AREA(strip),
+                                    draw_symptom_indicator,
+                                    (gpointer)(gintptr)stype, NULL);
+    gtk_box_append(GTK_BOX(vbox), strip);
+
+    gtk_button_set_child(GTK_BUTTON(btn), vbox);
+    return btn;
+}
+
 /* ── Shared button factory ───────────────────────────────────────────────── */
 static GtkWidget *make_btn(const char *label, int min_w, int min_h)
 {
@@ -1125,15 +1222,15 @@ static GtkWidget *build_draw_tab(AppState *app)
     gtk_widget_set_name(lbl1, "section-label");
     gtk_box_append(GTK_BOX(box), lbl1);
 
-    /* P&N=· (fine dots), Para=× (cross marks), Tick=✓ (symptom-free stamp) */
+    /* Labels — single line; pattern/colour shown via indicator strip below */
     static const char *sym_labels[] = {
-        "Pain\n●", "Pain\n◌", "P&N\n·", "Numb\n≡", "Para\n×", "Tick\n✓"
+        "Pain", "Intermt", "P&N", "Numb", "Para", "Tick", "Pencil"
     };
     static gpointer   sym_pairs[SYMPTOM_COUNT][2];
 
     GtkWidget *sym_grid = make_grid2col();
     for (int i = 0; i < SYMPTOM_COUNT; i++) {
-        GtkWidget *btn = make_btn(sym_labels[i], -1, 40);
+        GtkWidget *btn = make_symptom_btn(sym_labels[i], (SymptomType)i);
         gtk_widget_set_hexpand(btn, TRUE);
         gtk_widget_set_name(btn, "symptom-btn");
         sym_pairs[i][0] = app;
@@ -1143,19 +1240,19 @@ static GtkWidget *build_draw_tab(AppState *app)
         gtk_grid_attach(GTK_GRID(sym_grid), btn, i % 2, i / 2, 1, 1);
     }
 
-    /* Note tool button — full width, below symptoms */
+    /* Arrow tool button — half width, shares row with Pencil symptom button */
+    g_arrow_btn = make_btn("Arrow →", -1, 44);
+    gtk_widget_set_hexpand(g_arrow_btn, TRUE);
+    gtk_widget_set_name(g_arrow_btn, "tool-btn");
+    g_signal_connect(g_arrow_btn, "clicked", G_CALLBACK(on_arrow_clicked), app);
+    gtk_grid_attach(GTK_GRID(sym_grid), g_arrow_btn, 1, SYMPTOM_COUNT / 2, 1, 1);
+
+    /* Note tool button — full width, below Arrow */
     g_note_btn = make_btn("Note ✎", -1, 34);
     gtk_widget_set_hexpand(g_note_btn, TRUE);
     gtk_widget_set_name(g_note_btn, "tool-btn");
     g_signal_connect(g_note_btn, "clicked", G_CALLBACK(on_note_clicked), app);
-    gtk_grid_attach(GTK_GRID(sym_grid), g_note_btn, 0, SYMPTOM_COUNT / 2, 2, 1);
-
-    /* Arrow tool button — full width, below Note */
-    g_arrow_btn = make_btn("Arrow →", -1, 34);
-    gtk_widget_set_hexpand(g_arrow_btn, TRUE);
-    gtk_widget_set_name(g_arrow_btn, "tool-btn");
-    g_signal_connect(g_arrow_btn, "clicked", G_CALLBACK(on_arrow_clicked), app);
-    gtk_grid_attach(GTK_GRID(sym_grid), g_arrow_btn, 0, SYMPTOM_COUNT / 2 + 1, 2, 1);
+    gtk_grid_attach(GTK_GRID(sym_grid), g_note_btn, 0, SYMPTOM_COUNT / 2 + 1, 2, 1);
 
     gtk_box_append(GTK_BOX(box), sym_grid);
 

@@ -10,6 +10,7 @@ typedef enum {
     SYMPTOM_ANAESTHESIA,
     SYMPTOM_DEEP_ACHE,
     SYMPTOM_TICK,             /* green checkmark — symptom-free region */
+    SYMPTOM_PENCIL,           /* black narrow line — freehand writing  */
     SYMPTOM_COUNT
 } SymptomType;
 
@@ -20,6 +21,7 @@ typedef enum {
     FILL_H_STROKES,       /* short horizontal strokes — anaesthesia              */
     FILL_XMARKS,          /* X marks — deep ache / other                        */
     FILL_TICK,            /* checkmarks — symptom-free stamp                     */
+    FILL_PENCIL,          /* narrow solid line — freehand writing, ignores wide_mode */
 } FillPattern;
 
 /* ── Note annotations ───────────────────────────────────────────────────── */

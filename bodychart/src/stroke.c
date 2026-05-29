@@ -10,6 +10,7 @@ const SymptomDef SYMPTOM_DEFS[SYMPTOM_COUNT] = {
     [SYMPTOM_ANAESTHESIA]       = { "Anaesthesia",         0.22f, 0.54f, 0.87f, FILL_H_STROKES   },
     [SYMPTOM_DEEP_ACHE]         = { "Paraesthesia",        0.85f, 0.55f, 0.08f, FILL_XMARKS      },
     [SYMPTOM_TICK]              = { "Tick (clear)",        0.15f, 0.70f, 0.25f, FILL_TICK        },
+    [SYMPTOM_PENCIL]            = { "Pencil",              0.08f, 0.08f, 0.08f, FILL_PENCIL      },
 };
 
 /* ── Stroke ─────────────────────────────────────────────────────────────── */

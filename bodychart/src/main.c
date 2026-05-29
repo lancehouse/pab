@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     state.canvas_w         = 900;
     state.canvas_h         = 700;
 
-    state.pen_gamma           = 0.3f;
+    state.pen_gamma           = 2.0f;
     state.pen_wide_mode       = FALSE;
     state.pen_palm_reject     = TRUE;
     state.pen_btn_action      = BTN_CYCLE_SYMPTOM;

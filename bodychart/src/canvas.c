@@ -11,9 +11,12 @@
 /* ── Per-drawing-area context ────────────────────────────────────────────── *
  * g_col[0..3]  — quad view slots (anterior, posterior, lateral_l, lateral_r) *
  * g_col[4..7]  — matching single-view slots (same order)                    */
-/* Cache surface dimensions in pixels (body space is 200×400 units; 2 px/bu). */
-#define STROKE_CACHE_W 400
-#define STROKE_CACHE_H 800
+/* BLUR FIX: cache is now built at actual widget dimensions with the full
+ * col transform applied, so it maps 1:1 to screen pixels.
+ * ROLLBACK: uncomment the two #defines below and revert the three marked
+ * sections in rebuild_stroke_cache and on_col_draw. */
+/* #define STROKE_CACHE_W 400 */
+/* #define STROKE_CACHE_H 800 */
 
 typedef struct {
     AppState  *app;
@@ -30,12 +33,13 @@ typedef struct {
     GtkWidget *header_label;
 
     /* Committed-stroke offscreen cache.
-     * Strokes and arrows for cd->view are rendered into this 400×800 image
-     * surface (2 px per body-unit) whenever stroke_version changes.
-     * During on_col_draw the cache is composited at the correct scale/offset
-     * so only the active stroke and arrow preview are re-rendered each frame. */
+     * Built at actual widget pixel dimensions with apply_col_transform applied,
+     * so it maps 1:1 to screen pixels — no upsampling blur.
+     * Rebuilt whenever stroke_version, widget size, zoom, or pan changes. */
     cairo_surface_t *stroke_cache;
-    int              cache_stroke_version;  /* value of app->stroke_version when cache was built */
+    int              cache_stroke_version;
+    int              cache_w, cache_h;               /* widget dims at last rebuild */
+    double           cache_zoom, cache_pan_x, cache_pan_y; /* viewport at last rebuild */
 } ColData;
 
 static ColData g_col[8];
@@ -62,18 +66,19 @@ static void draw_stroke(cairo_t *cr, const Stroke *s, const SymptomDef *sd,
 
     case FILL_SOLID: {
         /* Pressure tracks within two bands selected by s->wide_mode:
-         *   thin: 0.5–6.0 bu   wide: 1.5–9.5 bu */
+         *   fine: 0.375–12.0 bu   wide: 1.5–16.0 bu */
         if (s->n_pts < 2) break;
         size_t n = s->n_pts;
         double p_cur = s->pts[0].pressure;
-        double w_cur = s->wide_mode ? (1.5 + p_cur * 8.0) : (0.5 + p_cur * 5.5);
+        double w_cur = s->wide_mode ? (1.5 + p_cur * 14.5) : (0.375 + p_cur * 11.625);
+        cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
         cairo_set_line_width(cr, w_cur);
         cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 0.8);
         cairo_move_to(cr, s->pts[0].x, s->pts[0].y);
         for (size_t i = 1; i < n; i++) {
             double p = (s->pts[i-1].pressure + s->pts[i].pressure) * 0.5;
-            double w = s->wide_mode ? (1.5 + p * 8.0) : (0.5 + p * 5.5);
-            if (fabs(w - w_cur) > 0.5) {
+            double w = s->wide_mode ? (1.5 + p * 14.5) : (0.375 + p * 11.625);
+            if (fabs(w - w_cur) > 0.3) {
                 cairo_stroke(cr);
                 w_cur = w;
                 cairo_set_line_width(cr, w_cur);
@@ -96,13 +101,13 @@ static void draw_stroke(cairo_t *cr, const Stroke *s, const SymptomDef *sd,
     }
 
     case FILL_DASHED: {
-        /* Finer pink dashes; pressure sets width. thin: 0.3–3.1 bu  wide: 0.8–5.8 bu */
+        /* Finer pink dashes; pressure sets width. thin: 0.3–6.0 bu  wide: 0.8–10.0 bu */
         if (s->n_pts < 2) break;
         size_t n = s->n_pts;
         double avg_p = 0.0;
         for (size_t i = 0; i < n; i++) avg_p += s->pts[i].pressure;
         avg_p /= (double)n;
-        cairo_set_line_width(cr, s->wide_mode ? (0.8 + avg_p * 5.0) : (0.3 + avg_p * 2.8));
+        cairo_set_line_width(cr, s->wide_mode ? (0.8 + avg_p * 9.2) : (0.3 + avg_p * 5.7));
         cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 0.8);
         double dashes[2] = { 6.0, 4.0 };
         cairo_set_dash(cr, dashes, 2, 0);
@@ -307,6 +312,41 @@ static void draw_stroke(cairo_t *cr, const Stroke *s, const SymptomDef *sd,
             accum = len - (need - spacing);
         }
         #undef TICK_AT
+        cairo_stroke(cr);
+        break;
+    }
+
+    case FILL_PENCIL: {
+        /* Narrow black writing line; ignores wide_mode.
+         * Width: 0.6–2.0 bu (slightly wider onset than Pain/Fine 0.375). */
+        if (s->n_pts < 2) break;
+        size_t n = s->n_pts;
+        double p_cur = s->pts[0].pressure;
+        double w_cur = 0.6 + p_cur * 1.4;
+        cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+        cairo_set_line_width(cr, w_cur);
+        cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 1.0);
+        cairo_move_to(cr, s->pts[0].x, s->pts[0].y);
+        for (size_t i = 1; i < n; i++) {
+            double p = (s->pts[i-1].pressure + s->pts[i].pressure) * 0.5;
+            double w = 0.6 + p * 1.4;
+            if (fabs(w - w_cur) > 0.15) {
+                cairo_stroke(cr);
+                w_cur = w;
+                cairo_set_line_width(cr, w_cur);
+                cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 1.0);
+                cairo_move_to(cr, s->pts[i-1].x, s->pts[i-1].y);
+            }
+            double x0 = (i >= 2) ? (double)s->pts[i-2].x : 2.0*s->pts[i-1].x - s->pts[i].x;
+            double y0 = (i >= 2) ? (double)s->pts[i-2].y : 2.0*s->pts[i-1].y - s->pts[i].y;
+            double x3 = (i+1 < n) ? (double)s->pts[i+1].x : 2.0*s->pts[i].x - s->pts[i-1].x;
+            double y3 = (i+1 < n) ? (double)s->pts[i+1].y : 2.0*s->pts[i].y - s->pts[i-1].y;
+            double cp1x = s->pts[i-1].x + (s->pts[i].x - x0) / 6.0;
+            double cp1y = s->pts[i-1].y + (s->pts[i].y - y0) / 6.0;
+            double cp2x = s->pts[i].x   - (x3 - s->pts[i-1].x) / 6.0;
+            double cp2y = s->pts[i].y   - (y3 - s->pts[i-1].y) / 6.0;
+            cairo_curve_to(cr, cp1x, cp1y, cp2x, cp2y, s->pts[i].x, s->pts[i].y);
+        }
         cairo_stroke(cr);
         break;
     }
@@ -637,6 +677,12 @@ static void draw_stroke_legend(cairo_t *cr, AppState *app,
             cairo_move_to(cr, sw_cx - 4.0, sw_cy);
             cairo_line_to(cr, sw_cx - 1.0, sw_cy + 3.0);
             cairo_line_to(cr, sw_cx + 5.0, sw_cy - 3.5);
+            cairo_stroke(cr);
+            break;
+        case FILL_PENCIL:
+            cairo_set_line_width(cr, 1.5);
+            cairo_move_to(cr, rx,        sw_cy);
+            cairo_line_to(cr, rx + sw_w, sw_cy);
             cairo_stroke(cr);
             break;
         }
@@ -1077,21 +1123,38 @@ static void rebuild_stroke_cache(ColData *cd)
 {
     AppState *app = cd->app;
 
-    /* (Re-)create the image surface */
+    /* BLUR FIX [1/3]: build cache at actual widget resolution with the full
+     * col transform, so cache pixels map 1:1 to screen pixels.
+     * ROLLBACK: delete from here to the matching ROLLBACK comment below,
+     * and uncomment the old block. */
+    int w = gtk_widget_get_width(cd->da);
+    int h = gtk_widget_get_height(cd->da);
+    if (w <= 0 || h <= 0) return;
+
     if (cd->stroke_cache)
         cairo_surface_destroy(cd->stroke_cache);
-    cd->stroke_cache = cairo_image_surface_create(
-        CAIRO_FORMAT_ARGB32, STROKE_CACHE_W, STROKE_CACHE_H);
+    cd->stroke_cache = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
 
     cairo_t *cr = cairo_create(cd->stroke_cache);
-
-    /* Clear to transparent */
     cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR);
     cairo_paint(cr);
     cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
 
-    /* Body space: 1 body-unit = 2 pixels */
+    /* Apply the same transform the screen uses — body space at screen scale */
+    apply_col_transform(cr, cd, (double)w, (double)h);
+    /* END BLUR FIX [1/3] */
+
+    /* ROLLBACK [1/3]: replace the block above with:
+    if (cd->stroke_cache)
+        cairo_surface_destroy(cd->stroke_cache);
+    cd->stroke_cache = cairo_image_surface_create(
+        CAIRO_FORMAT_ARGB32, STROKE_CACHE_W, STROKE_CACHE_H);
+    cairo_t *cr = cairo_create(cd->stroke_cache);
+    cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR);
+    cairo_paint(cr);
+    cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
     cairo_scale(cr, 2.0, 2.0);
+    */
 
     /* Committed strokes */
     for (int i = 0; i < app->strokes->n; i++) {
@@ -1110,6 +1173,15 @@ static void rebuild_stroke_cache(ColData *cd)
 
     cairo_destroy(cr);
     cd->cache_stroke_version = app->stroke_version;
+
+    /* BLUR FIX [2/3]: record viewport state so we know when to rebuild.
+     * ROLLBACK: delete these five lines. */
+    cd->cache_w     = w;
+    cd->cache_h     = h;
+    cd->cache_zoom  = *cd->p_zoom;
+    cd->cache_pan_x = *cd->p_pan_x;
+    cd->cache_pan_y = *cd->p_pan_y;
+    /* END BLUR FIX [2/3] */
 }
 
 /* ── Draw callback ───────────────────────────────────────────────────────── */
@@ -1122,6 +1194,13 @@ static void on_col_draw(GtkDrawingArea *da, cairo_t *cr,
 
     cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
     cairo_paint(cr);
+
+    /* BLUR FIX [3/3]: save the widget-level matrix before body transform so
+     * we can blit the cache back at 1:1 screen pixels.
+     * ROLLBACK: delete this cairo_get_matrix line. */
+    cairo_matrix_t device_matrix;
+    cairo_get_matrix(cr, &device_matrix);
+    /* END BLUR FIX [3/3 — continued in cache stamp below] */
 
     cairo_save(cr);
     apply_col_transform(cr, cd, width, height);
@@ -1150,25 +1229,30 @@ static void on_col_draw(GtkDrawingArea *da, cairo_t *cr,
     }
 
     if (app->current_mode == APP_MODE_SUBJECTIVE) {
-        /* ── Committed strokes/arrows via offscreen cache ── *
-         * Rebuild the cache if stroke_version changed (or first call).        *
-         * Then blit the cache surface: body (0,0) is at pixel (0,0) of the   *
-         * cache; cache is 2×body-space, so we draw at scale s/2 where         *
-         * s = col_base_scale * zoom.  The col transform is already active.    *
-         *                                                                       *
-         * cairo_set_source_surface takes the surface's (0,0) as the reference *
-         * point in the current coordinate system.  We're in body-space after  *
-         * apply_col_transform, so we scale down by 0.5 to map cache pixels    *
-         * back to body units, then paint.                                      */
-        if (cd->cache_stroke_version != app->stroke_version)
+        /* ── Committed strokes/arrows via offscreen cache ──────────────────── *
+         * BLUR FIX: cache is built at screen resolution with apply_col_transform,
+         * so it blits 1:1 — no resampling.  Rebuilt whenever strokes, widget
+         * size, zoom, or pan change.
+         * ROLLBACK: replace the invalidation condition with just:
+         *   if (cd->cache_stroke_version != app->stroke_version)
+         * and replace the blit block with:
+         *   cairo_save(cr);
+         *   cairo_scale(cr, 0.5, 0.5);
+         *   cairo_set_source_surface(cr, cd->stroke_cache, 0.0, 0.0);
+         *   cairo_paint(cr);
+         *   cairo_restore(cr);                                                */
+        if (cd->cache_stroke_version != app->stroke_version ||
+            cd->cache_w     != width                        ||
+            cd->cache_h     != height                       ||
+            cd->cache_zoom  != *cd->p_zoom                  ||
+            cd->cache_pan_x != *cd->p_pan_x                 ||
+            cd->cache_pan_y != *cd->p_pan_y)
             rebuild_stroke_cache(cd);
 
         if (cd->stroke_cache) {
+            /* Restore widget-level matrix and blit 1:1 — zero resampling. */
             cairo_save(cr);
-            /* Current transform: screen = T(cx,cy) · S(s) · T(-100,-200)
-             * We want cache pixel p to land at body coordinate p/2, which
-             * the existing transform already handles if we scale by 0.5. */
-            cairo_scale(cr, 0.5, 0.5);
+            cairo_set_matrix(cr, &device_matrix);
             cairo_set_source_surface(cr, cd->stroke_cache, 0.0, 0.0);
             cairo_paint(cr);
             cairo_restore(cr);
@@ -1983,8 +2067,7 @@ static gboolean on_raw_event(GtkEventControllerLegacy *ctrl,
     double bx, by;
     screen_to_body(cd, x, y, &bx, &by);
 
-    app->symptom = (SymptomType)((app->symptom + 1) % SYMPTOM_COUNT);
-    app->tool    = TOOL_DRAW;
+    app->pen_wide_mode = !app->pen_wide_mode;
     if (app->toolbar_update_cb) app->toolbar_update_cb(app);
     gtk_widget_queue_draw(cd->da);
     return TRUE;

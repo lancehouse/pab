@@ -94,7 +94,7 @@ struct _AppState {
     int              severity[8][10];
 
     /* ── Pen settings ──────────────────────────────────────────────────────── */
-    float       pen_gamma;          /* pressure curve exponent; 0.3–1.5, default 0.3 */
+    float       pen_gamma;          /* pressure curve exponent; 0.5–4.0, default 2.0 */
     gboolean    pen_wide_mode;      /* FALSE=thin band, TRUE=wide band */
     gboolean    pen_palm_reject;    /* reject touch within 500ms of stylus; default TRUE */
     BtnAction   pen_btn_action;     /* barrel button behaviour */
