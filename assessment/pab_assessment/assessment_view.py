@@ -314,10 +314,21 @@ class AssessmentView(Container):
 
         # Load subjective section
         subjective_data = assessment.get("subjective", {})
+        # Migration: goals moved from diagnosis → subjective (existing sessions)
+        if not any(subjective_data.get(f"goal_{i}") for i in range(1, 5)):
+            for i in range(1, 5):
+                k = f"goal_{i}"
+                v = assessment.get("diagnosis", {}).get(k)
+                if v:
+                    subjective_data.setdefault(k, v)
         if "02_subjective" in self.sections:
             subjective_section = self.sections["02_subjective"]
             subjective_section.session_file = session_file
             subjective_section.load(subjective_data)
+
+        # Mirror goals into consent section
+        if "01_consent" in self.sections:
+            self.sections["01_consent"].load_goals(subjective_data)
 
         # Load medical section
         medical_data = assessment.get("medical", {})
@@ -641,10 +652,50 @@ class AssessmentView(Container):
         except Exception:
             pass
 
+    def _sync_goals_consent_to_subj(self) -> None:
+        from textual.widgets import Input
+        consent = self.sections.get("01_consent")
+        subj    = self.sections.get("02_subjective")
+        if not consent or not subj:
+            return
+        subj._loading = True
+        try:
+            for i in range(1, 5):
+                try:
+                    val = consent.query_one(f"#consent_goal_{i}", Input).value
+                    w   = subj.query_one(f"#goal_{i}", Input)
+                    if w.value != val:
+                        w.value = val
+                except Exception:
+                    pass
+        finally:
+            subj._loading = False
+
+    def _sync_goals_subj_to_consent(self) -> None:
+        from textual.widgets import Input
+        subj    = self.sections.get("02_subjective")
+        consent = self.sections.get("01_consent")
+        if not subj or not consent:
+            return
+        consent._loading = True
+        try:
+            for i in range(1, 5):
+                try:
+                    val = subj.query_one(f"#goal_{i}", Input).value
+                    w   = consent.query_one(f"#consent_goal_{i}", Input)
+                    if w.value != val:
+                        w.value = val
+                except Exception:
+                    pass
+        finally:
+            consent._loading = False
+
     def on_consent_section_field_changed(self) -> None:
+        self._sync_goals_consent_to_subj()
         self._schedule_save()
 
     def on_subjective_section_field_changed(self) -> None:
+        self._sync_goals_subj_to_consent()
         self._schedule_save()
 
     def on_medical_section_field_changed(self) -> None:

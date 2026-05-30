@@ -119,6 +119,18 @@ class ConsentSection(BaseSection):
             yield Label("Treatment preference\n(what will help them):")
             yield TextArea(id="treatment_preference", language="plain")
 
+        yield Label("— SMART Goals —", classes="subsection_header", id="consent_goals")
+        yield Label("Shared with Subjective section — enter in either place:",
+                    classes="reference_note")
+        yield Label("1.")
+        yield Input(id="consent_goal_1", placeholder="Goal 1")
+        yield Label("2.")
+        yield Input(id="consent_goal_2", placeholder="Goal 2")
+        yield Label("3.")
+        yield Input(id="consent_goal_3", placeholder="Goal 3")
+        yield Label("4.")
+        yield Input(id="consent_goal_4", placeholder="Goal 4")
+
         yield Label("", id="consent_status")
 
     def load(self, data: dict) -> None:
@@ -171,6 +183,18 @@ class ConsentSection(BaseSection):
             }
         except Exception:
             return {}
+
+    def load_goals(self, data: dict) -> None:
+        """Sync goal values from subjective data into the mirror widgets."""
+        self._loading = True
+        try:
+            for i in range(1, 5):
+                try:
+                    self.query_one(f"#consent_goal_{i}", Input).value = data.get(f"goal_{i}", "")
+                except Exception:
+                    pass
+        finally:
+            self._loading = False
 
     def is_complete(self) -> bool:
         data = self.collect()

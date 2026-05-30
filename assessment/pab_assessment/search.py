@@ -77,6 +77,7 @@ _SUBSECTIONS: list[tuple[str, str, str]] = [
     ("02_subjective", "subj_sleep",        "Sleep"),
     ("02_subjective", "subj_24hr",         "24Hr Pattern"),
     ("02_subjective", "subj_psychosocial", "Psychosocial"),
+    ("02_subjective", "subj_goals",        "SMART Goals"),
     ("02_subjective", "subj_suicide",      "Suicide / Self-Harm Risk"),
     # 03 Medical
     ("03_medical", "med_comorbidities",    "Comorbidities / PMH"),
@@ -117,7 +118,6 @@ _SUBSECTIONS: list[tuple[str, str, str]] = [
     ("06_diagnosis", "dx_msk",         "MSK"),
     ("06_diagnosis", "dx_neuropathic", "Neuropathic Diagnosis"),
     ("06_diagnosis", "dx_mixed",       "Mixed"),
-    ("06_diagnosis", "dx_goals",       "Goals"),
     # 07 Barriers
     ("07_barriers", "br_physical",     "Physical Barriers"),
     ("07_barriers", "br_neuro",        "Neurological Barriers"),
@@ -311,10 +311,10 @@ _FIELD_LABELS: dict[str, tuple[str, str | None, str]] = {
     "msk_source":         ("06_diagnosis", "dx_msk",         "MSK source"),
     "neuro_lesion":       ("06_diagnosis", "dx_neuropathic", "Neurological lesion"),
     "mixed_reasoning":    ("06_diagnosis", "dx_mixed",       "Mixed reasoning"),
-    "goal_1":             ("06_diagnosis", "dx_goals",       "Goal 1"),
-    "goal_2":             ("06_diagnosis", "dx_goals",       "Goal 2"),
-    "goal_3":             ("06_diagnosis", "dx_goals",       "Goal 3"),
-    "goal_4":             ("06_diagnosis", "dx_goals",       "Goal 4"),
+    "goal_1":             ("02_subjective", "subj_goals",     "Goal 1"),
+    "goal_2":             ("02_subjective", "subj_goals",     "Goal 2"),
+    "goal_3":             ("02_subjective", "subj_goals",     "Goal 3"),
+    "goal_4":             ("02_subjective", "subj_goals",     "Goal 4"),
     # 07 Barriers
     "bi_movement_region": ("07_barriers", "br_physical",  "Movement region"),
     "bi_strength_other":  ("07_barriers", "br_physical",  "Other strength deficit"),

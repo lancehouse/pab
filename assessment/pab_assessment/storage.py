@@ -1730,6 +1730,12 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     txt("harm_means",     s)
     txt("harm_intent",    s)
     txt("harm_action",    s)
+
+    sub("SMART Goals")
+    f("goal_1", s)
+    f("goal_2", s)
+    f("goal_3", s)
+    f("goal_4", s)
     _emit_yaml_subs_md("subjective", s, clean, _emit, sub)
 
     # ════════════════════════════════════════════════════════════════════════
@@ -2241,12 +2247,6 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     sub("Mixed / Indeterminate")
     f("mixed_dominant",    dx)
     txt("mixed_reasoning", dx)
-
-    sub("SMART Goals")
-    f("goal_1", dx)
-    f("goal_2", dx)
-    f("goal_3", dx)
-    f("goal_4", dx)
 
     _emit_yaml_subs_md("diagnosis", dx, clean, _emit, sub)
     # ════════════════════════════════════════════════════════════════════════
@@ -3292,6 +3292,12 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     txt("harm_means",     s)
     txt("harm_intent",    s)
     txt("harm_action",    s)
+
+    sub("SMART Goals")
+    f("goal_1", s)
+    f("goal_2", s)
+    f("goal_3", s)
+    f("goal_4", s)
     _emit_yaml_subs_raw("subjective", s, clean, _emit, sub)
 
     # ════════════════════════════════════════════════════════════════════════
@@ -3806,12 +3812,6 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     sub("Mixed / Indeterminate")
     f("mixed_dominant",     dx)
     txt("mixed_reasoning",  dx)
-
-    sub("SMART Goals")
-    f("goal_1", dx)
-    f("goal_2", dx)
-    f("goal_3", dx)
-    f("goal_4", dx)
 
     _emit_yaml_subs_raw("diagnosis", dx, clean, _emit, sub)
     # ════════════════════════════════════════════════════════════════════════

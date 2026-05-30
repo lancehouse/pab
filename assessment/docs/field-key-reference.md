@@ -12,11 +12,11 @@ Jump to a section:
 - [Subjective — 01 Consent](#01-consent)
 - [Subjective — 02 Subjective History / Flare-ups / Management / Activity / Work](#02-subjective)
 - [Subjective — 02 Sleep (YAML pilot)](#02-sleep-yaml-pilot)
-- [Subjective — 02 24-Hour Pattern / Psychosocial / Suicide Risk](#02-24hr-psychosocial-suicide)
+- [Subjective — 02 24-Hour Pattern / Psychosocial / Goals / Suicide Risk](#02-24hr-psychosocial-suicide)
 - [Subjective — 03 Medical Screening](#03-medical-screening)
 - [Subjective — 04 Pain Classification](#04-pain-classification)
 - [Subjective — 05 Outcome Measures](#05-outcome-measures)
-- [Subjective — 06 Diagnosis & Goals](#06-diagnosis--goals)
+- [Subjective — 06 Diagnosis](#06-diagnosis)
 - [Subjective — 07 Barriers](#07-barriers)
 - [Subjective — 08 Rx & Plan](#08-rx--plan)
 - [Objective — 01 General Observations](#obj-01-general-observations)
@@ -143,6 +143,12 @@ These fields are defined in `pab_assessment/sections/yaml/subj_sleep_pilot.yaml`
 | `psychological_distress` | Psychological distress description |
 | `screening_tool` | Screening tool used (DASS, PHQ, etc.) |
 
+### SMART Goals
+
+| Key | Description |
+|---|---|
+| `goal_1` – `goal_4` | Patient goals 1–4 |
+
 ### Suicide / Self-Harm Risk
 
 | Key | Description |
@@ -233,7 +239,7 @@ dynamically by the search index. They have IDs beginning with `rf_`, `cvd_`,
 
 ---
 
-## 06 Diagnosis & Goals
+## 06 Diagnosis
 
 | Key | Description |
 |---|---|
@@ -245,7 +251,6 @@ dynamically by the search index. They have IDs beginning with `rf_`, `cvd_`,
 | `msk_source` | MSK pain source |
 | `neuro_lesion` | Neurological lesion description |
 | `mixed_reasoning` | Mixed pain — reasoning |
-| `goal_1` – `goal_4` | Patient goals 1–4 |
 
 ---
 

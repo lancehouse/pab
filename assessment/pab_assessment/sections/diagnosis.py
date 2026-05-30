@@ -106,7 +106,6 @@ _INPUT_FIELDS = [
     "traumatic_event", "traumatic_source",
     "msk_pathology", "msk_source",
     "neuro_lesion",
-    "goal_1", "goal_2", "goal_3", "goal_4",
 ]
 
 _TEXT_FIELDS = ["mixed_reasoning"]
@@ -224,17 +223,6 @@ class DiagnosisSection(BaseSection):
         yield Label("Reasoning:")
         yield TextArea(id="mixed_reasoning", language="plain")
 
-        # ── SMART Goals ────────────────────────────────────────
-        yield Label("— SMART Goals —", classes="subsection_header", id="dx_goals")
-        yield Label("Following completion of the assessment, the following potentially meaningful goals were confirmed:", classes="reference_note")
-        yield Label("1.")
-        yield Input(id="goal_1", placeholder="Goal 1")
-        yield Label("2.")
-        yield Input(id="goal_2", placeholder="Goal 2")
-        yield Label("3.")
-        yield Input(id="goal_3", placeholder="Goal 3")
-        yield Label("4.")
-        yield Input(id="goal_4", placeholder="Goal 4")
 
     # ------------------------------------------------------------------
     # Navigation

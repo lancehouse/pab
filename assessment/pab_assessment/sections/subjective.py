@@ -337,6 +337,20 @@ class SubjectiveSection(BaseSection):
                 yield Label("Formal screening\ntool used:")
                 yield TextArea(id="screening_tool", language="plain")
 
+            # ── SMART Goals ───────────────────────────────────────────────
+            yield Label("— SMART Goals —", classes="subsection_header",
+                        id="subj_goals")
+            yield Label("Potentially meaningful goals confirmed with patient:",
+                        classes="reference_note")
+            yield Label("1.")
+            yield Input(id="goal_1", placeholder="Goal 1")
+            yield Label("2.")
+            yield Input(id="goal_2", placeholder="Goal 2")
+            yield Label("3.")
+            yield Input(id="goal_3", placeholder="Goal 3")
+            yield Label("4.")
+            yield Input(id="goal_4", placeholder="Goal 4")
+
             # ── Suicide / Self-Harm Risk ──────────────────────────────
             yield Label("— Suicide / Self-Harm Risk —", classes="subsection_header",
                         id="subj_suicide")
@@ -509,6 +523,7 @@ class SubjectiveSection(BaseSection):
     _INPUT_FIELDS = [
         "pain_control_score", "confidence_score",
         "pre_injury_hours", "current_hours",
+        "goal_1", "goal_2", "goal_3", "goal_4",
     ]
 
     def collect(self) -> dict:

@@ -43,6 +43,7 @@ class PhysioAssessment(App):
         Binding("alt+e", "sub_sleep",                show=False, priority=True),
         Binding("alt+4", "sub_24hr",                 show=False, priority=True),
         Binding("alt+p", "sub_psychosocial",         show=False, priority=True),
+        Binding("alt+g", "sub_goals",                show=False, priority=True),
         Binding("alt+r", "sub_risk",                 show=False, priority=True),
     ]
 
@@ -176,6 +177,7 @@ class PhysioAssessment(App):
     def action_sub_sleep(self):        self._goto_subjective_sub("subj_sleep")
     def action_sub_24hr(self):         self._goto_subjective_sub("subj_24hr")
     def action_sub_psychosocial(self): self._goto_subjective_sub("subj_psychosocial")
+    def action_sub_goals(self):        self._goto_subjective_sub("subj_goals")
     def action_sub_risk(self):         self._goto_subjective_sub("subj_suicide")
 
 

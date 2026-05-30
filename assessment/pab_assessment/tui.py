@@ -307,6 +307,7 @@ class SubsectionNavBar(Static):
         ("sl",    "E", "ep",          "subj_sleep"),
         ("",      "2", "4Hr",         "subj_24hr"),
         ("",      "P", "sychosocial", "subj_psychosocial"),
+        ("",      "G", "oals",        "subj_goals"),
         ("",      "R", "isk",         "subj_suicide"),
     ]
 
@@ -346,7 +347,6 @@ class SubsectionNavBar(Static):
         ("MSK",         "dx_msk"),
         ("Neuro",       "dx_neuropathic"),
         ("Mixed",       "dx_mixed"),
-        ("Goals",       "dx_goals"),
     ]
 
     BR_SUBS = [
