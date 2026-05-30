@@ -33,6 +33,15 @@ class PhysioAssessment(App):
         Binding("f8", "section_barriers",         show=False, priority=True),
         Binding("f9", "section_rx_plan",          show=False, priority=True),
         Binding("f10", "toggle_notes",            show=False, priority=True),
+        # Objective section jump — Ctrl+F1-F8 (priority=True overrides any focused widget)
+        Binding("ctrl+f1", "obj_general",       show=False, priority=True),
+        Binding("ctrl+f2", "obj_active",        show=False, priority=True),
+        Binding("ctrl+shift+f3", "obj_passive",  show=False, priority=True),
+        Binding("ctrl+f4", "obj_neurological",  show=False, priority=True),
+        Binding("ctrl+f5", "obj_sensory",       show=False, priority=True),
+        Binding("ctrl+f6", "obj_muscle",        show=False, priority=True),
+        Binding("ctrl+f7", "obj_functional",    show=False, priority=True),
+        Binding("ctrl+f8", "obj_special",       show=False, priority=True),
         # Subjective subsection jump — Alt+letter (priority=True overrides TextArea)
         Binding("alt+s", "sub_symptoms",             show=False, priority=True),
         Binding("alt+h", "sub_history",              show=False, priority=True),
@@ -167,6 +176,27 @@ class PhysioAssessment(App):
             self.query_one("#section_02_subjective")._jump_to(anchor_id)
         except Exception:
             pass
+
+    # ------------------------------------------------------------------
+    # Objective section jump (Ctrl+F1-F8) — global
+    # ------------------------------------------------------------------
+
+    def _goto_objective_section(self, section_id: str) -> None:
+        try:
+            av = self.query_one("#assessment_view")
+            av._enter_objective_mode()
+            av._obj_view._show_section(section_id)
+        except Exception:
+            pass
+
+    def action_obj_general(self):      self._goto_objective_section("01_general")
+    def action_obj_active(self):       self._goto_objective_section("02_active")
+    def action_obj_passive(self):      self._goto_objective_section("03_passive")
+    def action_obj_neurological(self): self._goto_objective_section("04_neurological")
+    def action_obj_sensory(self):      self._goto_objective_section("05_sensory")
+    def action_obj_muscle(self):       self._goto_objective_section("06_muscle")
+    def action_obj_functional(self):   self._goto_objective_section("07_functional")
+    def action_obj_special(self):      self._goto_objective_section("08_special")
 
     def action_sub_symptoms(self):     self._goto_subjective_sub("subj_symptoms")
     def action_sub_history(self):      self._goto_subjective_sub("subj_history")
