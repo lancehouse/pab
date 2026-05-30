@@ -47,7 +47,7 @@ introduce binary formats or database files. Files are used individually for vari
 
 ## Environment
 
-- Fedora 43, GNOME, kitty terminal (GPU-accelerated; enables remote-control focus switching)
+- Fedora 43, GNOME, Ptyxis terminal (touch-compatible GTK terminal)
 - GTK app: build with `ninja -C build` inside `bodychart/`
 - TUI: Python 3.12 venv inside `assessment/`; activate before running
 

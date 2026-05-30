@@ -33,7 +33,7 @@ from .report_modal import ReportModal
 from .objective.kb_panel import KBPanel
 from .storage import (
     load_assessment, save_assessment, list_sessions, create_new_session,
-    read_gtk_pid, read_tui_socket, write_focus_signal, export_session_report,
+    read_gtk_pid, write_focus_signal, export_session_report,
     save_raw_report,
 )
 from .assessment_view import AssessmentView, NotesOverlay
@@ -57,17 +57,6 @@ def _process_alive(pid: int | None) -> bool:
     except (ProcessLookupError, PermissionError):
         return False
 
-
-def _focus_tui_window() -> None:
-    """Focus the kitty terminal window containing this TUI process (non-blocking)."""
-    tui_socket = read_tui_socket()
-    if tui_socket:
-        # kitty remote control: focus the kitty window listening on this socket
-        subprocess.Popen(
-            ["kitty", "@", "--to", tui_socket, "focus-window"],
-            close_fds=True,
-            stderr=subprocess.DEVNULL,
-        )
 
 
 # ---------------------------------------------------------------------------
@@ -506,7 +495,6 @@ class PhysioAssessmentTUI(Container):
         self.watcher = BodyChartWatcher(
             on_session_switch=self.on_session_switch,
             on_chart_update=self.on_chart_update,
-            on_focus_request=self._on_focus_request,
         )
         self.watcher.start()
 
@@ -597,12 +585,6 @@ class PhysioAssessmentTUI(Container):
         except Exception:
             pass
 
-    # ------------------------------------------------------------------
-    # Focus signal — GTK wrote .focus_tui, raise our kitty window
-    # ------------------------------------------------------------------
-
-    async def _on_focus_request(self) -> None:
-        _focus_tui_window()
 
     # ------------------------------------------------------------------
     # Status bar

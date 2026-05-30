@@ -7,50 +7,29 @@
 #include <json-c/json.h>
 
 /* ── Terminal preference list ────────────────────────────────────────────── *
- * Tried in order; first found is used.  kitty gets a remote-control socket  *
- * so Ctrl+A (GTK → TUI focus) works.  Other terminals spawn without socket. */
+ * Tried in order; first found is used.                                       */
 typedef struct {
     const char *bin;
     /* Format string for the full launch command.                              *
-     * %1$s = socket path (kitty only, ignored otherwise)                     *
-     * %2$s = session JSON path                                                */
+     * %s = session JSON path                                                  */
     const char *cmd_fmt;
-    gboolean    has_socket;
 } TerminalDef;
 
 /* Commands use bash -l (login shell) so the spawned process inherits the
  * user's full environment — PATH, WAYLAND_DISPLAY, XDG_SESSION_TYPE, etc.
- * Without this, touch/mouse reporting breaks because kitty launched from a
- * bare GTK spawn environment is missing variables set by the user's shell. */
+ * Without this touch/mouse reporting may break in environments missing
+ * variables set by the user's shell. */
 static const TerminalDef TERMINALS[] = {
-    {
-        "ptyxis",
-        "bash -l -c 'ptyxis -- assessment --session %s'",
-        FALSE,
-    },
-    {
-        "kitty",
-        "bash -l -c 'kitty --listen-on %s assessment --session %s'",
-        TRUE,
-    },
-    {
-        "gnome-terminal",
-        "bash -l -c 'gnome-terminal -- assessment --session %s'",
-        FALSE,
-    },
-    {
-        "xterm",
-        "bash -l -c 'xterm -e assessment --session %s'",
-        FALSE,
-    },
-    { NULL, NULL, FALSE },
+    { "ptyxis",        "bash -l -c 'ptyxis -- assessment --session %s'"        },
+    { "gnome-terminal","bash -l -c 'gnome-terminal -- assessment --session %s'" },
+    { "xterm",         "bash -l -c 'xterm -e assessment --session %s'"          },
+    { NULL, NULL },
 };
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
 
 static const TerminalDef *find_terminal(void)
 {
-    /* Allow override via PHYSIO_TERMINAL env var, e.g. export PHYSIO_TERMINAL=kitty */
     const char *override = g_getenv("PHYSIO_TERMINAL");
     if (override) {
         for (int i = 0; TERMINALS[i].bin != NULL; i++) {
@@ -58,82 +37,13 @@ static const TerminalDef *find_terminal(void)
                 && g_find_program_in_path(TERMINALS[i].bin))
                 return &TERMINALS[i];
         }
-        fprintf(stderr, "integration_spawn_tui: PHYSIO_TERMINAL=%s not found or not supported\n", override);
+        fprintf(stderr, "integration_spawn_tui: PHYSIO_TERMINAL=%s not found\n", override);
     }
     for (int i = 0; TERMINALS[i].bin != NULL; i++) {
         if (g_find_program_in_path(TERMINALS[i].bin))
             return &TERMINALS[i];
     }
     return NULL;
-}
-
-/* Write tui_socket into session_current.json (best-effort). */
-static void write_tui_socket(const char *socket_path)
-{
-    const char *home = g_get_home_dir();
-    char path[512];
-    snprintf(path, sizeof(path),
-             "%s/.local/share/pab/session_current.json", home);
-
-    json_object *root = NULL;
-    {
-        FILE *f = fopen(path, "r");
-        if (f) {
-            fseek(f, 0, SEEK_END);
-            long len = ftell(f);
-            rewind(f);
-            char *buf = g_malloc(len + 1);
-            fread(buf, 1, len, f);
-            buf[len] = '\0';
-            fclose(f);
-            root = json_tokener_parse(buf);
-            g_free(buf);
-        }
-    }
-    if (!root) root = json_object_new_object();
-
-    json_object_object_add(root, "tui_socket",
-                           json_object_new_string(socket_path));
-
-    /* Atomic write */
-    char tmp[520];
-    snprintf(tmp, sizeof(tmp), "%s.tmp", path);
-    FILE *out = fopen(tmp, "w");
-    if (out) {
-        fputs(json_object_to_json_string_ext(root, JSON_C_TO_STRING_PRETTY), out);
-        fclose(out);
-        rename(tmp, path);
-    }
-    json_object_put(root);
-}
-
-/* Read a string field from session_current.json. Caller must g_free result. */
-static char *read_session_current_field(const char *field)
-{
-    const char *home = g_get_home_dir();
-    char path[512];
-    snprintf(path, sizeof(path),
-             "%s/.local/share/pab/session_current.json", home);
-    FILE *f = fopen(path, "r");
-    if (!f) return NULL;
-    fseek(f, 0, SEEK_END);
-    long len = ftell(f);
-    rewind(f);
-    char *buf = g_malloc(len + 1);
-    fread(buf, 1, len, f);
-    buf[len] = '\0';
-    fclose(f);
-
-    json_object *root = json_tokener_parse(buf);
-    g_free(buf);
-    if (!root) return NULL;
-
-    json_object *val = NULL;
-    char *result = NULL;
-    if (json_object_object_get_ex(root, field, &val))
-        result = g_strdup(json_object_get_string(val));
-    json_object_put(root);
-    return result;
 }
 
 /* ── Focus monitor callback ───────────────────────────────────────────────── */
@@ -171,18 +81,7 @@ void integration_spawn_tui(AppState *app)
     }
 
     char cmd[1024];
-    if (term->has_socket) {
-        /* Generate a unique socket path using our PID */
-        char socket_path[256];
-        snprintf(socket_path, sizeof(socket_path),
-                 "unix:/tmp/physio-tui-%d.sock", (int)getpid());
-
-        snprintf(cmd, sizeof(cmd), term->cmd_fmt, socket_path, app->session_file);
-        write_tui_socket(socket_path);
-    } else {
-        /* Terminal doesn't support sockets — skip socket, format without it */
-        snprintf(cmd, sizeof(cmd), term->cmd_fmt, app->session_file);
-    }
+    snprintf(cmd, sizeof(cmd), term->cmd_fmt, app->session_file);
 
     GError *err = NULL;
     if (!g_spawn_command_line_async(cmd, &err)) {
@@ -225,20 +124,7 @@ void integration_focus_monitor_stop(AppState *app)
 
 void integration_focus_tui(AppState *app)
 {
+    /* No-op: ptyxis does not support remote window focus.
+     * Use the system window switcher (e.g. Alt+Tab) to return to the TUI. */
     (void)app;
-    /* Read the kitty socket path written by integration_spawn_tui */
-    char *socket = read_session_current_field("tui_socket");
-    if (socket && socket[0]) {
-        char cmd[512];
-        snprintf(cmd, sizeof(cmd), "kitty @ --to %s focus-window", socket);
-        GError *err = NULL;
-        if (!g_spawn_command_line_async(cmd, &err)) {
-            fprintf(stderr, "integration_focus_tui: %s\n",
-                    err ? err->message : "failed");
-            if (err) g_error_free(err);
-        }
-    } else {
-        fprintf(stderr, "integration_focus_tui: no tui_socket in session_current.json\n");
-    }
-    g_free(socket);
 }

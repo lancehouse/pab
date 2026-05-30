@@ -292,15 +292,6 @@ def read_gtk_pid() -> int | None:
         return None
 
 
-def read_tui_socket() -> str | None:
-    """Read the kitty remote-control socket path from session_current.json."""
-    path = Path.home() / ".local/share/pab/session_current.json"
-    try:
-        data = json.loads(path.read_text())
-        return data.get("tui_socket") or None
-    except Exception:
-        return None
-
 
 def focus_signal_path(session_file: str, target: str) -> Path:
     """Return path to a focus signal file (.focus_gtk or .focus_tui) in the session dir."""
