@@ -210,7 +210,9 @@ gboolean input_key_pressed(AppState *app, guint keyval, GdkModifierType mods)
 
         /* History */
         case HK_UNDO:  canvas_undo(app);  break;
-        case HK_CLEAR: canvas_clear(app); break;
+        case HK_CLEAR:
+            if (app->request_clear_cb) app->request_clear_cb(app);
+            break;
 
         /* Overlay category toggles (click same key again to hide) */
         case HK_OVERLAY_DERM:

@@ -22,7 +22,6 @@ class PhysioAssessment(App):
 
     BINDINGS = [
         ("ctrl+q", "quit",              "Quit"),
-        ("ctrl+l", "show_session_list", "Sessions"),
         # Section tab navigation — F1-F9 (priority=True overrides any focused widget)
         Binding("f1", "section_consent",          show=False, priority=True),
         Binding("f2", "section_subjective",       show=False, priority=True),
@@ -126,13 +125,6 @@ class PhysioAssessment(App):
     def on_unmount(self) -> None:
         clear_tui_pid()
 
-    async def action_show_session_list(self) -> None:
-        if self.assessment_screen:
-            try:
-                await self.assessment_screen.save_if_pending()
-            except Exception:
-                pass
-        self.show_session_list()
 
     # ------------------------------------------------------------------
     # Section navigation (Alt+1-7, Alt+N) — on App so they're global

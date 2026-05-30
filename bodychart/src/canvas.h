@@ -169,6 +169,9 @@ struct _AppState {
     /* Note wizard callback — set by window.c */
     void (*show_note_wizard_cb)(AppState *, int view, double bx, double by);
 
+    /* Clear confirmation callback — set by window.c */
+    void (*request_clear_cb)(AppState *);
+
     /* ── Mode / session ──────────────────────────────────────────────────────── */
     AppMode  current_mode;
     char     patient_id[32];      /* short ID/initials, e.g. "JB" */

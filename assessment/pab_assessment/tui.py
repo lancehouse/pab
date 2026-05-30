@@ -450,9 +450,8 @@ class PhysioAssessmentTUI(Container):
 
     BINDINGS = [
         Binding("ctrl+s", "save",          "Save",       show=True),
-        Binding("ctrl+b", "open_bodychart","Body Chart", show=True),
         Binding("ctrl+u", "reload_chart",  "Reload Chart", show=True),
-        Binding("ctrl+e", "export",        "Export MD",  show=True),
+
         Binding("ctrl+r", "view_report",     "Report",     show=True,  priority=True),
         Binding("ctrl+n", "toggle_notes",  "Notes",      show=True,  priority=True),
         Binding("ctrl+k", "toggle_kb",     "KB",         show=True,  priority=True),
@@ -709,29 +708,6 @@ class PhysioAssessmentTUI(Container):
 
         asyncio.create_task(_save_and_notify())
 
-    def action_open_bodychart(self) -> None:
-        """Ctrl+B — focus GTK body chart (or launch it if not running)."""
-        if not self.current_session_file:
-            self._show_status("No session loaded")
-            return
-
-        gtk_pid = read_gtk_pid()
-        if _process_alive(gtk_pid):
-            # GTK is running — send signal file; GTK will call gtk_window_present()
-            write_focus_signal(self.current_session_file, "gtk")
-            self._show_status("Switching to Body Chart…")
-        else:
-            # GTK not running — launch it
-            try:
-                subprocess.Popen(
-                    ["physio-bodychart", "--session", self.current_session_file],
-                    close_fds=True,
-                )
-                self._show_status("Launching Body Chart…")
-            except Exception as e:
-                self._show_status(f"Launch failed: {e}")
-                logger.error(f"Failed to launch body chart: {e}")
-
     def action_reload_chart(self) -> None:
         """Ctrl+U — force-reload body chart data from _session.json and refresh note slots."""
         if not self.current_session_file:
@@ -750,18 +726,6 @@ class PhysioAssessmentTUI(Container):
             self._show_status("Body chart reloaded")
         except Exception as e:
             self._show_status(f"Reload failed: {e}")
-
-    def action_export(self) -> None:
-        """Ctrl+E — export session report to Markdown."""
-        if not self.current_session_file:
-            self._show_status("No session loaded")
-            return
-        out = export_session_report(self.current_session_file)
-        if out:
-            name = Path(out).name
-            self._show_status(f"Exported → {name}", seconds=4.0)
-        else:
-            self._show_status("Export failed — check logs")
 
     def action_view_report(self) -> None:
         """Ctrl+R — save, regenerate clean.md + raw.txt, then show markdown viewer."""

@@ -349,13 +349,35 @@ static void on_undo_clicked(GtkButton *btn, gpointer data)
     AppState *app = data;
     canvas_undo(app);
 }
-static void on_clear_clicked(GtkButton *btn, gpointer data)
+static void on_clear_confirm_response(GObject *source, GAsyncResult *result,
+                                       gpointer data)
 {
-    (void)btn;
     AppState *app = data;
+    GtkAlertDialog *dlg = GTK_ALERT_DIALOG(source);
+    int btn = gtk_alert_dialog_choose_finish(dlg, result, NULL);
+    g_object_unref(dlg);
+    if (btn != 0) return;   /* 0 = "Clear all", 1 = "Cancel" */
     persistence_monitor_stop(app);
     canvas_clear(app);
     persistence_monitor_start(app);
+}
+
+static void request_clear(AppState *app)
+{
+    static const char *buttons[] = { "Clear all", "Cancel", NULL };
+    GtkAlertDialog *dlg = gtk_alert_dialog_new("Clear the chart?");
+    gtk_alert_dialog_set_detail(dlg, "All strokes and annotations will be removed. This cannot be undone.");
+    gtk_alert_dialog_set_buttons(dlg, buttons);
+    gtk_alert_dialog_set_default_button(dlg, 1);
+    gtk_alert_dialog_set_cancel_button(dlg, 1);
+    gtk_alert_dialog_choose(dlg, GTK_WINDOW(app->window), NULL,
+                             on_clear_confirm_response, app);
+}
+
+static void on_clear_clicked(GtkButton *btn, gpointer data)
+{
+    (void)btn;
+    request_clear(data);
 }
 
 /* ── Toolbar state references ───────────────────────────────────────────── */
@@ -2064,6 +2086,7 @@ void window_create(AppState *app, GtkApplication *gtk_app)
     app->toolbar_update_cb    = update_toolbar_state;
     app->show_note_wizard_cb  = show_note_wizard;
     app->show_ppt_entry_cb    = show_ppt_entry;
+    app->request_clear_cb     = request_clear;
     apply_css();
 
     app->window = gtk_application_window_new(gtk_app);
