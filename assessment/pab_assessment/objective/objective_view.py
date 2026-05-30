@@ -16,6 +16,7 @@ from .sections.sensory import SensorySection
 from .sections.functional import FunctionalSection
 from .sections.region_section import RegionTabContent
 from ..storage import objective_path, save_objective, save_raw_report, export_session_report
+from ..grid_overview import GridOverview, OBJ_GRID_DATA, _section_has_data, section_to_cursor
 from .kb_loader import get_registry
 from .kb_panel import KBPanel
 
@@ -287,6 +288,10 @@ class ObjectiveAssessmentView(Container):
         self._save_task: asyncio.Task | None = None
         self._mounted = False
         self._pending_load: dict | None = None
+        self._grid_visible = False
+        self._grid_cursor: tuple[int, int] = (0, 0)
+        self._grid_cursor_set = False
+        self._pre_grid_section: str = "01_general"
 
     def compose(self) -> ComposeResult:
         yield RegionTopbar(self._active_regions, id="obj_region_topbar")
@@ -300,6 +305,7 @@ class ObjectiveAssessmentView(Container):
                 Vertical(id="obj_section_content_inner"),
                 id="obj_section_content",
             )
+            yield GridOverview(OBJ_GRID_DATA, id="obj_grid_overview")
 
     async def on_mount(self) -> None:
         # Build generic sections
@@ -453,6 +459,51 @@ class ObjectiveAssessmentView(Container):
 
     def _go_back(self) -> None:
         self.post_message(self.ExitRequested())
+
+    # ── Grid overview ─────────────────────────────────────────────────────────
+
+    def toggle_grid(self) -> None:
+        if self._grid_visible:
+            self._grid_cursor = self.query_one("#obj_grid_overview", GridOverview).current_cursor()
+            self._grid_cursor_set = True
+            self.query_one("#obj_grid_overview", GridOverview).close()
+            self.query_one("#obj_section_content").display = True
+            self._grid_visible = False
+        else:
+            self._pre_grid_section = self.active_section_id
+            if not self._grid_cursor_set:
+                self._grid_cursor = section_to_cursor(self.active_section_id, OBJ_GRID_DATA)
+            has_data: dict[str, bool] = {}
+            for sid, section in self.sections.items():
+                try:
+                    has_data[sid] = _section_has_data(section.collect())
+                except Exception:
+                    has_data[sid] = False
+            self.query_one("#obj_section_content").display = False
+            self.query_one("#obj_grid_overview", GridOverview).open(has_data, self._grid_cursor)
+            self._grid_visible = True
+
+    def navigate_to_heading(self, section_id: str, anchor_id: str) -> None:
+        self._grid_cursor = section_to_cursor(getattr(self, '_pre_grid_section', self.active_section_id), OBJ_GRID_DATA)
+        self._grid_cursor_set = True
+        self.query_one("#obj_grid_overview", GridOverview).close()
+        self.query_one("#obj_section_content").display = True
+        self._grid_visible = False
+        self._show_section(section_id)
+        try:
+            sc = self.query_one("#obj_section_content", ScrollableContainer)
+            target = self.query_one(f"#{anchor_id}")
+            self.set_timer(0.05, lambda: sc.scroll_to_widget(target, top=True, animate=False))
+        except Exception:
+            pass
+
+    @on(GridOverview.HeadingSelected)
+    def _on_grid_heading_selected(self, event: GridOverview.HeadingSelected) -> None:
+        self.navigate_to_heading(event.section_id, event.anchor_id)
+
+    @on(GridOverview.Dismissed)
+    def _on_grid_dismissed(self, event: GridOverview.Dismissed) -> None:
+        self.toggle_grid()
 
     def on_descendant_focus(self, event: events.DescendantFocus) -> None:
         widget = event.widget

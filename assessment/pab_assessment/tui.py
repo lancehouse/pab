@@ -452,6 +452,7 @@ class PhysioAssessmentTUI(Container):
         Binding("ctrl+s", "save",          "Save",       show=True),
         Binding("ctrl+u", "reload_chart",  "Reload Chart", show=True),
 
+        Binding("ctrl+g", "toggle_grid",    "Overview",   show=True,  priority=True),
         Binding("ctrl+r", "view_report",     "Report",     show=True,  priority=True),
         Binding("ctrl+n", "toggle_notes",  "Notes",      show=True,  priority=True),
         Binding("ctrl+k", "toggle_kb",     "KB",         show=True,  priority=True),
@@ -698,6 +699,17 @@ class PhysioAssessmentTUI(Container):
         if task and not task.done():
             task.cancel()
             await assessment_view._do_save()
+
+    def action_toggle_grid(self) -> None:
+        """Ctrl+G — toggle grid overview for whichever mode is active."""
+        try:
+            av = self.query_one("#assessment_view", AssessmentView)
+            if av._in_objective_mode:
+                av._obj_view.toggle_grid()
+            else:
+                av.toggle_grid()
+        except Exception:
+            pass
 
     def action_save(self) -> None:
         assessment_view = self.query_one("#assessment_view", AssessmentView)

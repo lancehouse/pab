@@ -81,7 +81,7 @@ class ConsentSection(BaseSection):
     def compose(self) -> ComposeResult:
         yield Label("Consent & Session Setup", classes="section_title")
 
-        yield Label("— Consent —", classes="subsection_header")
+        yield Label("— Consent —", classes="subsection_header", id="cs_consent")
         with Horizontal(classes="btn_row"):
             yield CheckButton("Consent to proceed", id="consent_to_proceed")
             yield CheckButton("Consent to sensitive topics", id="consent_sensitive_topics")
@@ -90,7 +90,7 @@ class ConsentSection(BaseSection):
             yield Label("Preferred name\n(required):")
             yield Input(id="preferred_name_input", placeholder="patient's preferred name")
 
-        yield Label("— Session Framing —", classes="subsection_header")
+        yield Label("— Session Framing —", classes="subsection_header", id="cs_framing")
         with Horizontal(classes="btn_row"):
             yield CheckButton("Pain multifactorial explained", id="framing_pain_multifactorial")
             yield CheckButton("Education as treatment explained", id="framing_education_treatment")
@@ -99,7 +99,7 @@ class ConsentSection(BaseSection):
             yield Label("Patient expectations\nof this session:")
             yield TextArea(id="patient_expectations", language="plain")
 
-        yield Label("— Patient Perspective (ICE+) —", classes="subsection_header")
+        yield Label("— Patient Perspective (ICE+) —", classes="subsection_header", id="cs_ice")
 
         with Horizontal(classes="field_row"):
             yield Label("Reason for attending\n(patient's own words):")

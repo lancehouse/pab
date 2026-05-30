@@ -22,6 +22,7 @@ from .sections.rx_plan import RxPlanSection
 from .objective.objective_view import ObjectiveAssessmentView, RegionTopbar
 from .objective.kb_panel import KBPanel
 from .sections.regional_differential import RequestKBEntry
+from .grid_overview import GridOverview, SUBJ_GRID_DATA, _section_has_data, section_to_cursor
 from .storage import (
     save_all_sections,
     save_raw_report,
@@ -114,7 +115,7 @@ class SectionNav(Static):
         "02_subjective": "02 Subjective",
         "03_medical": "03 Medical",
         "04_objective": "04 Objective →",
-        "04_pain_classification": "05 Classification",
+        "04_pain_classification": "05 Pain Class",
         "05_outcome_measures": "06 Outcomes",
         "06_diagnosis": "07 Diagnosis",
         "07_barriers": "08 Barriers",
@@ -233,12 +234,17 @@ class AssessmentView(Container):
         self._in_objective_mode = False
         self._last_assessment_section_id = "01_consent"
         self._obj_view: ObjectiveAssessmentView | None = None
+        self._grid_visible = False
+        self._grid_cursor: tuple[int, int] = (0, 0)
+        self._grid_cursor_set = False   # False until first navigation anchors it
+        self._pre_grid_section: str = "01_consent"
 
     def compose(self) -> ComposeResult:
         """Create sidebar nav + content area."""
         yield SectionNav(on_section_selected=self._show_section, id="section_nav")
         with Vertical(id="content_column"):
             yield ScrollableContainer(Vertical(id="section_content_inner"), id="section_content")
+            yield GridOverview(SUBJ_GRID_DATA, id="subj_grid_overview")
             yield NotesOverlay(id="notes_overlay")
         yield ObjectiveAssessmentView(id="obj_view")
         yield KBPanel(id="kb_panel")
@@ -463,6 +469,65 @@ class AssessmentView(Container):
                 nav_bar.set_context(section_id)
         except Exception:
             pass
+
+    # ── Grid overview ─────────────────────────────────────────────────────────
+
+    def toggle_grid(self) -> None:
+        if self._grid_visible:
+            # Escape without navigating — remember where cursor was in grid
+            self._grid_cursor = self.query_one("#subj_grid_overview", GridOverview).current_cursor()
+            self._grid_cursor_set = True
+            self.query_one("#subj_grid_overview", GridOverview).close()
+            self.query_one("#section_content").display = True
+            self._grid_visible = False
+        else:
+            self._pre_grid_section = self.active_section_id
+            # First open (or no prior navigation): cursor at current section's row
+            if not self._grid_cursor_set:
+                self._grid_cursor = section_to_cursor(self.active_section_id, SUBJ_GRID_DATA)
+            has_data = {sid: _section_has_data(s.collect()) for sid, s in self.sections.items()}
+            self.query_one("#section_content").display = False
+            self.query_one("#subj_grid_overview", GridOverview).open(has_data, self._grid_cursor)
+            self._grid_visible = True
+
+    def navigate_to_heading(self, section_id: str, anchor_id: str) -> None:
+        """Close grid and jump to section + anchor."""
+        self._grid_cursor = section_to_cursor(self._pre_grid_section, SUBJ_GRID_DATA)
+        self._grid_cursor_set = True
+        self.query_one("#subj_grid_overview", GridOverview).close()
+        self.query_one("#section_content").display = True
+        self._grid_visible = False
+
+        if section_id == "04_objective":
+            # anchor_id is an objective section_id — switch mode then show it
+            self._enter_objective_mode()
+            if self._obj_view:
+                self.set_timer(0.05, lambda: self._obj_view._show_section(anchor_id))
+            return
+
+        self._show_section(section_id)
+        section = self.sections.get(section_id)
+        if section and hasattr(section, "_jump_to"):
+            self.set_timer(0.05, lambda: section._jump_to(anchor_id))
+        else:
+            try:
+                sc = self.query_one("#section_content", ScrollableContainer)
+                target = self.query_one(f"#{anchor_id}")
+                self.set_timer(0.05, lambda: sc.scroll_to_widget(target, top=True, animate=False))
+            except Exception:
+                pass
+
+    @on(GridOverview.HeadingSelected)
+    def _on_grid_heading_selected(self, event: GridOverview.HeadingSelected) -> None:
+        if not self._in_objective_mode:
+            self.navigate_to_heading(event.section_id, event.anchor_id)
+
+    @on(GridOverview.Dismissed)
+    def _on_grid_dismissed(self, event: GridOverview.Dismissed) -> None:
+        if not self._in_objective_mode:
+            self.toggle_grid()
+
+    # ── Objective mode ────────────────────────────────────────────────────────
 
     def _enter_objective_mode(self) -> None:
         """Show ObjectiveAssessmentView, hide assessment content."""
