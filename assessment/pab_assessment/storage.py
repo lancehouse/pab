@@ -2132,6 +2132,32 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
         f("fm_duration",  pc)
         f("fm_exclusion", pc)
 
+    sub("BACPAP LBP Phenotyping")
+    if clean:
+        _pain_md("BACPAP", [
+            ("LBP ≥ 3 months",                  "bacpap_chronic"),
+            ("Regional/widespread distribution", "bacpap_distribution"),
+            ("Nociceptive mainly responsible",   "bacpap_nociceptive"),
+            ("Neuropathic mainly responsible",   "bacpap_neuropathic"),
+            ("Static mechanical allodynia",      "bacpap_static"),
+            ("Dynamic mechanical allodynia",     "bacpap_dynamic"),
+            ("Heat or cold allodynia",           "bacpap_thermal"),
+            ("Painful after-sensations",         "bacpap_after"),
+            ("Hx hypersensitivity",              "bacpap_hx"),
+            ("Comorbid symptom present",         "bacpap_comorbid"),
+        ], pc)
+    else:
+        f("bacpap_chronic",      pc)
+        f("bacpap_distribution", pc)
+        f("bacpap_nociceptive",  pc)
+        f("bacpap_neuropathic",  pc)
+        f("bacpap_static",       pc)
+        f("bacpap_dynamic",      pc)
+        f("bacpap_thermal",      pc)
+        f("bacpap_after",        pc)
+        f("bacpap_hx",           pc)
+        f("bacpap_comorbid",     pc)
+
     sub("Pain Type Summary")
     f("summary_dominant",        pc)
     txt("summary_contributing",  pc)
@@ -2881,6 +2907,16 @@ LABELS: dict[str, str] = {
     "fm_depression":                    "FM: Depression",
     "fm_duration":                      "FM: Symptoms ≥ 3 months",
     "fm_exclusion":                     "FM: No alternative explanation",
+    "bacpap_chronic":                   "BACPAP: LBP ≥ 3 months",
+    "bacpap_distribution":              "BACPAP: Regional/widespread distribution",
+    "bacpap_nociceptive":               "BACPAP: Nociceptive mainly responsible",
+    "bacpap_neuropathic":               "BACPAP: Neuropathic mainly responsible",
+    "bacpap_static":                    "BACPAP: Static mechanical allodynia",
+    "bacpap_dynamic":                   "BACPAP: Dynamic mechanical allodynia",
+    "bacpap_thermal":                   "BACPAP: Heat or cold allodynia",
+    "bacpap_after":                     "BACPAP: Painful after-sensations",
+    "bacpap_hx":                        "BACPAP: Hx hypersensitivity",
+    "bacpap_comorbid":                  "BACPAP: Comorbid symptom present",
     "summary_dominant":                 "Dominant pain type",
     "summary_contributing":             "Contributing pain types",
     "summary_reasoning":                "Pain classification reasoning",
@@ -3727,6 +3763,32 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
         f("fm_depression",pc)
         f("fm_duration",  pc)
         f("fm_exclusion", pc)
+
+    sub("BACPAP LBP Phenotyping")
+    if clean:
+        _pain_raw("BACPAP", [
+            ("LBP ≥ 3 months",                  "bacpap_chronic"),
+            ("Regional/widespread distribution", "bacpap_distribution"),
+            ("Nociceptive mainly responsible",   "bacpap_nociceptive"),
+            ("Neuropathic mainly responsible",   "bacpap_neuropathic"),
+            ("Static mechanical allodynia",      "bacpap_static"),
+            ("Dynamic mechanical allodynia",     "bacpap_dynamic"),
+            ("Heat or cold allodynia",           "bacpap_thermal"),
+            ("Painful after-sensations",         "bacpap_after"),
+            ("Hx hypersensitivity",              "bacpap_hx"),
+            ("Comorbid symptom present",         "bacpap_comorbid"),
+        ], pc)
+    else:
+        f("bacpap_chronic",      pc)
+        f("bacpap_distribution", pc)
+        f("bacpap_nociceptive",  pc)
+        f("bacpap_neuropathic",  pc)
+        f("bacpap_static",       pc)
+        f("bacpap_dynamic",      pc)
+        f("bacpap_thermal",      pc)
+        f("bacpap_after",        pc)
+        f("bacpap_hx",           pc)
+        f("bacpap_comorbid",     pc)
 
     sub("Pain Type Summary")
     f("summary_dominant",       pc)

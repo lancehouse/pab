@@ -100,6 +100,8 @@ _SUBSECTIONS: list[tuple[str, str, str]] = [
     ("04_pain_classification", "pc_neuropathic",  "Neuropathic"),
     ("04_pain_classification", "pc_nociplastic",  "Nociplastic"),
     ("04_pain_classification", "pc_central",      "Central Sensitisation"),
+    ("04_pain_classification", "pc_fibromyalgia", "Fibromyalgia"),
+    ("04_pain_classification", "pc_bacpap",       "BACPAP LBP Phenotyping"),
     ("04_pain_classification", "pc_summary",      "Pain Classification Summary"),
     # 05 Outcome Measures
     ("05_outcome_measures", "om_psfs",       "PSFS"),
