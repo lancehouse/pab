@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
     svg_regions_load(&state.svg_regions);
 
     GtkApplication *gtk_app = gtk_application_new(
-        "com.physio.bodychart",
+        "com.pab.bodychart",
         G_APPLICATION_DEFAULT_FLAGS);
 
     g_signal_connect(gtk_app, "activate", G_CALLBACK(on_activate), &state);

@@ -37,3 +37,13 @@ executable('bodychart',
 
 install_data('data/com.pab.bodychart.desktop',
   install_dir : get_option('datadir') / 'applications')
+
+foreach size : ['16x16', '22x22', '24x24', '32x32', '48x48', '64x64', '128x128', '256x256', '512x512', '1024x1024']
+  install_data('data/icons/hicolor' / size / 'apps/com.pab.bodychart.png',
+    install_dir : get_option('datadir') / 'icons/hicolor' / size / 'apps')
+endforeach
+
+gnome = import('gnome')
+gnome.post_install(
+  gtk_update_icon_cache : true,
+)
