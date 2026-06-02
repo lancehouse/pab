@@ -310,6 +310,25 @@ def write_focus_signal(session_file: str, target: str) -> None:
 # Session report export
 # ---------------------------------------------------------------------------
 
+# Markdown heading level offset for *_report.md / *_clean.md.
+# 0 = original sizes (H1/H2/H3/H4).
+# 1 = one level smaller (H2/H3/H4/H5) — current setting.
+# Change back to 0 to restore original heading sizes.
+_MD_H_OFFSET: int = 1
+
+
+def _shift_md_heading(line: str, offset: int) -> str:
+    """Shift a Markdown heading down by `offset` levels (caps at H6)."""
+    if not line.startswith('#'):
+        return line
+    i = 0
+    while i < len(line) and line[i] == '#':
+        i += 1
+    if i < len(line) and line[i] == ' ':   # only valid headings (must have space)
+        return '#' * min(i + offset, 6) + line[i:]
+    return line
+
+
 def _yn(val) -> str:
     if val is True:  return "Yes"
     if val is False: return "No"
@@ -2630,6 +2649,8 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
               f"**Measurement points (PPT):** {n_points}")
 
     # ── Write ──────────────────────────────────────────────────────────────
+    if _MD_H_OFFSET:
+        lines = [_shift_md_heading(ln, _MD_H_OFFSET) for ln in lines]
     try:
         out_path.write_text("\n".join(lines))
         logger.info(f"Report written to {out_path}")
