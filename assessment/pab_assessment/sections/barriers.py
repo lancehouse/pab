@@ -12,7 +12,7 @@ from textual.widgets import Label, Input, TextArea, Static
 from textual.message import Message
 
 from .base import BaseSection
-from ..widgets import CheckButton
+from ..widgets import CheckButton, FlagButton
 from .outcome_measures import CycleField
 
 
@@ -120,18 +120,19 @@ class BarriersSection(BaseSection):
         padding: 0 1;
     }
 
-    .section_title     { text-style: bold; margin-bottom: 0; }
-    .group_header {
-        color: $text-muted; padding-top: 0; margin-bottom: 0;
-    }
+    .section_title  { text-style: bold; margin-bottom: 0; }
     .reference_note { color: $text-muted; margin-bottom: 0; }
 
-    Label  { margin-bottom: 0; }
-    Input  { height: auto; min-height: 1; margin-bottom: 0; }
+    Label    { margin-bottom: 0; }
+    Input    { height: auto; min-height: 1; margin-bottom: 0; }
     TextArea { height: auto; min-height: 2; margin-bottom: 0; }
 
-    CheckButton { width: 100%; height: auto; margin-bottom: 0; }
-    CheckButton.sub_item { margin-left: 2; width: auto; }
+    /* All flag/check buttons compact — width auto so they pack side-by-side */
+    CheckButton { width: auto; height: auto; min-width: 16; margin: 0 1 1 0; }
+
+    /* Horizontal rows */
+    .btn_row { height: auto; width: 100%; margin-bottom: 0; }
+    .sub_row { height: auto; width: 100%; margin-left: 4; margin-bottom: 0; }
 
     .xref_badge {
         width: 100%; height: auto; padding: 0 1;
@@ -155,146 +156,144 @@ class BarriersSection(BaseSection):
         yield Label("— Physical / Nociceptive Barriers —", classes="subsection_header", id="br_physical")
         yield Static("", id="xref_br_noci", classes="xref_badge")
 
-        yield CheckButton("Significant disease / pathology / physical factors — nociceptive", id="b_noci_disease")
-        yield CheckButton("Significant pacing issues — boom-bust pattern", id="b_noci_pacing")
-        yield CheckButton("Moderate severity inflammatory features", id="b_noci_inflammatory")
-        yield CheckButton("Deconditioning (>50% activity reduction >3 months)", id="b_noci_deconditioning")
+        yield FlagButton("Significant disease / pathology / physical factors — nociceptive", id="b_noci_disease")
+        with Horizontal(classes="btn_row"):
+            yield FlagButton("Significant pacing issues — boom-bust pattern", id="b_noci_pacing")
+            yield FlagButton("Moderate severity inflammatory features", id="b_noci_inflammatory")
+        with Horizontal(classes="btn_row"):
+            yield FlagButton("Deconditioning (>50% activity reduction >3 months)", id="b_noci_deconditioning")
+            yield FlagButton("Relevant diet and / or weight issues", id="b_noci_diet")
 
-        yield CheckButton("Significant regional reduction in passive movement / resistance", id="b_noci_movement")
-        yield Label("  Region / level:")
+        yield FlagButton("Significant regional reduction in passive movement / resistance", id="b_noci_movement")
         yield Input(id="bi_movement_region", placeholder="region or level")
 
-        yield CheckButton("Asymmetrical gait — moderate severity", id="b_noci_gait")
+        yield FlagButton("Asymmetrical gait — moderate severity", id="b_noci_gait")
 
-        yield CheckButton("Significant regional strength deficits", id="b_noci_strength")
-        yield Label("  Specific muscles:")
-        yield CheckButton("Gluteus maximus", id="bx_strength_glute_max", classes="sub_item")
-        yield CheckButton("Gluteus medius / minimus", id="bx_strength_glute_med", classes="sub_item")
-        yield CheckButton("Iliopsoas", id="bx_strength_iliopsoas", classes="sub_item")
-        yield CheckButton("Quadriceps", id="bx_strength_quads", classes="sub_item")
-        yield Label("  Other:")
+        yield FlagButton("Significant regional strength deficits", id="b_noci_strength")
+        with Horizontal(classes="sub_row"):
+            yield FlagButton("Gluteus maximus", id="bx_strength_glute_max")
+            yield FlagButton("Gluteus medius / minimus", id="bx_strength_glute_med")
+            yield FlagButton("Iliopsoas", id="bx_strength_iliopsoas")
+            yield FlagButton("Quadriceps", id="bx_strength_quads")
         yield Input(id="bi_strength_other", placeholder="other muscle(s)")
 
-        yield CheckButton("Reduced functional activation — deep / local / postural muscles", id="b_noci_deep_muscle")
-        yield Label("  Specific muscles:")
-        yield CheckButton("Lumbar multifidus", id="bx_deep_multifidus", classes="sub_item")
-        yield CheckButton("Transversus abdominis", id="bx_deep_ta", classes="sub_item")
-        yield CheckButton("Thoracic erector spinae", id="bx_deep_erector", classes="sub_item")
-        yield Label("  Other:")
+        yield FlagButton("Reduced functional activation — deep / local / postural muscles", id="b_noci_deep_muscle")
+        with Horizontal(classes="sub_row"):
+            yield FlagButton("Lumbar multifidus", id="bx_deep_multifidus")
+            yield FlagButton("Transversus abdominis", id="bx_deep_ta")
+            yield FlagButton("Thoracic erector spinae", id="bx_deep_erector")
         yield Input(id="bi_deep_other", placeholder="other muscle(s)")
 
-        yield CheckButton("Significant overactivity of muscles", id="b_noci_overactivity")
-        yield Label("  Specific muscles:")
-        yield CheckButton("Erector spinae", id="bx_over_erector", classes="sub_item")
-        yield CheckButton("Quadratus lumborum", id="bx_over_ql", classes="sub_item")
-        yield CheckButton("Rectus abdominis", id="bx_over_ra", classes="sub_item")
-        yield CheckButton("External obliques", id="bx_over_obliques", classes="sub_item")
-        yield CheckButton("Piriformis", id="bx_over_piriformis", classes="sub_item")
-        yield CheckButton("Iliopsoas", id="bx_over_iliopsoas", classes="sub_item")
-        yield CheckButton("Hamstrings", id="bx_over_hamstrings", classes="sub_item")
-        yield CheckButton("Short hip adductors", id="bx_over_adductors", classes="sub_item")
-        yield Label("  Other:")
+        yield FlagButton("Significant overactivity of muscles", id="b_noci_overactivity")
+        with Horizontal(classes="sub_row"):
+            yield FlagButton("Erector spinae", id="bx_over_erector")
+            yield FlagButton("Quadratus lumborum", id="bx_over_ql")
+            yield FlagButton("Rectus abdominis", id="bx_over_ra")
+            yield FlagButton("External obliques", id="bx_over_obliques")
+        with Horizontal(classes="sub_row"):
+            yield FlagButton("Piriformis", id="bx_over_piriformis")
+            yield FlagButton("Iliopsoas", id="bx_over_iliopsoas")
+            yield FlagButton("Hamstrings", id="bx_over_hamstrings")
+            yield FlagButton("Short hip adductors", id="bx_over_adductors")
         yield Input(id="bi_over_other", placeholder="other muscle(s)")
 
-        yield CheckButton("Moderately increased nerve mechanosensitivity", id="b_noci_nerve_mech")
-        yield Label("  Region:")
+        yield FlagButton("Moderately increased nerve mechanosensitivity", id="b_noci_nerve_mech")
         yield Input(id="bi_nerve_region", placeholder="nerve / region")
-
-        yield CheckButton("Relevant diet and / or weight issues", id="b_noci_diet")
 
         # ── Neuropathic ────────────────────────────────────────
         yield Label("— Neuropathic Barriers —", classes="subsection_header", id="br_neuro")
         yield Static("", id="xref_br_neuro", classes="xref_badge")
-
-        yield CheckButton("Moderate neuropathic pain — confirmed nerve injury on investigations", id="b_neuro_confirmed")
-        yield CheckButton("Moderate neuropathic pain — without confirmed nerve injury", id="b_neuro_unconfirmed")
+        with Horizontal(classes="btn_row"):
+            yield FlagButton("Moderate neuropathic pain — confirmed nerve injury on investigations", id="b_neuro_confirmed")
+            yield FlagButton("Moderate neuropathic pain — without confirmed nerve injury", id="b_neuro_unconfirmed")
 
         # ── Nociplastic ────────────────────────────────────────
         yield Label("— Nociplastic / Central Sensitisation Barriers —", classes="subsection_header", id="br_nocip")
         yield Static("", id="xref_br_nocip", classes="xref_badge")
-
-        yield CheckButton("Moderate nociplastic pain including central sensitisation", id="b_nocip_moderate")
-        yield CheckButton("Confirmed CRPS (Budapest criteria)", id="b_nocip_crps")
-        yield CheckButton("Functional neurological disorder", id="b_nocip_fnd")
+        with Horizontal(classes="btn_row"):
+            yield FlagButton("Moderate nociplastic pain including central sensitisation", id="b_nocip_moderate")
+            yield FlagButton("Confirmed CRPS (Budapest criteria)", id="b_nocip_crps")
+            yield FlagButton("Functional neurological disorder", id="b_nocip_fnd")
 
         # ── Psychological ──────────────────────────────────────
         yield Label("— Psychological Barriers —", classes="subsection_header", id="br_psych")
 
-        yield CheckButton("Depression (DASS-21)", id="b_psych_depression")
+        yield FlagButton("Depression (DASS-21)", id="b_psych_depression")
         yield Static("", id="xref_br_depression", classes="xref_badge")
-        yield Label("  Severity:")
+        yield Label("Severity:")
         yield CycleField("bx_dep_severity", _DASS_SEVERITY_OPTIONS)
-        yield CheckButton("Psychiatry referral", id="bx_dep_psychiatry", classes="sub_item")
+        yield CheckButton("Psychiatry referral", id="bx_dep_psychiatry")  # action taken = green
 
-        yield CheckButton("Anxiety (DASS-21)", id="b_psych_anxiety")
+        yield FlagButton("Anxiety (DASS-21)", id="b_psych_anxiety")
         yield Static("", id="xref_br_anxiety", classes="xref_badge")
-        yield Label("  Severity:")
+        yield Label("Severity:")
         yield CycleField("bx_anx_severity", _DASS_SEVERITY_OPTIONS)
-        yield CheckButton("Psychiatry referral", id="bx_anx_psychiatry", classes="sub_item")
+        yield CheckButton("Psychiatry referral", id="bx_anx_psychiatry")
 
-        yield CheckButton("Stress (DASS-21)", id="b_psych_stress")
+        yield FlagButton("Stress (DASS-21)", id="b_psych_stress")
         yield Static("", id="xref_br_stress", classes="xref_badge")
-        yield Label("  Severity:")
+        yield Label("Severity:")
         yield CycleField("bx_stress_severity", _DASS_SEVERITY_OPTIONS)
-        yield CheckButton("Psychiatry referral", id="bx_stress_psychiatry", classes="sub_item")
+        yield CheckButton("Psychiatry referral", id="bx_stress_psychiatry")
 
-        yield CheckButton("Moderate pain catastrophising (PCS)", id="b_psych_catastrophising")
+        with Horizontal(classes="btn_row"):
+            yield FlagButton("Moderate pain catastrophising (PCS)", id="b_psych_catastrophising")
+            yield FlagButton("Reduced pain self-efficacy (PSEQ)", id="b_psych_self_efficacy")
         yield Static("", id="xref_br_catastrophising", classes="xref_badge")
-
-        yield CheckButton("Reduced pain self-efficacy (PSEQ)", id="b_psych_self_efficacy")
         yield Static("", id="xref_br_self_efficacy", classes="xref_badge")
 
-        yield CheckButton("Moderate unhelpful beliefs impacting pain management", id="b_psych_unhelpful_beliefs")
-        yield Label("  Beliefs present:")
-        yield CheckButton("Unrealistic recovery expectations", id="bx_belief_expectations", classes="sub_item")
-        yield CheckButton("Strong symptom focus", id="bx_belief_symptom_focus", classes="sub_item")
-        yield CheckButton("Strong cure focus", id="bx_belief_cure_focus", classes="sub_item")
-        yield CheckButton("Desire for further treatment / investigations", id="bx_belief_further_tx", classes="sub_item")
+        yield FlagButton("Moderate unhelpful beliefs impacting pain management", id="b_psych_unhelpful_beliefs")
+        with Horizontal(classes="sub_row"):
+            yield FlagButton("Unrealistic recovery expectations", id="bx_belief_expectations")
+            yield FlagButton("Strong symptom focus", id="bx_belief_symptom_focus")
+            yield FlagButton("Strong cure focus", id="bx_belief_cure_focus")
+            yield FlagButton("Desire for further treatment / investigations", id="bx_belief_further_tx")
 
-        yield CheckButton("PTSD-type symptoms (PCL-5)", id="b_psych_ptsd")
+        yield FlagButton("PTSD-type symptoms (PCL-5)", id="b_psych_ptsd")
         yield Static("", id="xref_br_ptsd", classes="xref_badge_urgent")
-        yield Label("  Mechanism:")
+        yield Label("Mechanism:")
         yield CycleField("bx_ptsd_mechanism", _PTSD_MECHANISM_OPTIONS)
-        yield CheckButton("Psychiatry referral", id="bx_ptsd_psychiatry", classes="sub_item")
+        yield CheckButton("Psychiatry referral", id="bx_ptsd_psychiatry")
 
-        yield CheckButton("Unclear readiness for change", id="b_psych_readiness")
+        yield FlagButton("Unclear readiness for change", id="b_psych_readiness")
 
-        # ── Sleep ──────────────────────────────────────────────
+        # ── Sleep & Social ─────────────────────────────────────
         yield Label("— Sleep & Social / Contextual Barriers —", classes="subsection_header", id="br_sleep")
 
-        yield CheckButton("Moderately disturbed sleep due to pain and / or rumination", id="b_sleep_disturbed")
+        yield FlagButton("Moderately disturbed sleep due to pain and / or rumination", id="b_sleep_disturbed")
         yield Static("", id="xref_br_sleep", classes="xref_badge")
 
-        yield CheckButton("Moderate home / social barriers", id="b_social_home")
-        yield Label("  Issues present:")
-        yield CheckButton("Reduced family support", id="bx_soc_family_support", classes="sub_item")
-        yield CheckButton("Reduced social support", id="bx_soc_social_support", classes="sub_item")
-        yield CheckButton("Relationship issues (immediate family)", id="bx_soc_relationship", classes="sub_item")
-        yield CheckButton("Personal relationship issues", id="bx_soc_personal_rel", classes="sub_item")
-        yield CheckButton("Financial difficulties", id="bx_soc_financial", classes="sub_item")
-        yield CheckButton("Residential instability", id="bx_soc_residential", classes="sub_item")
-        yield CheckButton("Distance from program location", id="bx_soc_distance", classes="sub_item")
+        yield FlagButton("Moderate home / social barriers", id="b_social_home")
+        with Horizontal(classes="sub_row"):
+            yield FlagButton("Reduced family support", id="bx_soc_family_support")
+            yield FlagButton("Reduced social support", id="bx_soc_social_support")
+            yield FlagButton("Relationship issues (immediate family)", id="bx_soc_relationship")
+        with Horizontal(classes="sub_row"):
+            yield FlagButton("Personal relationship issues", id="bx_soc_personal_rel")
+            yield FlagButton("Financial difficulties", id="bx_soc_financial")
+            yield FlagButton("Residential instability", id="bx_soc_residential")
+            yield FlagButton("Distance from program location", id="bx_soc_distance")
 
-        yield CheckButton("Moderate return-to-work barriers — physical and psychosocial", id="b_social_rtw")
+        yield FlagButton("Moderate return-to-work barriers — physical and psychosocial", id="b_social_rtw")
 
         # ── Medical ────────────────────────────────────────────
         yield Label("— Medical / Systemic Barriers —", classes="subsection_header", id="br_medical")
         yield Static("", id="xref_br_red_flag", classes="xref_badge")
 
-        yield CheckButton("Red flag — requires further investigation", id="b_med_red_flag")
-        yield Label("  Flag:")
+        yield FlagButton("Red flag — requires further investigation", id="b_med_red_flag")
         yield TextArea(id="bi_red_flag_detail", language="plain")
 
-        yield CheckButton("Significant maladaptive use of prescription / non-prescription drugs / alcohol", id="b_med_substance")
+        yield FlagButton("Significant maladaptive use of prescription / non-prescription drugs / alcohol", id="b_med_substance")
         yield Static("", id="xref_br_substance", classes="xref_badge")
-        yield Label("  Substance:")
         yield TextArea(id="bi_substance_detail", language="plain")
 
-        yield CheckButton("Possible ankylosing spondylitis", id="b_med_as")
-        yield CheckButton("Possible lumbar symptoms due to AAA", id="b_med_aaa")
-        yield CheckButton("Possible vascular claudication", id="b_med_vascular")
-        yield CheckButton("Moderate severity cervical headache", id="b_med_cervical_ha")
-        yield CheckButton("Medico-legal / claim issues", id="b_med_medico_legal")
+        with Horizontal(classes="btn_row"):
+            yield FlagButton("Possible ankylosing spondylitis", id="b_med_as")
+            yield FlagButton("Possible lumbar symptoms due to AAA", id="b_med_aaa")
+            yield FlagButton("Possible vascular claudication", id="b_med_vascular")
+        with Horizontal(classes="btn_row"):
+            yield FlagButton("Moderate severity cervical headache", id="b_med_cervical_ha")
+            yield FlagButton("Medico-legal / claim issues", id="b_med_medico_legal")
 
         # ── Custom Barriers ────────────────────────────────────
         yield Label("— Custom Barriers —", classes="subsection_header", id="br_custom")
