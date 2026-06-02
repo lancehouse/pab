@@ -2157,6 +2157,7 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
         f("bacpap_after",        pc)
         f("bacpap_hx",           pc)
         f("bacpap_comorbid",     pc)
+    txt("bacpap_notes",          pc)
 
     sub("Pain Type Summary")
     f("summary_dominant",        pc)
@@ -2917,6 +2918,7 @@ LABELS: dict[str, str] = {
     "bacpap_after":                     "BACPAP: Painful after-sensations",
     "bacpap_hx":                        "BACPAP: Hx hypersensitivity",
     "bacpap_comorbid":                  "BACPAP: Comorbid symptom present",
+    "bacpap_notes":                     "BACPAP: Notes",
     "summary_dominant":                 "Dominant pain type",
     "summary_contributing":             "Contributing pain types",
     "summary_reasoning":                "Pain classification reasoning",
@@ -3789,6 +3791,7 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
         f("bacpap_after",        pc)
         f("bacpap_hx",           pc)
         f("bacpap_comorbid",     pc)
+    txt("bacpap_notes",         pc)
 
     sub("Pain Type Summary")
     f("summary_dominant",       pc)

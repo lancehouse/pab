@@ -209,6 +209,7 @@ dynamically by the search index. They have IDs beginning with `rf_`, `cvd_`,
 | `bacpap_after` | BACPAP: Painful after-sensations |
 | `bacpap_hx` | BACPAP: History of hypersensitivity |
 | `bacpap_comorbid` | BACPAP: ≥1 comorbid symptom present |
+| `bacpap_notes` | BACPAP: Clinician notes |
 | `summary_contributing` | Contributing factor summary |
 | `summary_reasoning` | Pain classification reasoning |
 

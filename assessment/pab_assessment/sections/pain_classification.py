@@ -185,6 +185,7 @@ class PainClassificationSection(BaseSection):
     _TEXT_FIELDS = [
         "noci_interpretation", "neuro_interpretation",
         "nocip_interpretation", "summary_contributing", "summary_reasoning",
+        "bacpap_notes",
     ]
 
     # ------------------------------------------------------------------
@@ -380,6 +381,8 @@ class PainClassificationSection(BaseSection):
             yield FlagButton("≥1 comorbid symptom (light/sound/odour sensitivity, sleep, fatigue, cognition)", id="bacpap_comorbid")
 
         yield Static("", id="bacpap_result")
+        yield Label("Notes:")
+        yield TextArea(id="bacpap_notes", language="plain")
 
         # ── Summary ──────────────────────────────────────────────────────
         yield Label("— Pain Type Summary —", classes="subsection_header", id="pc_summary")
