@@ -105,6 +105,18 @@ class KBRegistry:
             self._data[region] = _load_yaml_file(yaml_path)
             logger.debug("KB loaded %s: %d entries", region, len(self._data[region]))
 
+    def resolve_any(self, field_id: str) -> tuple[str, KBEntry] | None:
+        """Search all loaded regions for field_id. Returns (region, entry) or None."""
+        for region, data in self._data.items():
+            if field_id in data:
+                return region, data[field_id]
+            for suffix in _STRIP_SUFFIXES:
+                if field_id.endswith(suffix):
+                    stem = field_id[: -len(suffix)]
+                    if stem in data:
+                        return region, data[stem]
+        return None
+
     def resolve(self, region: str, field_id: str) -> KBEntry | None:
         """Resolve a field_id to a KBEntry for the given region.
 
