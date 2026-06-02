@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 from textual.app import ComposeResult, on
-from textual.containers import ScrollableContainer
+from textual.containers import Horizontal, ScrollableContainer
 from textual.widgets import Label, Input, TextArea, Static
 from textual.message import Message
 
