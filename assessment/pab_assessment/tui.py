@@ -314,6 +314,8 @@ class SubsectionNavBar(Static):
         ("Neuropathic",  "pc_neuropathic"),
         ("Nociplastic",  "pc_nociplastic"),
         ("Central Sens", "pc_central"),
+        ("Fibro",        "pc_fibromyalgia"),
+        ("BACPAP",       "pc_bacpap"),
         ("Summary",      "pc_summary"),
     ]
 

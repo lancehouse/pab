@@ -54,6 +54,8 @@ SUBJ_GRID_DATA: list[tuple[str, str, list[tuple[str, str]]]] = [
         ("Neuropathic",  "pc_neuropathic"),
         ("Nociplastic",  "pc_nociplastic"),
         ("Central",      "pc_central"),
+        ("Fibro",        "pc_fibromyalgia"),
+        ("BACPAP",       "pc_bacpap"),
         ("Summary",      "pc_summary"),
     ]),
     ("05_outcome_measures", "05 Outcomes", [
