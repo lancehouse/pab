@@ -20,6 +20,7 @@ class KBEntry:
     purpose: str = ""
     position: str = ""
     procedure: str = ""
+    assess: str = ""      # decision-criteria entries (non-test KB)
     sn_sp: str = ""
     variants: str = ""
     cluster: str = ""
@@ -36,6 +37,8 @@ class KBEntry:
             lines += ["Position:", _wrap(self.position.strip(), 34), ""]
         if self.procedure:
             lines += ["Procedure:", _wrap(self.procedure.strip(), 34), ""]
+        if self.assess:
+            lines += ["Assess:", _wrap(self.assess.strip(), 34), ""]
         if self.variants:
             lines += ["Variants:", _wrap(self.variants.strip(), 34), ""]
         if self.sn_sp:
@@ -80,6 +83,7 @@ def _load_yaml_file(path: Path) -> dict[str, KBEntry]:
             purpose=str(data.get("purpose", "")),
             position=str(data.get("position", "")),
             procedure=str(data.get("procedure", "")),
+            assess=str(data.get("assess", "")),
             sn_sp=str(data.get("sn_sp", "")),
             variants=str(data.get("variants", "")),
             cluster=str(data.get("cluster", "")),
