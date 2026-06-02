@@ -372,13 +372,13 @@ class PainClassificationSection(BaseSection):
         with Horizontal(classes="btn_row"):
             yield FlagButton("Static mechanical allodynia", id="bacpap_static")
             yield FlagButton("Dynamic mechanical allodynia", id="bacpap_dynamic")
+        with Horizontal(classes="btn_row"):
             yield FlagButton("Heat or cold allodynia", id="bacpap_thermal")
             yield FlagButton("Painful after-sensations", id="bacpap_after")
 
         yield Label("Nociplastic features:", classes="subgroup_header")
-        with Horizontal(classes="btn_row"):
-            yield FlagButton("Hx hypersensitivity (touch / movement / pressure / heat / cold)", id="bacpap_hx")
-            yield FlagButton("≥1 comorbid symptom (light/sound/odour sensitivity, sleep, fatigue, cognition)", id="bacpap_comorbid")
+        yield FlagButton("Hx hypersensitivity (touch / movement / pressure / heat / cold)", id="bacpap_hx")
+        yield FlagButton("≥1 comorbid symptom (light/sound/odour sensitivity, sleep, fatigue, cognition)", id="bacpap_comorbid")
 
         yield Static("", id="bacpap_result")
         yield Label("Notes:")
