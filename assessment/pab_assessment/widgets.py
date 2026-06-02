@@ -368,6 +368,24 @@ class CycleButton(Static):
         self._idx = 0
         self._apply()
 
+    def _set_by_label(self, label: str) -> bool:
+        for i, (lbl, _) in enumerate(self._states):
+            if lbl == label:
+                if self._idx != i:
+                    self._idx = i
+                    self._apply()
+                    self.post_message(self.Changed())
+                return True
+        return False
+
+    async def key_y(self) -> None:
+        if self._set_by_label("Yes"):
+            self.screen.focus_next()
+
+    async def key_n(self) -> None:
+        if self._set_by_label("No"):
+            self.screen.focus_next()
+
 
 class CheckButton(Button):
     """
