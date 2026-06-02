@@ -121,10 +121,17 @@ class PainClassificationSection(BaseSection):
     #pc_infl_score {
         color: $primary; text-style: bold; margin-bottom: 0;
     }
-    #pc_infl_alert, #pc_csi_alert {
+    #pc_infl_alert, #pc_csi_alert, #fm_alert {
         width: 100%; padding: 0 1; text-style: bold;
         color: $warning; background: $warning 20%; margin-bottom: 0;
     }
+
+    /* Fibromyalgia compact score row */
+    .fm_row       { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
+    .fm_lbl       { width: auto; height: 3; content-align: right middle; padding: 0 1; }
+    .fm_score     { width: 7; height: 3; padding: 0 1; }
+    #fm_ss_total  { width: auto; height: 3; content-align: left middle;
+                    padding: 0 1; color: $primary; text-style: bold; }
     #pc_mixed_reminder {
         width: 100%; padding: 0 1; color: $warning; margin-bottom: 0;
     }
@@ -162,6 +169,8 @@ class PainClassificationSection(BaseSection):
         "nocip_exam_diffuse", "nocip_exam_psychosocial",
         "cs_light", "cs_touch", "cs_noise", "cs_pesticides", "cs_temperature",
         "cs_fatigue", "cs_sleep", "cs_concentration", "cs_swelling", "cs_tingling",
+        # Fibromyalgia
+        "fm_headaches", "fm_ibs", "fm_depression", "fm_duration", "fm_exclusion",
     ]
 
     _LIKELIHOOD_FIELDS = [
@@ -310,6 +319,34 @@ class PainClassificationSection(BaseSection):
             yield CheckButton("Limb swelling sensation", id="cs_swelling")
             yield CheckButton("Tingling/numbness", id="cs_tingling")
         yield Static("", id="xref_cs_tingling", classes="xref_badge")
+
+        # ── Fibromyalgia ─────────────────────────────────────────────────
+        yield Label("— Fibromyalgia —", classes="subsection_header", id="pc_fibromyalgia")
+        yield Label("Wolfe et al 2016", classes="reference_note")
+        yield Label(
+            "Criteria A: WPI > 7 and SS > 5  |  Criteria B: WPI 3–6 and SS > 9",
+            classes="reference_note",
+        )
+        with Horizontal(classes="fm_row"):
+            yield Static("WPI (0–19):", classes="fm_lbl")
+            yield Input(id="fm_wpi", placeholder="0–19", classes="fm_score")
+            yield Static("Fatigue:", classes="fm_lbl")
+            yield Input(id="fm_fatigue", placeholder="0–3", classes="fm_score")
+            yield Static("Waking:", classes="fm_lbl")
+            yield Input(id="fm_waking", placeholder="0–3", classes="fm_score")
+            yield Static("Cognition:", classes="fm_lbl")
+            yield Input(id="fm_cognitive", placeholder="0–3", classes="fm_score")
+            yield Static("SS: —", id="fm_ss_total")
+        yield Label("Additional SS symptoms (1 pt each):", classes="subgroup_header")
+        with Horizontal(classes="btn_row"):
+            yield CheckButton("Headaches", id="fm_headaches")
+            yield CheckButton("IBS", id="fm_ibs")
+            yield CheckButton("Depression", id="fm_depression")
+        yield Label("Diagnostic criteria:", classes="subgroup_header")
+        with Horizontal(classes="btn_row"):
+            yield CheckButton("Symptoms ≥ 3 months", id="fm_duration")
+            yield CheckButton("No alternative explanation", id="fm_exclusion")
+        yield Static("", id="fm_alert")
 
         # ── Summary ──────────────────────────────────────────────────────
         yield Label("— Pain Type Summary —", classes="subsection_header", id="pc_summary")
@@ -510,6 +547,49 @@ class PainClassificationSection(BaseSection):
         except Exception:
             pass
 
+    def _update_fm_score(self) -> None:
+        try:
+            def _int(fid: str) -> int | None:
+                v = self.query_one(f"#{fid}", Input).value.strip()
+                return int(v) if v.isdigit() else None
+
+            wpi      = _int("fm_wpi")
+            fatigue  = _int("fm_fatigue")
+            waking   = _int("fm_waking")
+            cognitive = _int("fm_cognitive")
+
+            def _yn(fid: str) -> int:
+                return 1 if self.query_one(f"#{fid}", CheckButton).value is True else 0
+
+            additional = _yn("fm_headaches") + _yn("fm_ibs") + _yn("fm_depression")
+
+            if all(v is not None for v in (fatigue, waking, cognitive)):
+                ss = fatigue + waking + cognitive + additional  # type: ignore[operator]
+                self.query_one("#fm_ss_total", Static).update(f"SS: {ss}/12")
+            else:
+                ss = None
+                self.query_one("#fm_ss_total", Static).update("SS: —")
+
+            alert = self.query_one("#fm_alert", Static)
+            if wpi is not None and ss is not None:
+                crit_a = wpi > 7 and ss > 5
+                crit_b = 3 <= wpi <= 6 and ss > 9
+                duration  = self.query_one("#fm_duration",  CheckButton).value is True
+                exclusion = self.query_one("#fm_exclusion", CheckButton).value is True
+                if (crit_a or crit_b) and duration and exclusion:
+                    label = "A" if crit_a else "B"
+                    alert.update(f"⚠ Fibromyalgia criteria met — Condition {label}")
+                    alert.display = True
+                elif crit_a or crit_b:
+                    alert.update("Scoring criteria met — confirm duration and exclusion")
+                    alert.display = True
+                else:
+                    alert.display = False
+            else:
+                alert.display = False
+        except Exception:
+            pass
+
     def _update_mixed_reminder(self) -> None:
         try:
             val = self.query_one("#summary_dominant", PainTypeSelector).get_value()
@@ -550,6 +630,11 @@ class PainClassificationSection(BaseSection):
             data["csi_score"] = self.query_one("#csi_score", Input).value
         except Exception:
             data["csi_score"] = ""
+        for fid in ("fm_wpi", "fm_fatigue", "fm_waking", "fm_cognitive"):
+            try:
+                data[fid] = self.query_one(f"#{fid}", Input).value
+            except Exception:
+                data[fid] = ""
         try:
             data["summary_dominant"] = self.query_one("#summary_dominant", PainTypeSelector).get_value()
         except Exception:
@@ -583,6 +668,12 @@ class PainClassificationSection(BaseSection):
                     self.query_one("#csi_score", Input).value = pain["csi_score"]
                 except Exception:
                     pass
+            for fid in ("fm_wpi", "fm_fatigue", "fm_waking", "fm_cognitive"):
+                if fid in pain:
+                    try:
+                        self.query_one(f"#{fid}", Input).value = pain[fid]
+                    except Exception:
+                        pass
             if "summary_dominant" in pain:
                 try:
                     self.query_one("#summary_dominant", PainTypeSelector).set_value(
@@ -594,6 +685,7 @@ class PainClassificationSection(BaseSection):
             self._loading = False
             self._update_infl_score()
             self._update_csi_alert()
+            self._update_fm_score()
             self._update_mixed_reminder()
             self.update_cross_refs()
 
@@ -614,6 +706,7 @@ class PainClassificationSection(BaseSection):
             return
         self._update_infl_score()
         self._update_csi_alert()
+        self._update_fm_score()
         self._update_mixed_reminder()
         self.post_message(self.FieldChanged())
 
