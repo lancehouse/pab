@@ -2108,6 +2108,30 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
         f("cs_swelling",      pc)
         f("cs_tingling",      pc)
 
+    sub("Fibromyalgia")
+    if clean:
+        _pain_md("FM scores", [
+            ("WPI (0–19)",              "fm_wpi"),
+            ("Fatigue severity (0–3)",  "fm_fatigue"),
+            ("Waking unrefreshed (0–3)","fm_waking"),
+            ("Cognitive symptoms (0–3)","fm_cognitive"),
+            ("Headaches",               "fm_headaches"),
+            ("IBS",                     "fm_ibs"),
+            ("Depression",              "fm_depression"),
+            ("Symptoms ≥ 3 months",     "fm_duration"),
+            ("No alternative explanation","fm_exclusion"),
+        ], pc)
+    else:
+        f("fm_wpi",       pc)
+        f("fm_fatigue",   pc)
+        f("fm_waking",    pc)
+        f("fm_cognitive", pc)
+        f("fm_headaches", pc)
+        f("fm_ibs",       pc)
+        f("fm_depression",pc)
+        f("fm_duration",  pc)
+        f("fm_exclusion", pc)
+
     sub("Pain Type Summary")
     f("summary_dominant",        pc)
     txt("summary_contributing",  pc)
@@ -2848,6 +2872,15 @@ LABELS: dict[str, str] = {
     "cs_swelling":                      "CS feature: Perceived swelling",
     "cs_tingling":                      "CS feature: Tingling",
     "csi_score":                        "CSI score",
+    "fm_wpi":                           "FM: WPI score",
+    "fm_fatigue":                       "FM: Fatigue severity (0–3)",
+    "fm_waking":                        "FM: Waking unrefreshed (0–3)",
+    "fm_cognitive":                     "FM: Cognitive symptoms (0–3)",
+    "fm_headaches":                     "FM: Headaches",
+    "fm_ibs":                           "FM: IBS",
+    "fm_depression":                    "FM: Depression",
+    "fm_duration":                      "FM: Symptoms ≥ 3 months",
+    "fm_exclusion":                     "FM: No alternative explanation",
     "summary_dominant":                 "Dominant pain type",
     "summary_contributing":             "Contributing pain types",
     "summary_reasoning":                "Pain classification reasoning",
@@ -3670,6 +3703,30 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
         f("cs_concentration", pc)
         f("cs_swelling",      pc)
         f("cs_tingling",      pc)
+
+    sub("Fibromyalgia")
+    if clean:
+        _pain_raw("FM scores", [
+            ("WPI (0–19)",              "fm_wpi"),
+            ("Fatigue severity (0–3)",  "fm_fatigue"),
+            ("Waking unrefreshed (0–3)","fm_waking"),
+            ("Cognitive symptoms (0–3)","fm_cognitive"),
+            ("Headaches",               "fm_headaches"),
+            ("IBS",                     "fm_ibs"),
+            ("Depression",              "fm_depression"),
+            ("Symptoms ≥ 3 months",     "fm_duration"),
+            ("No alternative explanation","fm_exclusion"),
+        ], pc)
+    else:
+        f("fm_wpi",       pc)
+        f("fm_fatigue",   pc)
+        f("fm_waking",    pc)
+        f("fm_cognitive", pc)
+        f("fm_headaches", pc)
+        f("fm_ibs",       pc)
+        f("fm_depression",pc)
+        f("fm_duration",  pc)
+        f("fm_exclusion", pc)
 
     sub("Pain Type Summary")
     f("summary_dominant",       pc)
