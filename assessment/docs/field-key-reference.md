@@ -190,6 +190,26 @@ dynamically by the search index. They have IDs beginning with `rf_`, `cvd_`,
 | `neuro_interpretation` | Neuropathic pain — clinician interpretation |
 | `nocip_interpretation` | Nociplastic pain — clinician interpretation |
 | `csi_score` | Central Sensitisation Inventory score |
+| `fm_wpi` | FM: Widespread Pain Index score (0–19) |
+| `fm_fatigue` | FM: Fatigue severity (0–3) |
+| `fm_waking` | FM: Waking unrefreshed severity (0–3) |
+| `fm_cognitive` | FM: Cognitive symptoms severity (0–3) |
+| `fm_headaches` | FM: Headaches present |
+| `fm_ibs` | FM: IBS present |
+| `fm_depression` | FM: Depression present |
+| `fm_duration` | FM: Symptoms ≥ 3 months |
+| `fm_exclusion` | FM: No alternative explanation |
+| `bacpap_chronic` | BACPAP: LBP ≥ 3 months |
+| `bacpap_distribution` | BACPAP: Regional/widespread distribution |
+| `bacpap_nociceptive` | BACPAP: Nociceptive pain mainly responsible |
+| `bacpap_neuropathic` | BACPAP: Neuropathic pain mainly responsible |
+| `bacpap_static` | BACPAP: Static mechanical allodynia |
+| `bacpap_dynamic` | BACPAP: Dynamic mechanical allodynia |
+| `bacpap_thermal` | BACPAP: Heat or cold allodynia |
+| `bacpap_after` | BACPAP: Painful after-sensations |
+| `bacpap_hx` | BACPAP: History of hypersensitivity |
+| `bacpap_comorbid` | BACPAP: ≥1 comorbid symptom present |
+| `bacpap_notes` | BACPAP: Clinician notes |
 | `summary_contributing` | Contributing factor summary |
 | `summary_reasoning` | Pain classification reasoning |
 

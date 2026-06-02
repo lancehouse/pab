@@ -100,6 +100,8 @@ _SUBSECTIONS: list[tuple[str, str, str]] = [
     ("04_pain_classification", "pc_neuropathic",  "Neuropathic"),
     ("04_pain_classification", "pc_nociplastic",  "Nociplastic"),
     ("04_pain_classification", "pc_central",      "Central Sensitisation"),
+    ("04_pain_classification", "pc_fibromyalgia", "Fibromyalgia"),
+    ("04_pain_classification", "pc_bacpap",       "BACPAP LBP Phenotyping"),
     ("04_pain_classification", "pc_summary",      "Pain Classification Summary"),
     # 05 Outcome Measures
     ("05_outcome_measures", "om_psfs",       "PSFS"),
@@ -173,6 +175,17 @@ _SUBSECTIONS: list[tuple[str, str, str]] = [
 # Pre-built lookup: (section_id, anchor_id) -> subsection label
 _SUBSECTION_LABEL: dict[tuple[str, str], str] = {
     (s, a): lbl for s, a, lbl in _SUBSECTIONS
+}
+
+# Extra match aliases for specific subsections (terms not in the label itself)
+_SUBSECTION_EXTRA: dict[tuple[str, str], str] = {
+    ("04_pain_classification", "pc_fibromyalgia"):
+        "Wolfe 2016 fibromyalgia FM WPI widespread pain index symptom severity "
+        "SS fatigue cognitive IBS depression criteria duration exclusion",
+    ("04_pain_classification", "pc_bacpap"):
+        "Nijs 2024 BACPAP LBP phenotyping nociplastic hypersensitivity allodynia "
+        "dominant mechanism evoked comorbid probable possible nociceptive neuropathic "
+        "static dynamic thermal after-sensations",
 }
 
 # widget_id -> (section_id, anchor_id_or_None, human_name)
@@ -260,12 +273,17 @@ _FIELD_LABELS: dict[str, tuple[str, str | None, str]] = {
     "diff_aaa_action":       ("03_medical", "med_differential",   "AAA action"),
     "diff_vc_action":        ("03_medical", "med_differential",   "Vascular claudication action"),
     # 04 Pain Classification
-    "noci_interpretation":  ("04_pain_classification", "pc_nociceptive", "Nociceptive interpretation"),
-    "neuro_interpretation": ("04_pain_classification", "pc_neuropathic", "Neuropathic interpretation"),
-    "nocip_interpretation": ("04_pain_classification", "pc_nociplastic", "Nociplastic interpretation"),
-    "csi_score":            ("04_pain_classification", "pc_nociplastic", "CSI score"),
-    "summary_contributing": ("04_pain_classification", "pc_summary",     "Contributing factors"),
-    "summary_reasoning":    ("04_pain_classification", "pc_summary",     "Classification reasoning"),
+    "noci_interpretation":  ("04_pain_classification", "pc_nociceptive",  "Nociceptive interpretation"),
+    "neuro_interpretation": ("04_pain_classification", "pc_neuropathic",  "Neuropathic interpretation"),
+    "nocip_interpretation": ("04_pain_classification", "pc_nociplastic",  "Nociplastic interpretation"),
+    "csi_score":            ("04_pain_classification", "pc_central",      "CSI score"),
+    "fm_wpi":               ("04_pain_classification", "pc_fibromyalgia", "FM: WPI score"),
+    "fm_fatigue":           ("04_pain_classification", "pc_fibromyalgia", "FM: Fatigue severity"),
+    "fm_waking":            ("04_pain_classification", "pc_fibromyalgia", "FM: Waking unrefreshed"),
+    "fm_cognitive":         ("04_pain_classification", "pc_fibromyalgia", "FM: Cognitive symptoms"),
+    "bacpap_notes":         ("04_pain_classification", "pc_bacpap",       "BACPAP: Notes"),
+    "summary_contributing": ("04_pain_classification", "pc_summary",      "Contributing factors"),
+    "summary_reasoning":    ("04_pain_classification", "pc_summary",      "Classification reasoning"),
     # 05 Outcome Measures
     "psfs_act_1":    ("05_outcome_measures", "om_psfs",       "PSFS activity 1"),
     "psfs_act_2":    ("05_outcome_measures", "om_psfs",       "PSFS activity 2"),
@@ -498,9 +516,10 @@ def build_index(app: "App") -> list[SearchEntry]:
     # 2 — Subsections
     for sec_id, anchor_id, label in _SUBSECTIONS:
         short = _SECTION_SHORT.get(sec_id, sec_id)
+        extra = _SUBSECTION_EXTRA.get((sec_id, anchor_id), "")
         entries.append(SearchEntry(
             display=f"{short} › {label}",
-            match_text=f"{label} {short}",
+            match_text=f"{label} {short} {extra}".strip(),
             section_id=sec_id,
             anchor_id=anchor_id,
             widget_id=None,

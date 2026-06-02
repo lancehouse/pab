@@ -20,6 +20,7 @@ class KBEntry:
     purpose: str = ""
     position: str = ""
     procedure: str = ""
+    assess: str = ""      # decision-criteria entries (non-test KB)
     sn_sp: str = ""
     variants: str = ""
     cluster: str = ""
@@ -36,6 +37,8 @@ class KBEntry:
             lines += ["Position:", _wrap(self.position.strip(), 34), ""]
         if self.procedure:
             lines += ["Procedure:", _wrap(self.procedure.strip(), 34), ""]
+        if self.assess:
+            lines += ["Assess:", _wrap(self.assess.strip(), 34), ""]
         if self.variants:
             lines += ["Variants:", _wrap(self.variants.strip(), 34), ""]
         if self.sn_sp:
@@ -80,6 +83,7 @@ def _load_yaml_file(path: Path) -> dict[str, KBEntry]:
             purpose=str(data.get("purpose", "")),
             position=str(data.get("position", "")),
             procedure=str(data.get("procedure", "")),
+            assess=str(data.get("assess", "")),
             sn_sp=str(data.get("sn_sp", "")),
             variants=str(data.get("variants", "")),
             cluster=str(data.get("cluster", "")),
@@ -100,6 +104,18 @@ class KBRegistry:
             region = yaml_path.stem
             self._data[region] = _load_yaml_file(yaml_path)
             logger.debug("KB loaded %s: %d entries", region, len(self._data[region]))
+
+    def resolve_any(self, field_id: str) -> tuple[str, KBEntry] | None:
+        """Search all loaded regions for field_id. Returns (region, entry) or None."""
+        for region, data in self._data.items():
+            if field_id in data:
+                return region, data[field_id]
+            for suffix in _STRIP_SUFFIXES:
+                if field_id.endswith(suffix):
+                    stem = field_id[: -len(suffix)]
+                    if stem in data:
+                        return region, data[stem]
+        return None
 
     def resolve(self, region: str, field_id: str) -> KBEntry | None:
         """Resolve a field_id to a KBEntry for the given region.

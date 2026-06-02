@@ -1,0 +1,115 @@
+# BACPAP KB — Nijs et al. 2024, Lancet Rheumatology
+# Keys map to button field IDs in the BACPAP section of 04 Pain Classification.
+# Uses 'assess' field (decision criteria) rather than 'position'/'procedure' (physical tests).
+
+bacpap_chronic:
+  label: "Step 1 — LBP Chronicity"
+  purpose: >
+    Chronicity gate — nociplastic pain can only be considered in chronic LBP.
+    Acute/subacute (<3 months) stops the algorithm.
+  assess: >
+    LBP every day for ≥3 months OR pain for ≥ half the days in the last 6 months.
+    Recurrent LBP qualifies if the current episode meets either criterion.
+  note: "No → acute/subacute LBP — BACPAP not applicable."
+
+bacpap_distribution:
+  label: "Step 2 — Pain Distribution"
+  purpose: >
+    Nociplastic LBP: pain spreading is disproportionate to what any identifiable
+    nociceptive or neuropathic source alone can explain.
+  assess: >
+    Use pain drawing. Pain extends beyond the innervation territory of any
+    identifiable nerve lesion. Enquire about concurrent pain syndromes elsewhere
+    (eg chronic tension headache, endometriosis).
+  note: "No → exclude nociplastic; consider nociceptive/neuropathic only."
+
+bacpap_nociceptive:
+  label: "Step 3 — Nociceptive Mainly Responsible?"
+  purpose: >
+    Assess whether injury, pathology, and objective dysfunctions are
+    predominantly driving the LBP.
+  assess: >
+    Nociceptive pattern: predictable, proportionate response to specific
+    postures/movements/mechanical tests; confirmatory negatives present.
+    Nociplastic pattern: inconsistent response; pain across unrelated
+    tests/postures; confirmatory negatives scarce.
+  note: >
+    Yes does NOT exit the algorithm. Nociceptive source does not exclude
+    nociplastic — pain distribution must be broader than the source explains.
+
+bacpap_neuropathic:
+  label: "Step 4 — Neuropathic Mainly Responsible?"
+  purpose: >
+    Identifiable nervous system lesion/disease AND pain limited to a
+    neuroanatomically plausible distribution.
+  assess: >
+    Medical records + history + physical examination.
+    Apply Finnerup et al. 2016 neuropathic pain classification guidelines.
+    Neuropathic phenotype is under-recognised — screen actively.
+  note: >
+    Sensitisation can accompany neuropathic LBP — mixed nociplastic +
+    neuropathic is possible.
+
+bacpap_static:
+  label: "Step 5a — Static Mechanical Allodynia"
+  purpose: >
+    Evoked pain from static pressure in the LBP region at normally
+    sub-nociceptive intensity.
+  assess: >
+    Apply sustained static pressure to the LBP region. Positive = pain (not
+    just pressure/discomfort) at intensity that would not normally produce pain.
+  note: "Not specific to nociplastic — can occur in neuropathic and nociceptive conditions."
+
+bacpap_dynamic:
+  label: "Step 5b — Dynamic Mechanical Allodynia"
+  purpose: >
+    Evoked pain from light moving tactile stimuli across the LBP region.
+  assess: >
+    Apply light brush stroke or cotton wool across the LBP region.
+    Positive = pain reproduced (not just sensation).
+  note: "Any painful after-sensations following this stimulus also count toward Step 5."
+
+bacpap_thermal:
+  label: "Step 5c — Heat or Cold Allodynia"
+  purpose: >
+    Evoked pain from non-noxious warm or cool stimulus in the LBP region.
+  assess: >
+    Apply warm (~40°C) or cool (~20°C) stimulus to LBP region.
+    Positive = pain, not just temperature awareness.
+  note: "History equivalent: pain flares during or after a warm or cold shower."
+
+bacpap_after:
+  label: "Step 5d — Painful After-Sensations"
+  purpose: >
+    Pain that persists and outlasts any of the Step 5 stimuli after removal.
+  assess: >
+    Observe for pain continuing beyond the stimulus after static, dynamic,
+    or thermal allodynia assessment. Positive = pain outlasts the stimulus.
+  note: "Can follow any one of the three allodynia assessments above."
+
+bacpap_hx:
+  label: "Step 6 — History of Hypersensitivity"
+  purpose: >
+    Self-reported hypersensitivity to touch, movement, pressure, heat, or
+    cold in the lower back region.
+  assess: >
+    Ask about: clothing/belts/handbags unpleasant against skin; pain flares
+    with warm/cold bath or shower; pain with low-intensity activities such as
+    walking, gardening, or grocery shopping.
+  note: >
+    Nociplastic = unpredictable, disproportionate to movement intensity.
+    Nociceptive/neuropathic = predictable and proportionate.
+
+bacpap_comorbid:
+  label: "Step 7 — Comorbid Symptoms"
+  purpose: >
+    Central sensitisation signature symptoms beyond the LBP region.
+    Criterion met if ANY ONE is present.
+  assess: >
+    Screen for: increased sensitivity to sound, light, or odours; sleep
+    disturbance with frequent nocturnal awakenings; fatigue; cognitive
+    difficulties (concentration, "brain fog").
+    Tool: CSI (reliable/valid for chronic LBP — not gold standard for CS).
+  note: >
+    Steps 1–7 all met = probable nociplastic LBP.
+    Steps 1–5 met, step 6 or 7 absent = possible nociplastic LBP.

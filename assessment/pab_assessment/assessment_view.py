@@ -7,6 +7,7 @@ import threading
 from pathlib import Path
 
 from textual.app import ComposeResult, on
+from textual import events
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
 from textual.message import Message
 from textual.widgets import Button, Label, Static, TextArea
@@ -21,6 +22,7 @@ from .sections.barriers import BarriersSection
 from .sections.rx_plan import RxPlanSection
 from .objective.objective_view import ObjectiveAssessmentView, RegionTopbar
 from .objective.kb_panel import KBPanel
+from .objective.kb_loader import get_registry
 from .sections.regional_differential import RequestKBEntry
 from .grid_overview import GridOverview, SUBJ_GRID_DATA, _section_has_data, section_to_cursor
 from .storage import (
@@ -718,6 +720,24 @@ class AssessmentView(Container):
             kb.display = True
         except Exception:
             pass
+
+    def on_descendant_focus(self, event: events.DescendantFocus) -> None:
+        """Update KB panel when any assessment-section field is focused."""
+        try:
+            panel = self.query_one("#kb_panel", KBPanel)
+        except Exception:
+            return
+        if not panel.display:
+            return
+        wid = event.widget.id or ""
+        if not wid:
+            return
+        if wid.endswith("_btn"):
+            wid = wid[:-4]
+        result = get_registry().resolve_any(wid)
+        if result is not None:
+            region, _ = result
+            panel.update(region, wid)
 
     def _sync_goals_consent_to_subj(self) -> None:
         from textual.widgets import Input

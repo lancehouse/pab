@@ -12,7 +12,7 @@ from textual.message import Message
 from .base import BaseSection
 
 logger = logging.getLogger(__name__)
-from ..widgets import CheckButton
+from ..widgets import CheckButton, FlagButton
 from .medical import LikelihoodField
 from .regional_differential import RegionalDifferentialPanel
 
@@ -121,7 +121,7 @@ class PainClassificationSection(BaseSection):
     #pc_infl_score {
         color: $primary; text-style: bold; margin-bottom: 0;
     }
-    #pc_infl_alert, #pc_csi_alert, #fm_alert {
+    #pc_infl_alert, #pc_csi_alert, #fm_alert, #bacpap_result {
         width: 100%; padding: 0 1; text-style: bold;
         color: $warning; background: $warning 20%; margin-bottom: 0;
     }
@@ -171,6 +171,11 @@ class PainClassificationSection(BaseSection):
         "cs_fatigue", "cs_sleep", "cs_concentration", "cs_swelling", "cs_tingling",
         # Fibromyalgia
         "fm_headaches", "fm_ibs", "fm_depression", "fm_duration", "fm_exclusion",
+        # BACPAP
+        "bacpap_chronic", "bacpap_distribution",
+        "bacpap_nociceptive", "bacpap_neuropathic",
+        "bacpap_static", "bacpap_dynamic", "bacpap_thermal", "bacpap_after",
+        "bacpap_hx", "bacpap_comorbid",
     ]
 
     _LIKELIHOOD_FIELDS = [
@@ -180,6 +185,7 @@ class PainClassificationSection(BaseSection):
     _TEXT_FIELDS = [
         "noci_interpretation", "neuro_interpretation",
         "nocip_interpretation", "summary_contributing", "summary_reasoning",
+        "bacpap_notes",
     ]
 
     # ------------------------------------------------------------------
@@ -347,6 +353,36 @@ class PainClassificationSection(BaseSection):
             yield CheckButton("Symptoms ≥ 3 months", id="fm_duration")
             yield CheckButton("No alternative explanation", id="fm_exclusion")
         yield Static("", id="fm_alert")
+
+        # ── BACPAP ───────────────────────────────────────────────────────
+        yield Label("— BACPAP LBP Phenotyping —", classes="subsection_header", id="pc_bacpap")
+        yield Label("Nijs et al. 2024 — 7-step consensus decision tree for LBP pain phenotyping", classes="reference_note")
+
+        yield Label("Chronicity & distribution:", classes="subgroup_header")
+        with Horizontal(classes="btn_row"):
+            yield CheckButton("LBP ≥ 3 months (or half-days in 6 months)", id="bacpap_chronic")
+            yield CheckButton("Regional / multifocal / widespread distribution", id="bacpap_distribution")
+
+        yield Label("Dominant mechanism:", classes="subgroup_header")
+        with Horizontal(classes="btn_row"):
+            yield CheckButton("Nociceptive pain mainly responsible", id="bacpap_nociceptive")
+            yield CheckButton("Neuropathic pain mainly responsible", id="bacpap_neuropathic")
+
+        yield Label("Evoked hypersensitivity in LBP region — any one of:", classes="subgroup_header")
+        with Horizontal(classes="btn_row"):
+            yield FlagButton("Static mechanical allodynia", id="bacpap_static")
+            yield FlagButton("Dynamic mechanical allodynia", id="bacpap_dynamic")
+        with Horizontal(classes="btn_row"):
+            yield FlagButton("Heat or cold allodynia", id="bacpap_thermal")
+            yield FlagButton("Painful after-sensations", id="bacpap_after")
+
+        yield Label("Nociplastic features:", classes="subgroup_header")
+        yield FlagButton("Hx hypersensitivity (touch / movement / pressure / heat / cold)", id="bacpap_hx")
+        yield FlagButton("≥1 comorbid symptom (light/sound/odour sensitivity, sleep, fatigue, cognition)", id="bacpap_comorbid")
+
+        yield Static("", id="bacpap_result")
+        yield Label("Notes:")
+        yield TextArea(id="bacpap_notes", language="plain")
 
         # ── Summary ──────────────────────────────────────────────────────
         yield Label("— Pain Type Summary —", classes="subsection_header", id="pc_summary")
@@ -590,6 +626,78 @@ class PainClassificationSection(BaseSection):
         except Exception:
             pass
 
+    def _update_bacpap(self) -> None:
+        try:
+            def val(fid: str):
+                return self.query_one(f"#{fid}", CheckButton).value
+
+            alert = self.query_one("#bacpap_result", Static)
+
+            chronic = val("bacpap_chronic")
+            if chronic is False:
+                alert.update("Acute / subacute LBP — BACPAP criteria not applicable")
+                alert.display = True
+                return
+            if chronic is None:
+                alert.display = False
+                return
+
+            distribution = val("bacpap_distribution")
+            if distribution is False:
+                alert.update("Exclude nociplastic — consider nociceptive / neuropathic LBP")
+                alert.display = True
+                return
+            if distribution is None:
+                alert.display = False
+                return
+
+            noci  = val("bacpap_nociceptive") is True
+            neuro = val("bacpap_neuropathic") is True
+
+            step5_ids = ("bacpap_static", "bacpap_dynamic", "bacpap_thermal", "bacpap_after")
+            step5_vals = [val(f) for f in step5_ids]
+            step5_any_yes = any(v is True for v in step5_vals)
+            step5_all_answered = all(v is not None for v in step5_vals)
+
+            if not step5_any_yes:
+                if step5_all_answered:
+                    if noci and not neuro:
+                        alert.update("Nociceptive LBP — nociplastic excluded")
+                    elif neuro and not noci:
+                        alert.update("Neuropathic LBP — nociplastic excluded")
+                    elif noci and neuro:
+                        alert.update("Mixed nociceptive + neuropathic LBP — nociplastic excluded")
+                    else:
+                        alert.update("Exclude nociplastic LBP")
+                    alert.display = True
+                else:
+                    alert.display = False
+                return
+
+            hx      = val("bacpap_hx")
+            comorbid = val("bacpap_comorbid")
+            if hx is None or comorbid is None:
+                alert.display = False
+                return
+
+            if noci and neuro:
+                mix = " (mixed: nociplastic + nociceptive + neuropathic)"
+            elif noci:
+                mix = " (mixed: nociplastic + nociceptive)"
+            elif neuro:
+                mix = " (mixed: nociplastic + neuropathic)"
+            else:
+                mix = ""
+
+            if hx is True and comorbid is True:
+                alert.update(f"⚠ Probable nociplastic LBP{mix}")
+            else:
+                alert.update(f"Possible nociplastic LBP{mix}")
+            alert.display = True
+
+        except Exception:
+            pass
+
     def _update_mixed_reminder(self) -> None:
         try:
             val = self.query_one("#summary_dominant", PainTypeSelector).get_value()
@@ -686,6 +794,7 @@ class PainClassificationSection(BaseSection):
             self._update_infl_score()
             self._update_csi_alert()
             self._update_fm_score()
+            self._update_bacpap()
             self._update_mixed_reminder()
             self.update_cross_refs()
 
@@ -707,6 +816,7 @@ class PainClassificationSection(BaseSection):
         self._update_infl_score()
         self._update_csi_alert()
         self._update_fm_score()
+        self._update_bacpap()
         self._update_mixed_reminder()
         self.post_message(self.FieldChanged())
 
