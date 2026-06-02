@@ -131,8 +131,12 @@ class BarriersSection(BaseSection):
     CheckButton { width: auto; height: auto; min-width: 16; margin: 0 1 1 0; }
 
     /* Horizontal rows */
-    .btn_row { height: auto; width: 100%; margin-bottom: 0; }
-    .sub_row { height: auto; width: 100%; margin-left: 4; margin-bottom: 0; }
+    .btn_row  { height: auto; width: 100%; margin-bottom: 0; }
+    .sub_row  { height: auto; width: 100%; margin-left: 4; margin-bottom: 0; }
+
+    /* DASS compact rows */
+    .dass_row  { layout: horizontal; height: auto; width: 100%; margin-bottom: 0; }
+    .dass_flag { width: 16; }
 
     .xref_badge {
         width: 100%; height: auto; padding: 0 1;
@@ -218,23 +222,21 @@ class BarriersSection(BaseSection):
         # ── Psychological ──────────────────────────────────────
         yield Label("— Psychological Barriers —", classes="subsection_header", id="br_psych")
 
-        yield FlagButton("Depression (DASS-21)", id="b_psych_depression")
         yield Static("", id="xref_br_depression", classes="xref_badge")
-        yield Label("Severity:")
-        yield CycleField("bx_dep_severity", _DASS_SEVERITY_OPTIONS)
-        yield CheckButton("Psychiatry referral", id="bx_dep_psychiatry")  # action taken = green
-
-        yield FlagButton("Anxiety (DASS-21)", id="b_psych_anxiety")
-        yield Static("", id="xref_br_anxiety", classes="xref_badge")
-        yield Label("Severity:")
-        yield CycleField("bx_anx_severity", _DASS_SEVERITY_OPTIONS)
-        yield CheckButton("Psychiatry referral", id="bx_anx_psychiatry")
-
-        yield FlagButton("Stress (DASS-21)", id="b_psych_stress")
-        yield Static("", id="xref_br_stress", classes="xref_badge")
-        yield Label("Severity:")
-        yield CycleField("bx_stress_severity", _DASS_SEVERITY_OPTIONS)
-        yield CheckButton("Psychiatry referral", id="bx_stress_psychiatry")
+        yield Static("", id="xref_br_anxiety",    classes="xref_badge")
+        yield Static("", id="xref_br_stress",     classes="xref_badge")
+        with Horizontal(classes="dass_row"):
+            yield FlagButton("Depression", id="b_psych_depression", classes="dass_flag")
+            yield CycleField("bx_dep_severity", _DASS_SEVERITY_OPTIONS)
+            yield CheckButton("Psychiatry referral", id="bx_dep_psychiatry")
+        with Horizontal(classes="dass_row"):
+            yield FlagButton("Anxiety", id="b_psych_anxiety", classes="dass_flag")
+            yield CycleField("bx_anx_severity", _DASS_SEVERITY_OPTIONS)
+            yield CheckButton("Psychiatry referral", id="bx_anx_psychiatry")
+        with Horizontal(classes="dass_row"):
+            yield FlagButton("Stress", id="b_psych_stress", classes="dass_flag")
+            yield CycleField("bx_stress_severity", _DASS_SEVERITY_OPTIONS)
+            yield CheckButton("Psychiatry referral", id="bx_stress_psychiatry")
 
         with Horizontal(classes="btn_row"):
             yield FlagButton("Moderate pain catastrophising (PCS)", id="b_psych_catastrophising")
