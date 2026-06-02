@@ -74,7 +74,7 @@ class SubjectiveSection(BaseSection):
         padding: 0 1;
     }
 
-    .field_row TextArea {
+    SubjectiveSection TextArea {
         width: 1fr;
         height: auto;
         min-height: 2;
@@ -343,13 +343,13 @@ class SubjectiveSection(BaseSection):
             yield Label("Potentially meaningful goals confirmed with patient:",
                         classes="reference_note")
             yield Label("1.")
-            yield Input(id="goal_1", placeholder="Goal 1")
+            yield TextArea(id="goal_1", language="plain")
             yield Label("2.")
-            yield Input(id="goal_2", placeholder="Goal 2")
+            yield TextArea(id="goal_2", language="plain")
             yield Label("3.")
-            yield Input(id="goal_3", placeholder="Goal 3")
+            yield TextArea(id="goal_3", language="plain")
             yield Label("4.")
-            yield Input(id="goal_4", placeholder="Goal 4")
+            yield TextArea(id="goal_4", language="plain")
 
             # ── Suicide / Self-Harm Risk ──────────────────────────────
             yield Label("— Suicide / Self-Harm Risk —", classes="subsection_header",
@@ -518,12 +518,12 @@ class SubjectiveSection(BaseSection):
         "social_situation", "financial_status", "cultural_considerations",
         "psychological_distress", "screening_tool",
         "harm_plan", "harm_means", "harm_intent", "harm_action",
+        "goal_1", "goal_2", "goal_3", "goal_4",
     ]
 
     _INPUT_FIELDS = [
         "pain_control_score", "confidence_score",
         "pre_injury_hours", "current_hours",
-        "goal_1", "goal_2", "goal_3", "goal_4",
     ]
 
     def collect(self) -> dict:

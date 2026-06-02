@@ -80,12 +80,14 @@ _CYCLE_FIELDS = [
 
 _INPUT_FIELDS = [
     "bi_movement_region", "bi_strength_other", "bi_deep_other", "bi_over_other",
-    "bi_nerve_region", "bi_red_flag_detail", "bi_substance_detail",
+    "bi_nerve_region",
+]
+
+_TEXT_FIELDS = [
+    "bi_red_flag_detail", "bi_substance_detail",
     "custom_1_barrier", "custom_1_strategy",
     "custom_2_barrier", "custom_2_strategy",
 ]
-
-_TEXT_FIELDS: list[str] = []  # all treatment plan fields moved to RxPlanSection
 
 # Barriers used for is_complete (any reviewed = section is started)
 _MAIN_BARRIERS = [
@@ -281,12 +283,12 @@ class BarriersSection(BaseSection):
 
         yield CheckButton("Red flag — requires further investigation", id="b_med_red_flag")
         yield Label("  Flag:")
-        yield Input(id="bi_red_flag_detail", placeholder="specify flag")
+        yield TextArea(id="bi_red_flag_detail", language="plain")
 
         yield CheckButton("Significant maladaptive use of prescription / non-prescription drugs / alcohol", id="b_med_substance")
         yield Static("", id="xref_br_substance", classes="xref_badge")
         yield Label("  Substance:")
-        yield Input(id="bi_substance_detail", placeholder="substance")
+        yield TextArea(id="bi_substance_detail", language="plain")
 
         yield CheckButton("Possible ankylosing spondylitis", id="b_med_as")
         yield CheckButton("Possible lumbar symptoms due to AAA", id="b_med_aaa")
@@ -297,13 +299,13 @@ class BarriersSection(BaseSection):
         # ── Custom Barriers ────────────────────────────────────
         yield Label("— Custom Barriers —", classes="subsection_header", id="br_custom")
         yield Label("1. Barrier:")
-        yield Input(id="custom_1_barrier", placeholder="barrier description")
+        yield TextArea(id="custom_1_barrier", language="plain")
         yield Label("   Strategy:")
-        yield Input(id="custom_1_strategy", placeholder="treatment strategy")
+        yield TextArea(id="custom_1_strategy", language="plain")
         yield Label("2. Barrier:")
-        yield Input(id="custom_2_barrier", placeholder="barrier description")
+        yield TextArea(id="custom_2_barrier", language="plain")
         yield Label("   Strategy:")
-        yield Input(id="custom_2_strategy", placeholder="treatment strategy")
+        yield TextArea(id="custom_2_strategy", language="plain")
 
     # ------------------------------------------------------------------
     # Navigation
