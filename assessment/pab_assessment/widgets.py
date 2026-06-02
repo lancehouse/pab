@@ -217,6 +217,99 @@ class RadioGroup(Static):
 
 
 # ---------------------------------------------------------------------------
+# MultiSelectGroup — multi-select button gang (same chips as RadioGroup)
+# ---------------------------------------------------------------------------
+
+class MultiSelectGroup(Static):
+    """Multi-select button gang — click toggles each option independently.
+
+    Same visual chip appearance as RadioGroup. value returns list[str] of
+    selected labels. set_value accepts list[str] or a legacy str (backward compat).
+    Enter/Space/Y advance focus; Left/Right not implemented (tap is primary input).
+    """
+
+    can_focus = True
+
+    class Changed(Message):
+        pass
+
+    DEFAULT_CSS = """
+    MultiSelectGroup                      { height: 3; layout: horizontal; width: auto; }
+    MultiSelectGroup.-ms-focused          { border: tall $accent; }
+    MultiSelectGroup.-ms-focused _RadioButton { height: 1; min-height: 1; }
+    """
+
+    def __init__(self, options: list[tuple[str, str]], **kwargs) -> None:
+        super().__init__(**kwargs)
+        self._options = options
+        self._selected: set[int] = set()
+
+    @property
+    def value(self) -> list[str]:
+        return [self._options[i][0] for i in sorted(self._selected)]
+
+    def compose(self) -> ComposeResult:
+        for i, (label, _) in enumerate(self._options):
+            yield _RadioButton(label, variant="default", id=f"{self.id}_r{i}")
+
+    def _update_display(self) -> None:
+        for i, (_, variant) in enumerate(self._options):
+            try:
+                btn = self.query_one(f"#{self.id}_r{i}", _RadioButton)
+                if i in self._selected:
+                    btn.variant = variant if variant != "default" else "primary"
+                else:
+                    btn.variant = "default"
+            except Exception:
+                pass
+
+    @on(_RadioButton.Clicked)
+    def _on_btn_clicked(self, event: _RadioButton.Clicked) -> None:
+        for i in range(len(self._options)):
+            if event.button.id == f"{self.id}_r{i}":
+                if i in self._selected:
+                    self._selected.discard(i)
+                else:
+                    self._selected.add(i)
+                self._update_display()
+                self.post_message(self.Changed())
+                self.focus()
+                return
+
+    def key_enter(self) -> None:
+        self.screen.focus_next()
+
+    def key_space(self) -> None:
+        self.screen.focus_next()
+
+    async def key_y(self) -> None:
+        self.screen.focus_next()
+
+    def on_focus(self) -> None:
+        self.add_class("-ms-focused")
+
+    def on_blur(self) -> None:
+        self.remove_class("-ms-focused")
+
+    def set_value(self, values: list[str] | str | None) -> None:
+        self._selected = set()
+        if values is None:
+            pass
+        elif isinstance(values, str):
+            for i, (label, _) in enumerate(self._options):
+                if label == values:
+                    self._selected.add(i)
+                    break
+        else:
+            for v in values:
+                for i, (label, _) in enumerate(self._options):
+                    if label == v:
+                        self._selected.add(i)
+                        break
+        self._update_display()
+
+
+# ---------------------------------------------------------------------------
 # CycleButton — generalised cycling state widget
 # ---------------------------------------------------------------------------
 

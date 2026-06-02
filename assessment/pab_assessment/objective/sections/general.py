@@ -6,7 +6,7 @@ from textual.message import Message
 from textual.widgets import Input, Label, Static, TextArea
 
 from ...sections.base import BaseSection
-from ...widgets import RadioGroup
+from ...widgets import MultiSelectGroup, RadioGroup
 
 
 # ---------------------------------------------------------------------------
@@ -54,8 +54,8 @@ class GeneralSection(BaseSection):
         ("Sit-to-stand", "go_sts",   _STS4),
     ]
 
-    _INPUT_IDS = ("go_height", "go_weight", "go_bmi", "go_nrs", "go_sit_tol")
-    _TA_IDS    = ("go_posture_notes", "go_functional_notes")
+    _INPUT_IDS = ()
+    _TA_IDS    = ("go_general_notes", "go_transfer_cmt", "go_posture_notes", "go_functional_notes")
 
     DEFAULT_CSS = """
     GeneralSection {
@@ -77,8 +77,13 @@ class GeneralSection(BaseSection):
     GeneralSection .obs_label { width: 20; height: 3; content-align: left middle; }
     GeneralSection .obs_cmt   { height: 3; width: 1fr; }
 
-    GeneralSection TextArea { height: auto; min-height: 2; padding: 0 1; }
+    GeneralSection TextArea { width: 1fr; height: auto; min-height: 2; padding: 0 1; }
     GeneralSection Label    { height: auto; margin-top: 0; }
+
+    /* General mobility inline row */
+    GeneralSection .mob_row     { layout: horizontal; height: auto; width: 100%; margin-bottom: 0; }
+    GeneralSection .mob_lbl     { width: 20; height: auto; content-align: left top; padding-top: 1; }
+    GeneralSection .mob_row TextArea { width: 1fr; min-height: 2; }
     """
 
     def compose(self) -> ComposeResult:
@@ -86,33 +91,20 @@ class GeneralSection(BaseSection):
 
         # ── Physical ──────────────────────────────────────────────────────────
         yield Label("Physical", classes="subsection_header", id="go_physical")
-        with Horizontal(classes="stats_row"):
-            yield Static("Height",           classes="stats_lbl")
-            yield Input(placeholder="cm",    id="go_height",  classes="stats_input")
-            yield Static("cm",               classes="stats_unit")
-            yield Static("Weight",           classes="stats_lbl")
-            yield Input(placeholder="kg",    id="go_weight",  classes="stats_input")
-            yield Static("kg",               classes="stats_unit")
-            yield Static("BMI",              classes="stats_lbl")
-            yield Input(placeholder="kg/m²", id="go_bmi",     classes="stats_input")
-        with Horizontal(classes="stats_row"):
-            yield Static("NRS rest",         classes="stats_lbl")
-            yield Input(placeholder="/10",   id="go_nrs",     classes="stats_input")
-            yield Static("/10",              classes="stats_unit")
-            yield Static("Sitting tol",      classes="stats_lbl")
-            yield Input(placeholder="min",   id="go_sit_tol", classes="stats_input")
-            yield Static("min",              classes="stats_unit")
-        with Horizontal(classes="obs_row"):
-            yield Static("General mobility", classes="obs_label")
-            yield RadioGroup(_SEV4, id="go_transfer")
-            yield Input(id="go_transfer_cmt", classes="obs_cmt")
+        yield TextArea(id="go_general_notes", language="plain")
+        with Horizontal(classes="mob_row"):
+            yield Static("General mobility:", classes="mob_lbl")
+            yield TextArea(id="go_transfer_cmt", language="plain")
 
         # ── Posture ───────────────────────────────────────────────────────────
         yield Label("Posture", classes="subsection_header", id="go_posture")
         for label, key, opts in self._POSTURE_ROWS:
             with Horizontal(classes="obs_row"):
                 yield Static(label, classes="obs_label")
-                yield RadioGroup(opts, id=key)
+                if key == "go_lean":
+                    yield MultiSelectGroup(opts, id=key)
+                else:
+                    yield RadioGroup(opts, id=key)
                 yield Input(id=f"{key}_cmt", classes="obs_cmt")
         yield Label("Posture notes:")
         yield TextArea(id="go_posture_notes", language="plain")
@@ -132,6 +124,7 @@ class GeneralSection(BaseSection):
     # ------------------------------------------------------------------
 
     @on(RadioGroup.Changed)
+    @on(MultiSelectGroup.Changed)
     @on(Input.Changed, selector="Input")
     @on(TextArea.Changed, selector="TextArea")
     def _on_field_changed(self) -> None:
@@ -151,6 +144,8 @@ class GeneralSection(BaseSection):
                 data[iid] = ""
         for rg in self.query(RadioGroup):
             data[rg.id] = rg.value
+        for msg in self.query(MultiSelectGroup):
+            data[msg.id] = msg.value
         for inp in self.query("Input.obs_cmt"):
             data[inp.id] = inp.value
         for tid in self._TA_IDS:
@@ -170,6 +165,8 @@ class GeneralSection(BaseSection):
                     pass
             for rg in self.query(RadioGroup):
                 rg.set_value(data.get(rg.id))
+            for msg in self.query(MultiSelectGroup):
+                msg.set_value(data.get(msg.id))
             for inp in self.query("Input.obs_cmt"):
                 inp.value = data.get(inp.id, "")
             for tid in self._TA_IDS:
@@ -182,6 +179,6 @@ class GeneralSection(BaseSection):
 
     def is_complete(self) -> bool:
         try:
-            return bool(self.query_one("#go_height", Input).value.strip())
+            return bool(self.query_one("#go_general_notes", TextArea).text.strip())
         except Exception:
             return False

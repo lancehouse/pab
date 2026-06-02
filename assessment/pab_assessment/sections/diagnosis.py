@@ -101,14 +101,15 @@ _TOGGLE_FIELDS = [
     "primary_not_other_dx",
 ]
 
-_INPUT_FIELDS = [
+_INPUT_FIELDS: list[str] = []
+
+_TEXT_FIELDS = [
     "surgical_procedure", "surgical_source",
     "traumatic_event", "traumatic_source",
     "msk_pathology", "msk_source",
     "neuro_lesion",
+    "mixed_reasoning",
 ]
-
-_TEXT_FIELDS = ["mixed_reasoning"]
 
 
 class DiagnosisSection(BaseSection):
@@ -168,11 +169,11 @@ class DiagnosisSection(BaseSection):
         yield Label("— Chronic Post-Surgical Pain —", classes="subsection_header", id="dx_surgical")
         yield Label("(Schug et al 2019)", classes="reference_note")
         yield Label("Surgical procedure:")
-        yield Input(id="surgical_procedure", placeholder="procedure name")
+        yield TextArea(id="surgical_procedure", language="plain")
         yield Label("Subtype:")
         yield CycleField("surgical_subtype", _SURGICAL_SUBTYPE_OPTIONS)
         yield Label("Most likely specific source:")
-        yield Input(id="surgical_source", placeholder="source")
+        yield TextArea(id="surgical_source", language="plain")
         yield Label("Severity:")
         yield CycleField("surgical_severity", _SEVERITY_OPTIONS)
         yield Static("", id="xref_dx_surgical_severity", classes="xref_badge")
@@ -182,11 +183,11 @@ class DiagnosisSection(BaseSection):
         yield Label("(Schug et al 2019)", classes="reference_note")
         yield Static("", id="xref_dx_traumatic", classes="xref_badge")
         yield Label("Traumatic event:")
-        yield Input(id="traumatic_event", placeholder="describe event")
+        yield TextArea(id="traumatic_event", language="plain")
         yield Label("Subtype:")
         yield CycleField("traumatic_subtype", _TRAUMATIC_SUBTYPE_OPTIONS)
         yield Label("Most likely specific source:")
-        yield Input(id="traumatic_source", placeholder="source")
+        yield TextArea(id="traumatic_source", language="plain")
         yield Label("Severity:")
         yield CycleField("traumatic_severity", _SEVERITY_OPTIONS)
         yield Static("", id="xref_dx_traumatic_severity", classes="xref_badge")
@@ -195,11 +196,11 @@ class DiagnosisSection(BaseSection):
         yield Label("— Chronic Secondary MSK Pain —", classes="subsection_header", id="dx_msk")
         yield Label("(Perrot et al 2019)", classes="reference_note")
         yield Label("Underlying disease / pathology:")
-        yield Input(id="msk_pathology", placeholder="pathology")
+        yield TextArea(id="msk_pathology", language="plain")
         yield Label("Subtype:")
         yield CycleField("msk_subtype", _MSK_SUBTYPE_OPTIONS)
         yield Label("Most likely specific source:")
-        yield Input(id="msk_source", placeholder="source")
+        yield TextArea(id="msk_source", language="plain")
         yield Label("Severity:")
         yield CycleField("msk_severity", _SEVERITY_OPTIONS)
         yield Static("", id="xref_dx_msk_severity", classes="xref_badge")
@@ -209,7 +210,7 @@ class DiagnosisSection(BaseSection):
         yield Label("(Scholz et al 2019)", classes="reference_note")
         yield Static("", id="xref_dx_neuropathic", classes="xref_badge")
         yield Label("Causative lesion / disease:")
-        yield Input(id="neuro_lesion", placeholder="lesion or disease")
+        yield TextArea(id="neuro_lesion", language="plain")
         yield Label("Subtype:")
         yield CycleField("neuro_subtype", _NEURO_SUBTYPE_OPTIONS)
         yield Label("Severity:")

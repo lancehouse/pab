@@ -234,6 +234,7 @@ class AssessmentView(Container):
         self._in_objective_mode = False
         self._last_assessment_section_id = "01_consent"
         self._obj_view: ObjectiveAssessmentView | None = None
+        self._active_regions: list[str] = ["lumbar"]  # session-level region context
         self._grid_visible = False
         self._grid_cursor: tuple[int, int] = (0, 0)
         self._grid_cursor_set = False   # False until first navigation anchors it
@@ -399,6 +400,7 @@ class AssessmentView(Container):
         if section_05:
             obj_assessment = obj_file_data.get("assessment", {})
             obj_regions = obj_assessment.get("active_regions", [])
+            self._active_regions = list(obj_regions)   # sync session-level context
             section_05.set_active_regions(obj_regions)
             for rid in obj_regions:
                 tests = obj_assessment.get(rid, {}).get("special", {})
@@ -680,6 +682,7 @@ class AssessmentView(Container):
         section_05 = self.sections.get("04_pain_classification")
         if section_05 and self._obj_view:
             active = list(self._obj_view._active_regions)
+            self._active_regions = active              # sync session-level context
             logger.debug("RDP broker: calling set_active_regions(%s)", active)
             section_05.set_active_regions(active)
             self._push_region_tests_to_section05()
@@ -693,9 +696,8 @@ class AssessmentView(Container):
             return
         try:
             obj = load_objective(self.session_file).get("assessment", {})
-            active = obj.get("active_regions", [])
-            logger.debug("RDP push: active_regions from file=%s", active)
-            for rid in active:
+            logger.debug("RDP push: active_regions=%s", self._active_regions)
+            for rid in self._active_regions:
                 tests = obj.get(rid, {}).get("special", {})
                 logger.debug("RDP push: %s tests sample=%s", rid, dict(list(tests.items())[:3]))
                 section_05.set_region_test_data(rid, tests)

@@ -427,22 +427,19 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
     # ── 01 General Observation ────────────────────────────────────────────────
     if gen:
         sl: list[str] = []
-        for key, lbl, unit in [("go_height","Height","cm"),("go_weight","Weight","kg"),
-                                ("go_bmi","BMI",""),("go_nrs","NRS rest","/10"),
-                                ("go_sit_tol","Sit tol","min")]:
-            v = (gen.get(key) or "").strip()
-            if v:
-                sl.append(f"**{lbl}:** {v}{unit}")
-            elif not clean:
-                sl.append(f"**{lbl}:** *(not recorded)*")
+        _maybe_note(sl, "*General observations*", gen.get("go_general_notes", "").strip())
+        _maybe_note(sl, "*General mobility*", gen.get("go_transfer_cmt", "").strip())
         _posture_def = [("Lumbar lordosis","go_lx_lord"),("Thoracic kyphosis","go_tx_kyph"),
                         ("Antalgic lean","go_lean"),("Sway posture","go_sway"),
                         ("Breathing","go_breath"),("Scapular L","go_scap_l"),
-                        ("Scapular R","go_scap_r"),("Muscle wasting","go_wasting"),
-                        ("Undress/transfer","go_transfer")]
+                        ("Scapular R","go_scap_r"),("Muscle wasting","go_wasting")]
         posture_rows = []
         for lbl, key in _posture_def:
-            v = gen.get(key) or "—"
+            raw = gen.get(key)
+            if key == "go_lean" and isinstance(raw, list):
+                v = " + ".join(raw) if raw else "—"
+            else:
+                v = raw or "—"
             cmt = gen.get(f"{key}_cmt", "").strip()
             posture_rows.append([lbl, f"{v} — {cmt}" if cmt else v])
         _maybe_table(sl, "Posture", ["", "Finding"], posture_rows)
@@ -913,21 +910,25 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
     # ── 01 General Observation ────────────────────────────────────────────────
     if gen:
         sl: list[str] = []
-        for key, lbl, unit in [("go_height","Height","cm"),("go_weight","Weight","kg"),
-                                ("go_bmi","BMI",""),("go_nrs","NRS rest","/10"),
-                                ("go_sit_tol","Sit tol","min")]:
-            v = (gen.get(key) or "").strip()
+        for key, lbl in [("go_general_notes","General observations"),
+                          ("go_transfer_cmt","General mobility")]:
+            v = gen.get(key, "").strip()
             if v:
-                sl.append(f"  {lbl}: {v}{unit}")
+                sl.append(f"  {lbl}: {v}")
             elif not clean:
-                sl.append(f"  {lbl}: (not recorded)")
+                sl.append(f"  {lbl}: (empty)")
         _posture_raw = [("Lumbar lordosis","go_lx_lord"),("Thoracic kyphosis","go_tx_kyph"),
                         ("Antalgic lean","go_lean"),("Sway posture","go_sway"),
                         ("Breathing","go_breath"),("Scapular L","go_scap_l"),
-                        ("Scapular R","go_scap_r"),("Muscle wasting","go_wasting"),
-                        ("Undress/transfer","go_transfer")]
-        p_rows = [[lbl, gen.get(key) or "(not recorded)", gen.get(f"{key}_cmt", "")]
-                  for lbl, key in _posture_raw]
+                        ("Scapular R","go_scap_r"),("Muscle wasting","go_wasting")]
+        p_rows = []
+        for lbl, key in _posture_raw:
+            raw = gen.get(key)
+            if key == "go_lean" and isinstance(raw, list):
+                v = " + ".join(raw) if raw else "(not recorded)"
+            else:
+                v = raw or "(not recorded)"
+            p_rows.append([lbl, v, gen.get(f"{key}_cmt", "")])
         _maybe_table(sl, ["Posture", "Finding", "Comment"], p_rows)
         _func_raw = [("Gait","go_gait"),("SLS Left","go_sls_l"),
                      ("SLS Right","go_sls_r"),("Sit-to-stand","go_sts")]

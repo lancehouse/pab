@@ -64,7 +64,7 @@ class ConsentSection(BaseSection):
         padding: 0 1;
     }
 
-    .field_row TextArea {
+    ConsentSection TextArea {
         width: 1fr;
         height: auto;
         min-height: 2;
@@ -123,13 +123,13 @@ class ConsentSection(BaseSection):
         yield Label("Shared with Subjective section — enter in either place:",
                     classes="reference_note")
         yield Label("1.")
-        yield Input(id="consent_goal_1", placeholder="Goal 1")
+        yield TextArea(id="consent_goal_1", language="plain")
         yield Label("2.")
-        yield Input(id="consent_goal_2", placeholder="Goal 2")
+        yield TextArea(id="consent_goal_2", language="plain")
         yield Label("3.")
-        yield Input(id="consent_goal_3", placeholder="Goal 3")
+        yield TextArea(id="consent_goal_3", language="plain")
         yield Label("4.")
-        yield Input(id="consent_goal_4", placeholder="Goal 4")
+        yield TextArea(id="consent_goal_4", language="plain")
 
         yield Label("", id="consent_status")
 
@@ -190,7 +190,7 @@ class ConsentSection(BaseSection):
         try:
             for i in range(1, 5):
                 try:
-                    self.query_one(f"#consent_goal_{i}", Input).value = data.get(f"goal_{i}", "")
+                    self.query_one(f"#consent_goal_{i}", TextArea).text = data.get(f"goal_{i}", "")
                 except Exception:
                     pass
         finally:
