@@ -844,9 +844,6 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
     if not lines:
         return []
 
-    obj_heading = "## Objective Examination" if clean else "## 04 Objective Examination"
-    lines.insert(0, obj_heading)
-    lines.insert(1, "")
     return lines
 
 
@@ -897,13 +894,8 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
             return
         sl.extend(_raw_table(headers, rows))
 
-    _obj_header_written = [False]
-
     def _flush_section(header: str, sl: list) -> None:
         if sl:
-            if not _obj_header_written[0]:
-                lines.extend(["", SEP, "SECTION 8: OBJECTIVE EXAMINATION", SEP])
-                _obj_header_written[0] = True
             lines.extend(["", f"  — {header} —"])
             lines.extend(sl)
 
@@ -1587,6 +1579,8 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
                       f"**Session ID:** {data.get('session_name', '')}  ",
                       ""])
 
+    lines.append("\n# S — Subjective\n")
+
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 1: CONSENT & SETUP
     # ════════════════════════════════════════════════════════════════════════
@@ -1932,6 +1926,23 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
         _emit("*(none recorded)*")
 
     _emit_yaml_subs_md("medical", m, clean, _emit, sub)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # SOAP: OBJECTIVE
+    # ════════════════════════════════════════════════════════════════════════
+    lines.append("\n# O — Objective\n")
+    _obj_md_lines = _render_objective_md(obj_assessment, clean=clean)
+    if _obj_md_lines:
+        lines.append("")
+        lines.append("---")
+        lines.append("")
+        lines.extend(_obj_md_lines)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # SOAP: ASSESSMENT
+    # ════════════════════════════════════════════════════════════════════════
+    lines.append("\n# A — Assessment\n")
+
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 4: PAIN CLASSIFICATION
     # ════════════════════════════════════════════════════════════════════════
@@ -2292,6 +2303,12 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
     txt("mixed_reasoning", dx)
 
     _emit_yaml_subs_md("diagnosis", dx, clean, _emit, sub)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # SOAP: PLAN
+    # ════════════════════════════════════════════════════════════════════════
+    lines.append("\n# P — Plan\n")
+
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 7: BARRIERS & TREATMENT PLAN
     # ════════════════════════════════════════════════════════════════════════
@@ -2611,16 +2628,6 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
               f"**Arrows:** {n_arrows}",
               f"**Objective zones:** {n_zones}",
               f"**Measurement points (PPT):** {n_points}")
-
-    # ════════════════════════════════════════════════════════════════════════
-    # OBJECTIVE EXAMINATION
-    # ════════════════════════════════════════════════════════════════════════
-    obj_lines = _render_objective_md(obj_assessment, clean=clean)
-    if obj_lines:
-        lines.append("")
-        lines.append("---")
-        lines.append("")
-        lines.extend(obj_lines)
 
     # ── Write ──────────────────────────────────────────────────────────────
     try:
@@ -3155,6 +3162,7 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     lines: list[str] = []
     _pending: list[str] = []  # buffered section/sub headers waiting for content
     a = session_data.get("assessment", {})
+    obj_assessment = session_data.get("objective_assessment", {}) or {}
 
     # ── helpers ─────────────────────────────────────────────────────────────
 
@@ -3221,6 +3229,8 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     title = "PHYSIOTHERAPY ASSESSMENT — ENTERED DATA" if clean else "PHYSIOTHERAPY ASSESSMENT — FULL RAW DATA"
     lines.extend([SEP, title, f"Patient:    {preferred_name}", f"Date:       {date_str}",
                   f"Region:     {regions}", f"Session ID: {session_name}", SEP])
+
+    lines.extend(["", SEP, "S — SUBJECTIVE", SEP])
 
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 1: CONSENT & SETUP
@@ -3566,6 +3576,18 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
         _emit("  (none recorded)")
 
     _emit_yaml_subs_raw("medical", m, clean, _emit, sub)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # SOAP: OBJECTIVE
+    # ════════════════════════════════════════════════════════════════════════
+    lines.extend(["", SEP, "O — OBJECTIVE", SEP])
+    _render_objective_raw(obj_assessment, lines, SEP, SEP2, clean=clean)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # SOAP: ASSESSMENT
+    # ════════════════════════════════════════════════════════════════════════
+    lines.extend(["", SEP, "A — ASSESSMENT", SEP])
+
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 4: PAIN CLASSIFICATION
     # ════════════════════════════════════════════════════════════════════════
@@ -3928,6 +3950,12 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     txt("mixed_reasoning",  dx)
 
     _emit_yaml_subs_raw("diagnosis", dx, clean, _emit, sub)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # SOAP: PLAN
+    # ════════════════════════════════════════════════════════════════════════
+    lines.extend(["", SEP, "P — PLAN", SEP])
+
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 7: BARRIERS & TREATMENT PLAN
     # ════════════════════════════════════════════════════════════════════════
@@ -4228,12 +4256,6 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
             _emit(f"  {row}")
     elif not clean:
         _emit("  (empty)")
-
-    # ════════════════════════════════════════════════════════════════════════
-    # OBJECTIVE EXAMINATION
-    # ════════════════════════════════════════════════════════════════════════
-    obj_assessment = session_data.get("objective_assessment", {}) or {}
-    _render_objective_raw(obj_assessment, lines, SEP, SEP2, clean=clean)
 
     # ════════════════════════════════════════════════════════════════════════
     # BODY CHART SUMMARY
