@@ -142,6 +142,42 @@ pab
 assessment
 ```
 
+### 8. Body chart PDF export (optional)
+
+The `placepdf` tool places a body chart PNG export onto a prepared clinical PDF template using PyMuPDF.
+
+**Install PyMuPDF:**
+
+```bash
+pip install pymupdf
+```
+
+**Install your private template:**
+
+The template PDF is private and is not distributed with the repository. Place it at:
+
+```
+~/.local/share/pab/template.pdf
+```
+
+**Install the launcher:**
+
+```bash
+ln -sf ~/Projects/pab/tools/placepdf ~/.local/bin/placepdf
+```
+
+**Usage:**
+
+```bash
+# Uses template at ~/.local/share/pab/template.pdf by default
+placepdf /path/to/combined.png
+
+# Or specify a different template
+placepdf /path/to/combined.png --template /path/to/other_template.pdf
+```
+
+Output is saved as a `.pdf` beside the input PNG.
+
 ---
 
 ## Developer setup
@@ -330,3 +366,4 @@ The active session pointer is at `~/.local/share/pab/session_current.json`. Both
 | `pydantic>=2.0.0` | Data validation |
 | `jinja2>=3.0.0` | Report templating |
 | `pyyaml>=6.0.0` | YAML form definitions |
+| `pymupdf` | Body chart PDF export (`placepdf` tool, optional) |

@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+
+import fitz
+import sys
+import argparse
+from pathlib import Path
+
+DEFAULT_TEMPLATE = Path.home() / ".local" / "share" / "pab" / "template.pdf"
+
+# Placement coordinates in PDF points (origin = top-left)
+X      = 90
+Y      = 160
+WIDTH  = 420
+HEIGHT = 660
+
+parser = argparse.ArgumentParser(
+    description="Place a PNG body chart onto a PDF template background."
+)
+parser.add_argument("image", help="Path to input PNG (e.g. combined.png)")
+parser.add_argument(
+    "--template", "-t",
+    default=str(DEFAULT_TEMPLATE),
+    help=f"Path to template PDF (default: {DEFAULT_TEMPLATE})",
+)
+args = parser.parse_args()
+
+image_path = Path(args.image)
+template_path = Path(args.template)
+
+if not image_path.exists():
+    print(f"Error: image not found: {image_path}")
+    sys.exit(1)
+
+if not template_path.exists():
+    print(f"Error: template not found: {template_path}")
+    print(f"Place your template PDF at {DEFAULT_TEMPLATE} or pass --template /path/to/template.pdf")
+    sys.exit(1)
+
+output_pdf = image_path.with_suffix(".pdf")
+
+doc = fitz.open(str(template_path))
+page = doc[0]
+
+page.insert_image(
+    fitz.Rect(X, Y, X + WIDTH, Y + HEIGHT),
+    filename=str(image_path),
+    keep_proportion=True,
+)
+
+doc.save(str(output_pdf))
+print(f"Saved: {output_pdf}")

@@ -35,3 +35,7 @@ Thumbs.db
 *.db
 *.json.tmp
 *.log
+
+# Private — must never reach GitHub
+workfiles/template.pdf
+workfiles/placepdf
