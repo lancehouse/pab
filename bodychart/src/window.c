@@ -2076,6 +2076,11 @@ static void on_main_window_close(GtkWidget *w, gpointer data)
     AppState *app = data;
     persistence_monitor_stop(app);
     window_autosave(app);
+    /* Re-render combined_focus.png unconditionally — window_autosave's if(ok)
+     * chain can skip it if an earlier focus export fails, leaving a stale or
+     * missing file that causes session_export_combined_focus_pdf to silently
+     * do nothing. */
+    session_export_combined_focus_png(app);
     session_export_combined_pdf(app);
     session_export_combined_focus_pdf(app);
 }

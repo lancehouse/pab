@@ -285,8 +285,9 @@ class AssessmentView(Container):
         if self._save_task and not self._save_task.done():
             self._save_task.cancel()
         if self.session_file:
+            # daemon=False so the process waits for pandoc to finish before exiting
             threading.Thread(
-                target=save_docx_report, args=(self.session_file,), daemon=True
+                target=save_docx_report, args=(self.session_file,), daemon=False
             ).start()
 
     def load_session(self, session_file: str, data: dict) -> None:
@@ -664,6 +665,7 @@ class AssessmentView(Container):
             asyncio.to_thread(save_raw_report, sf),
             asyncio.to_thread(export_session_report, sf),
             asyncio.to_thread(save_clean_reports, sf),
+            asyncio.to_thread(save_docx_report, sf),
         )
 
         self.post_message(self.SaveStateChanged("saved"))
