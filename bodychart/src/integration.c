@@ -20,9 +20,9 @@ typedef struct {
  * Without this touch/mouse reporting may break in environments missing
  * variables set by the user's shell. */
 static const TerminalDef TERMINALS[] = {
-    { "ptyxis",        "bash -l -c 'ptyxis -- assessments --session %s'"        },
-    { "gnome-terminal","bash -l -c 'gnome-terminal -- assessments --session %s'" },
-    { "xterm",         "bash -l -c 'xterm -e assessments --session %s'"          },
+    { "ptyxis",        "bash -l -c 'ptyxis -- assessment --session %s'"        },
+    { "gnome-terminal","bash -l -c 'gnome-terminal -- assessment --session %s'" },
+    { "xterm",         "bash -l -c 'xterm -e assessment --session %s'"          },
     { NULL, NULL },
 };
 
