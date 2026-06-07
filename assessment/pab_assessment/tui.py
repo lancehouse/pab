@@ -15,6 +15,7 @@ import json
 import logging
 import os
 import subprocess
+import threading
 from pathlib import Path
 from datetime import datetime
 
@@ -34,7 +35,7 @@ from .objective.kb_panel import KBPanel
 from .storage import (
     load_assessment, save_assessment, list_sessions, create_new_session,
     read_gtk_pid, write_focus_signal, export_session_report,
-    save_raw_report,
+    save_raw_report, save_clean_reports, save_docx_report,
 )
 from .assessment_view import AssessmentView, NotesOverlay
 
@@ -724,23 +725,34 @@ class PhysioAssessmentTUI(Container):
             self._show_status(f"Reload failed: {e}")
 
     def action_view_report(self) -> None:
-        """Ctrl+R — save, regenerate clean.md + raw.txt, then show markdown viewer."""
+        """Ctrl+R — save, regenerate reports in threads, show viewer, then run pandoc."""
         if not self.current_session_file:
             self._show_status("No session loaded")
             return
 
         async def _save_then_show():
-            assessment_view = self.query_one("#assessment_view", AssessmentView)
-            await assessment_view._do_save()
-            # Regenerate both report formats
-            clean_path = export_session_report(self.current_session_file, clean=True)
-            save_raw_report(self.current_session_file)
-            if not clean_path:
-                self._show_status("Report generation failed — check logs")
-                return
-            md_text = Path(clean_path).read_text(encoding="utf-8")
-            session_name = Path(self.current_session_file).stem
-            await self.app.push_screen(ReportModal(md_text))
+            try:
+                assessment_view = self.query_one("#assessment_view", AssessmentView)
+                await assessment_view._do_save()
+                sf = self.current_session_file
+                # Generate raw + md + clean in threads (no pandoc yet)
+                results = await asyncio.gather(
+                    asyncio.to_thread(save_raw_report, sf),
+                    asyncio.to_thread(export_session_report, sf, True),  # clean=True → _clean.md
+                    asyncio.to_thread(save_clean_reports, sf),
+                    return_exceptions=True,
+                )
+                clean_path = results[1]
+                if not clean_path or isinstance(clean_path, Exception):
+                    self._show_status("Report generation failed — check logs")
+                    return
+                md_text = Path(clean_path).read_text(encoding="utf-8")
+                await self.app.push_screen(ReportModal(md_text))
+                # Pandoc runs after the modal is visible — daemon=True is fine here
+                # (user has seen the report; docx is a bonus, not blocking)
+                threading.Thread(target=save_docx_report, args=(sf,), daemon=True).start()
+            except Exception as e:
+                self._show_status(f"Report error: {e}")
 
         asyncio.create_task(_save_then_show())
 

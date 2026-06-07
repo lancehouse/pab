@@ -1,6 +1,7 @@
 
 GTK:
-    
+
+        
 TUI:
 
 Classification Tab - many toggels need to be reversed.
@@ -16,4 +17,6 @@ Not:
 03 meidcal 
     all sections need a comments field to remove flag urgency.
     
-Obj : BMI screen failure.
+    
+neuro Ax - check locaiton of sensatio ntesting
+    

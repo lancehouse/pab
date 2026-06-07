@@ -15,7 +15,7 @@ from .sections.neurological import NeurologicalSection
 from .sections.sensory import SensorySection
 from .sections.functional import FunctionalSection
 from .sections.region_section import RegionTabContent
-from ..storage import objective_path, save_objective, save_raw_report, export_session_report
+from ..storage import objective_path, save_objective
 from ..grid_overview import GridOverview, OBJ_GRID_DATA, _section_has_data, section_to_cursor
 from .kb_loader import get_registry
 from .kb_panel import KBPanel
@@ -581,6 +581,4 @@ class ObjectiveAssessmentView(Container):
             assessment_data[region_id] = region_data
 
         save_objective(self.session_file, assessment_data, sections_complete)
-        save_raw_report(self.session_file)
-        export_session_report(self.session_file)
         self.post_message(self.SaveStateChanged("saved"))
