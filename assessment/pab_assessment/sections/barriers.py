@@ -323,17 +323,19 @@ class BarriersSection(BaseSection):
     # Cross-reference badges
     # ------------------------------------------------------------------
 
-    def update_cross_refs(self) -> None:
-        """Read sibling section data from session JSON and update inline badges."""
-        if not self.session_file:
-            return
-        try:
-            data = json.loads(Path(self.session_file).read_text())
-        except Exception:
-            return
+    def update_cross_refs(self, assessment: dict | None = None) -> None:
+        """Update inline badges from sibling section data."""
+        if assessment is None:
+            if not self.session_file:
+                return
+            try:
+                data = json.loads(Path(self.session_file).read_text())
+                assessment = data.get("assessment", {})
+            except Exception:
+                return
 
         def _sec(key):
-            v = data.get("assessment", {}).get(key)
+            v = assessment.get(key)
             return v if isinstance(v, dict) else {}
 
         med  = _sec("medical")

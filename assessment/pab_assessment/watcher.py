@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Callable, Awaitable
 
 SESSION_CURRENT = Path.home() / ".local/share/pab/session_current.json"
-POLL_INTERVAL   = 1.0    # seconds
+POLL_INTERVAL   = 2.0    # seconds
 
 
 class BodyChartWatcher:

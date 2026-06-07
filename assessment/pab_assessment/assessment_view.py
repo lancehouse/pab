@@ -35,6 +35,16 @@ from .storage import (
     load_objective,
 )
 
+_REPORT_INTERVAL = 60.0  # seconds between background report regeneration
+
+
+def _exit_generate_all_reports(session_file: str) -> None:
+    """Run all four report generators serially — called in a non-daemon thread at exit."""
+    save_raw_report(session_file)
+    export_session_report(session_file)
+    save_clean_reports(session_file)
+    save_docx_report(session_file)
+
 
 logger = logging.getLogger(__name__)
 
@@ -231,6 +241,7 @@ class AssessmentView(Container):
         self.sections = {}
         self.active_section_id = "01_consent"
         self._save_task: asyncio.Task | None = None
+        self._report_interval = None
         self._mounted = False
         self._pending_load: dict | None = None
         self._in_objective_mode = False
@@ -284,10 +295,13 @@ class AssessmentView(Container):
     def on_unmount(self) -> None:
         if self._save_task and not self._save_task.done():
             self._save_task.cancel()
+        if self._report_interval is not None:
+            self._report_interval.stop()
+            self._report_interval = None
         if self.session_file:
-            # daemon=False so the process waits for pandoc to finish before exiting
+            # daemon=False — process waits for all reports + pandoc before exit
             threading.Thread(
-                target=save_docx_report, args=(self.session_file,), daemon=False
+                target=_exit_generate_all_reports, args=(self.session_file,), daemon=False
             ).start()
 
     def load_session(self, session_file: str, data: dict) -> None:
@@ -413,6 +427,36 @@ class AssessmentView(Container):
         self._refresh_nav_indicators(nav_data)
         self._update_medical_tab_color()
 
+        # (Re)start 60s background report timer now that a session is loaded
+        if self._report_interval is not None:
+            self._report_interval.stop()
+        self._report_interval = self.set_interval(
+            _REPORT_INTERVAL,
+            lambda: asyncio.create_task(self._generate_reports()),
+        )
+
+    def _collect_assessment_for_xref(self) -> dict:
+        """Collect in-memory section data for cross-reference badge updates.
+
+        Reads widget values — no disk I/O. Called before update_cross_refs()
+        on section switch so badges never need to re-read the JSON file.
+        """
+        result = {}
+        for section_id, json_key in (
+            ("02_subjective",          "subjective"),
+            ("03_medical",             "medical"),
+            ("04_pain_classification", "pain_classification"),
+            ("05_outcome_measures",    "outcome_measures"),
+            ("06_diagnosis",           "diagnosis"),
+        ):
+            s = self.sections.get(section_id)
+            if s is not None:
+                try:
+                    result[json_key] = s.collect()
+                except Exception:
+                    result[json_key] = {}
+        return result
+
     def _show_section(self, section_id: str) -> None:
         """Switch to an assessment section; exits objective mode if needed."""
         if section_id == "04_objective":
@@ -448,19 +492,12 @@ class AssessmentView(Container):
         except Exception:
             pass
 
-        # Cross-reference refresh (assessment sections only)
-        if section_id == "04_pain_classification":
-            s = self.sections.get("04_pain_classification")
-            if s: s.update_cross_refs()
-        elif section_id == "05_outcome_measures":
-            s = self.sections.get("05_outcome_measures")
-            if s: s.update_cross_refs()
-        elif section_id == "06_diagnosis":
-            s = self.sections.get("06_diagnosis")
-            if s: s.update_cross_refs()
-        elif section_id == "07_barriers":
-            s = self.sections.get("07_barriers")
-            if s: s.update_cross_refs()
+        # Cross-reference refresh (assessment sections only) — use in-memory data
+        if section_id in ("04_pain_classification", "05_outcome_measures",
+                          "06_diagnosis", "07_barriers"):
+            s = self.sections.get(section_id)
+            if s:
+                s.update_cross_refs(self._collect_assessment_for_xref())
 
         # Subsection nav bar: only for certain assessment sections
         has_subnav = section_id in (
@@ -659,16 +696,25 @@ class AssessmentView(Container):
         self._refresh_nav_indicators({"sections_complete": sections_complete})
         self._update_medical_tab_color()
 
-        # Regenerate all reports concurrently in threads so the event loop stays live
-        sf = self.session_file
-        await asyncio.gather(
-            asyncio.to_thread(save_raw_report, sf),
-            asyncio.to_thread(export_session_report, sf),
-            asyncio.to_thread(save_clean_reports, sf),
-            asyncio.to_thread(save_docx_report, sf),
-        )
-
         self.post_message(self.SaveStateChanged("saved"))
+
+    async def _generate_reports(self) -> None:
+        """Regenerate raw + markdown reports in background threads.
+
+        Called by the 60s interval timer and by Ctrl+R before showing the modal.
+        Pandoc (docx) is NOT run here — only on Ctrl+R and at session close.
+        """
+        if not self.session_file:
+            return
+        sf = self.session_file
+        try:
+            await asyncio.gather(
+                asyncio.to_thread(save_raw_report, sf),
+                asyncio.to_thread(export_session_report, sf),
+                asyncio.to_thread(save_clean_reports, sf),
+            )
+        except Exception as e:
+            logger.error(f"_generate_reports failed: {e}")
 
     @on(ObjectiveAssessmentView.ExitRequested)
     def _on_obj_exit_requested(self) -> None:
