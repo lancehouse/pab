@@ -12,6 +12,7 @@ from textual.containers import Container
 from .tui import PhysioAssessmentTUI, SessionListScreen
 from .assessment_view import AssessmentView
 from .storage import load_assessment, load_session_current, clear_tui_pid
+from .objective.kb_db_screen import KBDBScreen
 
 
 class PhysioAssessment(App):
@@ -22,6 +23,7 @@ class PhysioAssessment(App):
 
     BINDINGS = [
         ("ctrl+q", "quit",              "Quit"),
+        Binding("ctrl+d", "open_kb_db", "KB DB", show=True, priority=True),
         # Section tab navigation — F1-F9 (priority=True overrides any focused widget)
         Binding("f1", "section_consent",          show=False, priority=True),
         Binding("f2", "section_subjective",       show=False, priority=True),
@@ -133,6 +135,10 @@ class PhysioAssessment(App):
 
     def on_unmount(self) -> None:
         clear_tui_pid()
+
+    def action_open_kb_db(self) -> None:
+        """Ctrl+D — open the full Clinical KB database browser."""
+        self.push_screen(KBDBScreen())
 
 
     # ------------------------------------------------------------------
