@@ -554,21 +554,32 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         _flush_section("### 02 Active Movement", sl)
 
     # ── 03 Passive Movement ───────────────────────────────────────────────────
+    def _fmt_pas(norm: str | None, txt: str | None) -> str:
+        n = norm == "Norm"
+        t = (txt or "").strip()
+        if n and t:
+            return f"Normal; {t}"
+        if n:
+            return "Normal"
+        return t or "—"
+
     if pas:
         sl = []
         op_def = [("Tx Flexion","op_tx_flex"),("Tx Extension","op_tx_ext"),
                   ("Tx Rot L","op_tx_rot_l"),("Tx Rot R","op_tx_rot_r"),
                   ("Lx Flexion","op_lx_flex"),("Lx Extension","op_lx_ext"),
                   ("Lx Lat Fl L","op_lx_lf_l"),("Lx Lat Fl R","op_lx_lf_r")]
-        op_rows = [[lbl, pas.get(f"{p}_ef") or "—", pas.get(f"{p}_resp") or "—"]
+        op_rows = [[lbl, _fmt_pas(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
                    for lbl, p in op_def]
-        _maybe_table(sl, "Overpressure", ["Movement", "End-feel", "Response"], op_rows)
-        paivm_levels = ["L5","L4","L3","L2","L1","T12","T11","T10","T9","T8"]
-        paivm_rows = [[lv, pas.get(f"pm_{lv}_c") or "—",
-                          pas.get(f"pm_{lv}_ul_l") or "—",
-                          pas.get(f"pm_{lv}_ul_r") or "—"]
+        _maybe_table(sl, "Overpressure", ["Movement", "Findings"], op_rows)
+        paivm_levels = ["T8","T9","T10","T11","T12","L1","L2","L3","L4","L5"]
+        paivm_rows = [[lv,
+                       _fmt_pas(pas.get(f"pm_{lv}_l_norm"), None),
+                       _fmt_pas(pas.get(f"pm_{lv}_c_norm"), None),
+                       _fmt_pas(pas.get(f"pm_{lv}_r_norm"), None),
+                       (pas.get(f"pm_{lv}_txt") or "").strip() or "—"]
                       for lv in paivm_levels]
-        _maybe_table(sl, "PAIVMs", ["Level", "Central", "UL Left", "UL Right"], paivm_rows)
+        _maybe_table(sl, "PAIVMs", ["Level", "L", "C", "R", "Notes"], paivm_rows)
         for key, lbl in [("pm_op_notes","*OP notes*"),("pm_paivm_notes","*PAIVM notes*")]:
             _maybe_note(sl, lbl, pas.get(key, "").strip())
         if any(k.startswith("cx_op_") or k.startswith("cx_pm_") for k in pas):
@@ -576,17 +587,19 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
                          ("Lat Fl L","cx_op_lf_l"),("Lat Fl R","cx_op_lf_r"),
                          ("Rotation L","cx_op_rot_l"),("Rotation R","cx_op_rot_r"),
                          ("Quadrant L","cx_op_quad_l"),("Quadrant R","cx_op_quad_r")]
-            cx_op_rows = [[lbl, pas.get(f"{p}_ef") or "—", pas.get(f"{p}_resp") or "—"]
+            cx_op_rows = [[lbl, _fmt_pas(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
                           for lbl, p in cx_op_def]
-            _maybe_table(sl, "Cervical OP", ["Movement","End-feel","Response"], cx_op_rows)
+            _maybe_table(sl, "Cervical OP", ["Movement","Findings"], cx_op_rows)
             cx_paivm_levels = [("C0/1","C0_1"),("C1/2","C1_2"),("C2","C2"),("C3","C3"),
                                ("C4","C4"),("C5","C5"),("C6","C6"),("C7","C7"),
                                ("T1","T1"),("T2","T2"),("T3","T3"),("T4","T4")]
-            cx_paivm_rows = [[lv, pas.get(f"cx_pm_{k}_ul_l") or "—",
-                                  pas.get(f"cx_pm_{k}_c") or "—",
-                                  pas.get(f"cx_pm_{k}_ul_r") or "—"]
+            cx_paivm_rows = [[lv,
+                               _fmt_pas(pas.get(f"cx_pm_{k}_l_norm"), None),
+                               _fmt_pas(pas.get(f"cx_pm_{k}_c_norm"), None),
+                               _fmt_pas(pas.get(f"cx_pm_{k}_r_norm"), None),
+                               (pas.get(f"cx_pm_{k}_txt") or "").strip() or "—"]
                              for lv, k in cx_paivm_levels]
-            _maybe_table(sl, "Cervical PAIVMs", ["Level","UL Left","Central","UL Right"], cx_paivm_rows)
+            _maybe_table(sl, "Cervical PAIVMs", ["Level","L","C","R","Notes"], cx_paivm_rows)
             for key, lbl in [("cx_pm_op_notes","*Cervical OP notes*"),
                               ("cx_pm_paivm_notes","*Cervical PAIVM notes*")]:
                 _maybe_note(sl, lbl, pas.get(key, "").strip())
@@ -596,17 +609,20 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
                          ("Abduction","sh_op_abd"),("Int Rot","sh_op_ir"),
                          ("Ext Rot","sh_op_er"),("Horiz Add","sh_op_hadd"),
                          ("Horiz Abd","sh_op_habd")]
-            sh_op_rows = [[lbl, pas.get(f"{p}_ef") or "—", pas.get(f"{p}_resp") or "—"]
+            sh_op_rows = [[lbl,
+                           _fmt_pas(pas.get(f"{p}_l_norm"), pas.get(f"{p}_l_txt")),
+                           _fmt_pas(pas.get(f"{p}_r_norm"), pas.get(f"{p}_r_txt"))]
                           for lbl, p in sh_op_def]
-            _maybe_table(sl, "Shoulder OP", ["Movement","End-feel","Response"], sh_op_rows)
+            _maybe_table(sl, "Shoulder OP", ["Movement","Left","Right"], sh_op_rows)
             for side, side_lbl in (("l","Left"),("r","Right")):
                 acc_rows = [[dir_lbl,
-                             pas.get(f"sh_acc_{dk}_{side}_grade") or "—",
-                             pas.get(f"sh_acc_{dk}_{side}_resp") or "—"]
+                             _fmt_pas(pas.get(f"sh_acc_{dk}_{side}_norm"),
+                                      pas.get(f"sh_acc_{dk}_{side}_txt"))]
                             for dir_lbl, dk in (("Inferior","inf"),("Posterior","post"),("Anterior","ant"))]
-                _maybe_table(sl, f"GH Accessory — {side_lbl}",
-                             ["Direction","Grade","Response"], acc_rows)
-            acsc_rows = [[lbl, pas.get(f"{pfx}_l") or "—", pas.get(f"{pfx}_r") or "—"]
+                _maybe_table(sl, f"GH Accessory — {side_lbl}", ["Direction","Findings"], acc_rows)
+            acsc_rows = [[lbl,
+                          _fmt_pas(pas.get(f"{pfx}_l_norm"), pas.get(f"{pfx}_l_txt")),
+                          _fmt_pas(pas.get(f"{pfx}_r_norm"), pas.get(f"{pfx}_r_txt"))]
                          for lbl, pfx in (("AC Stress","sh_ac_pm_stress"),
                                           ("AC Palp","sh_ac_pm_palp"),
                                           ("SC Stress","sh_sc_pm_stress"))]
@@ -1070,21 +1086,32 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         _flush_section("02 Active Movement", sl)
 
     # ── 03 Passive Movement ───────────────────────────────────────────────────
+    def _fmt_pas_r(norm: str | None, txt: str | None) -> str:
+        n = norm == "Norm"
+        t = (txt or "").strip()
+        if n and t:
+            return f"Normal; {t}"
+        if n:
+            return "Normal"
+        return t or "-"
+
     if pas:
         sl = []
         op_def = [("Tx Flexion","op_tx_flex"),("Tx Extension","op_tx_ext"),
                   ("Tx Rot L","op_tx_rot_l"),("Tx Rot R","op_tx_rot_r"),
                   ("Lx Flexion","op_lx_flex"),("Lx Extension","op_lx_ext"),
                   ("Lx Lat Fl L","op_lx_lf_l"),("Lx Lat Fl R","op_lx_lf_r")]
-        op_rows = [[lbl, pas.get(f"{p}_ef") or "-", pas.get(f"{p}_resp") or "-"]
+        op_rows = [[lbl, _fmt_pas_r(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
                    for lbl, p in op_def]
-        _maybe_table(sl, ["Overpressure", "End-feel", "Response"], op_rows)
-        paivm_levels = ["L5","L4","L3","L2","L1","T12","T11","T10","T9","T8"]
-        paivm_rows = [[lv, pas.get(f"pm_{lv}_c") or "-",
-                          pas.get(f"pm_{lv}_ul_l") or "-",
-                          pas.get(f"pm_{lv}_ul_r") or "-"]
+        _maybe_table(sl, ["Overpressure", "Findings"], op_rows)
+        paivm_levels = ["T8","T9","T10","T11","T12","L1","L2","L3","L4","L5"]
+        paivm_rows = [[lv,
+                       _fmt_pas_r(pas.get(f"pm_{lv}_l_norm"), None),
+                       _fmt_pas_r(pas.get(f"pm_{lv}_c_norm"), None),
+                       _fmt_pas_r(pas.get(f"pm_{lv}_r_norm"), None),
+                       (pas.get(f"pm_{lv}_txt") or "").strip() or "-"]
                       for lv in paivm_levels]
-        _maybe_table(sl, ["PAIVM", "Central", "UL Left", "UL Right"], paivm_rows)
+        _maybe_table(sl, ["PAIVM", "L", "C", "R", "Notes"], paivm_rows)
         for key, lbl in [("pm_op_notes","OP notes"),("pm_paivm_notes","PAIVM notes")]:
             v = pas.get(key, "").strip()
             if v:
@@ -1096,17 +1123,19 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
                            ("Lat Fl L","cx_op_lf_l"),("Lat Fl R","cx_op_lf_r"),
                            ("Rotation L","cx_op_rot_l"),("Rotation R","cx_op_rot_r"),
                            ("Quadrant L","cx_op_quad_l"),("Quadrant R","cx_op_quad_r")]
-            cx_op_rows_r = [[lbl, pas.get(f"{p}_ef") or "-", pas.get(f"{p}_resp") or "-"]
+            cx_op_rows_r = [[lbl, _fmt_pas_r(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
                             for lbl, p in cx_op_def_r]
-            _maybe_table(sl, ["Cervical OP","End-feel","Response"], cx_op_rows_r)
+            _maybe_table(sl, ["Cervical OP","Findings"], cx_op_rows_r)
             cx_paivm_levels_r = [("C0/1","C0_1"),("C1/2","C1_2"),("C2","C2"),("C3","C3"),
                                  ("C4","C4"),("C5","C5"),("C6","C6"),("C7","C7"),
                                  ("T1","T1"),("T2","T2"),("T3","T3"),("T4","T4")]
-            cx_paivm_rows_r = [[lv, pas.get(f"cx_pm_{k}_ul_l") or "-",
-                                     pas.get(f"cx_pm_{k}_c") or "-",
-                                     pas.get(f"cx_pm_{k}_ul_r") or "-"]
+            cx_paivm_rows_r = [[lv,
+                                 _fmt_pas_r(pas.get(f"cx_pm_{k}_l_norm"), None),
+                                 _fmt_pas_r(pas.get(f"cx_pm_{k}_c_norm"), None),
+                                 _fmt_pas_r(pas.get(f"cx_pm_{k}_r_norm"), None),
+                                 (pas.get(f"cx_pm_{k}_txt") or "").strip() or "-"]
                                 for lv, k in cx_paivm_levels_r]
-            _maybe_table(sl, ["Cervical PAIVMs","UL Left","Central","UL Right"], cx_paivm_rows_r)
+            _maybe_table(sl, ["Cervical PAIVMs","L","C","R","Notes"], cx_paivm_rows_r)
             for key, lbl in [("cx_pm_op_notes","Cervical OP notes"),
                               ("cx_pm_paivm_notes","Cervical PAIVM notes")]:
                 v = pas.get(key, "").strip()
@@ -1120,16 +1149,20 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
                            ("Abduction","sh_op_abd"),("Int Rot","sh_op_ir"),
                            ("Ext Rot","sh_op_er"),("Horiz Add","sh_op_hadd"),
                            ("Horiz Abd","sh_op_habd")]
-            sh_op_rows_r = [[lbl, pas.get(f"{p}_ef") or "-", pas.get(f"{p}_resp") or "-"]
+            sh_op_rows_r = [[lbl,
+                             _fmt_pas_r(pas.get(f"{p}_l_norm"), pas.get(f"{p}_l_txt")),
+                             _fmt_pas_r(pas.get(f"{p}_r_norm"), pas.get(f"{p}_r_txt"))]
                             for lbl, p in sh_op_def_r]
-            _maybe_table(sl, ["Shoulder OP","End-feel","Response"], sh_op_rows_r)
+            _maybe_table(sl, ["Shoulder OP","Left","Right"], sh_op_rows_r)
             for side, side_lbl in (("l","Left"),("r","Right")):
                 acc_rows_r = [[dir_lbl,
-                               pas.get(f"sh_acc_{dk}_{side}_grade") or "-",
-                               pas.get(f"sh_acc_{dk}_{side}_resp") or "-"]
+                               _fmt_pas_r(pas.get(f"sh_acc_{dk}_{side}_norm"),
+                                          pas.get(f"sh_acc_{dk}_{side}_txt"))]
                               for dir_lbl, dk in (("Inferior","inf"),("Posterior","post"),("Anterior","ant"))]
-                _maybe_table(sl, [f"GH Accessory {side_lbl}","Grade","Response"], acc_rows_r)
-            acsc_rows_r = [[lbl, pas.get(f"{pfx}_l") or "-", pas.get(f"{pfx}_r") or "-"]
+                _maybe_table(sl, [f"GH Accessory {side_lbl}","Findings"], acc_rows_r)
+            acsc_rows_r = [[lbl,
+                            _fmt_pas_r(pas.get(f"{pfx}_l_norm"), pas.get(f"{pfx}_l_txt")),
+                            _fmt_pas_r(pas.get(f"{pfx}_r_norm"), pas.get(f"{pfx}_r_txt"))]
                            for lbl, pfx in (("AC Stress","sh_ac_pm_stress"),
                                             ("AC Palp","sh_ac_pm_palp"),
                                             ("SC Stress","sh_sc_pm_stress"))]

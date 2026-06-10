@@ -1,6 +1,6 @@
 """Cervical Python table widgets — OP/PAIVM (passive) and neck strength (muscle).
 
-CervicalPassiveTables  — Overpressure end-feel/response + PAIVM grid C0/1–T4
+CervicalPassiveTables  — Overpressure Normal+text + PAIVM grid C0/1–T4
 CervicalMuscleTables   — Neck strength bilateral grid (kg)
 
 Both post CervicalTables.Changed when any field changes, which RegionContainer
@@ -13,9 +13,9 @@ from textual import events
 from textual.app import ComposeResult, on
 from textual.containers import Horizontal
 from textual.message import Message
-from textual.widgets import Label, Static, TextArea
+from textual.widgets import Button, Label, Static, TextArea
 
-from ...widgets import GridInput, RadioGroup
+from ...widgets import CycleButton, GridInput
 
 
 # ── Shared changed message ────────────────────────────────────────────────────
@@ -26,29 +26,12 @@ class CervicalTables:
         pass
 
 
-# ── Gang option sets ──────────────────────────────────────────────────────────
+# ── Normal toggle state ───────────────────────────────────────────────────────
 
-_END_FEEL = [
-    ("Norm",  "success"),
-    ("Hard",  "default"),
-    ("Sprng", "warning"),
-    ("Spasm", "error"),
-]
+_NORM_STATE = [("Norm", "success")]
 
-_OP_RESP = [
-    ("NoChg", "success"),
-    ("Repro", "warning"),
-    ("Incrs", "error"),
-    ("Decrs", "default"),
-]
 
-_PAIVM = [
-    ("Norm",  "success"),
-    ("↑R",    "warning"),
-    ("↑R+P",  "error"),
-    ("Pain",  "error"),
-    ("↓R",    "default"),
-]
+# ── Row / level definitions ───────────────────────────────────────────────────
 
 _CX_OP_ROWS: list[tuple[str, str]] = [
     ("Cx Flexion",    "cx_op_flex"),
@@ -61,7 +44,7 @@ _CX_OP_ROWS: list[tuple[str, str]] = [
     ("Cx Quadrant R", "cx_op_quad_r"),
 ]
 
-# (display_label, id_key) — id_key is used in field IDs (no slashes)
+# (display_label, id_key) — id_key avoids slashes for use in field IDs
 _CX_PAIVM_LEVELS: list[tuple[str, str]] = [
     ("C0/1", "C0_1"),
     ("C1/2", "C1_2"),
@@ -77,8 +60,6 @@ _CX_PAIVM_LEVELS: list[tuple[str, str]] = [
     ("T4",   "T4"),
 ]
 
-_CX_PAIVM_DIRS = ("ul_l", "c", "ul_r")
-
 _CX_NECK_ROWS: list[tuple[str, str]] = [
     ("Neck flexion",   "cx_neck_flex"),
     ("Neck extension", "cx_neck_ext"),
@@ -87,113 +68,158 @@ _CX_NECK_ROWS: list[tuple[str, str]] = [
 ]
 
 
-def _cx_paivm_id(level_key: str, direction: str) -> str:
-    return f"cx_pm_{level_key}_{direction}"
-
-
 # ── CervicalPassiveTables ─────────────────────────────────────────────────────
 
 class CervicalPassiveTables(Static):
-    """Overpressure end-feel/response table + PAIVM grid C0/1–T4 for cervical passive tab."""
+    """Overpressure Normal+text table + PAIVM grid C0/1–T4 for cervical passive tab."""
 
     DEFAULT_CSS = """
-    CervicalPassiveTables {
-        width: 100%;
-        height: auto;
-    }
+    CervicalPassiveTables { width: 100%; height: auto; }
+    CervicalPassiveTables CycleButton { width: 6; height: 3; }
+
     CervicalPassiveTables .op_hdr      { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
     CervicalPassiveTables .op_hdr_lbl  { width: 16; }
-    CervicalPassiveTables .op_hdr_ef   { width: 24; text-align: center; }
-    CervicalPassiveTables .op_hdr_gap  { width: 2; }
-    CervicalPassiveTables .op_hdr_resp { width: 24; text-align: center; }
+    CervicalPassiveTables .op_hdr_norm { width: 6; text-align: center; }
+    CervicalPassiveTables .op_hdr_txt  { width: 1fr; }
     CervicalPassiveTables .op_row      { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
     CervicalPassiveTables .op_row_lbl  { width: 16; height: 3; content-align: left middle; }
-    CervicalPassiveTables .op_gap      { width: 2; height: 3; }
-    CervicalPassiveTables .paivm_hdr     { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
-    CervicalPassiveTables .paivm_hdr_lbl { width: 6; }
-    CervicalPassiveTables .paivm_hdr_col { width: 30; text-align: center; }
-    CervicalPassiveTables .paivm_hdr_gap { width: 2; }
-    CervicalPassiveTables .paivm_row     { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
-    CervicalPassiveTables .paivm_row_lbl { width: 6; height: 3; content-align: left middle; }
-    CervicalPassiveTables .paivm_gap     { width: 2; height: 3; }
+    CervicalPassiveTables .op_txt      { width: 1fr; height: 3; padding: 0 1; }
+
+    CervicalPassiveTables .paivm_hdr      { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
+    CervicalPassiveTables .paivm_hdr_lbl  { width: 6; }
+    CervicalPassiveTables .paivm_hdr_norm { width: 6; text-align: center; }
+    CervicalPassiveTables .paivm_hdr_txt  { width: 1fr; }
+    CervicalPassiveTables .paivm_row      { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
+    CervicalPassiveTables .paivm_row_lbl  { width: 6; height: 3; content-align: left middle; }
+    CervicalPassiveTables .paivm_txt      { width: 1fr; height: 3; padding: 0 1; }
+
     CervicalPassiveTables TextArea { height: auto; min-height: 2; padding: 0 1; }
     CervicalPassiveTables Label    { height: auto; margin-top: 0; }
     """
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        self._grid:     list[list[str]] = []
-        self._grid_pos: dict[str, tuple[int, int]] = {}
+        self._op_grid:     list[list[str]] = []
+        self._op_grid_pos: dict[str, tuple[int, int]] = {}
+        self._pm_grid:     list[list[str]] = []
+        self._pm_grid_pos: dict[str, tuple[int, int]] = {}
 
     def compose(self) -> ComposeResult:
+        # ── Overpressure ──────────────────────────────────────────────────────
         yield Label("Overpressure", classes="subsection_header")
         with Horizontal(classes="op_hdr"):
-            yield Static("",          classes="op_hdr_lbl")
-            yield Static("End-feel",  classes="op_hdr_ef")
-            yield Static("",          classes="op_hdr_gap")
-            yield Static("Response",  classes="op_hdr_resp")
+            yield Static("",       classes="op_hdr_lbl")
+            yield Static("Norm",   classes="op_hdr_norm")
+            yield Static("Notes",  classes="op_hdr_txt")
         for label, prefix in _CX_OP_ROWS:
             with Horizontal(classes="op_row"):
                 yield Static(label, classes="op_row_lbl")
-                yield RadioGroup(_END_FEEL, id=f"{prefix}_ef")
-                yield Static("",    classes="op_gap")
-                yield RadioGroup(_OP_RESP,  id=f"{prefix}_resp")
+                yield CycleButton(_NORM_STATE, id=f"{prefix}_norm")
+                yield GridInput(placeholder="findings / // reassessment",
+                                id=f"{prefix}_txt", classes="op_txt")
         yield Label("OP notes:")
         yield TextArea(id="cx_pm_op_notes", language="plain")
 
+        # ── PAIVMs ────────────────────────────────────────────────────────────
         yield Label("PAIVMs", classes="subsection_header")
         with Horizontal(classes="paivm_hdr"):
-            yield Static("",        classes="paivm_hdr_lbl")
-            yield Static("Left",    classes="paivm_hdr_col")
-            yield Static("",        classes="paivm_hdr_gap")
-            yield Static("Central", classes="paivm_hdr_col")
-            yield Static("",        classes="paivm_hdr_gap")
-            yield Static("Right",   classes="paivm_hdr_col")
+            yield Static("",       classes="paivm_hdr_lbl")
+            yield Static("L",      classes="paivm_hdr_norm")
+            yield Static("C",      classes="paivm_hdr_norm")
+            yield Static("R",      classes="paivm_hdr_norm")
+            yield Static("Notes",  classes="paivm_hdr_txt")
         for display, key in _CX_PAIVM_LEVELS:
             with Horizontal(classes="paivm_row"):
                 yield Static(display, classes="paivm_row_lbl")
-                yield RadioGroup(_PAIVM, id=_cx_paivm_id(key, "ul_l"))
-                yield Static("",        classes="paivm_gap")
-                yield RadioGroup(_PAIVM, id=_cx_paivm_id(key, "c"))
-                yield Static("",        classes="paivm_gap")
-                yield RadioGroup(_PAIVM, id=_cx_paivm_id(key, "ul_r"))
+                yield CycleButton(_NORM_STATE, id=f"cx_pm_{key}_l_norm")
+                yield CycleButton(_NORM_STATE, id=f"cx_pm_{key}_c_norm")
+                yield CycleButton(_NORM_STATE, id=f"cx_pm_{key}_r_norm")
+                yield GridInput(placeholder="grade / findings",
+                                id=f"cx_pm_{key}_txt", classes="paivm_txt")
         yield Label("PAIVM notes:")
         yield TextArea(id="cx_pm_paivm_notes", language="plain")
 
     def on_mount(self) -> None:
+        for row_idx, (_, prefix) in enumerate(_CX_OP_ROWS):
+            row = [f"{prefix}_norm_btn", f"{prefix}_txt"]
+            self._op_grid.append(row)
+            for col_idx, wid in enumerate(row):
+                self._op_grid_pos[wid] = (row_idx, col_idx)
         for row_idx, (_, key) in enumerate(_CX_PAIVM_LEVELS):
-            row = [_cx_paivm_id(key, d) for d in _CX_PAIVM_DIRS]
-            self._grid.append(row)
-            for col_idx, rg_id in enumerate(row):
-                self._grid_pos[rg_id] = (row_idx, col_idx)
+            row = [f"cx_pm_{key}_l_norm_btn", f"cx_pm_{key}_c_norm_btn",
+                   f"cx_pm_{key}_r_norm_btn", f"cx_pm_{key}_txt"]
+            self._pm_grid.append(row)
+            for col_idx, wid in enumerate(row):
+                self._pm_grid_pos[wid] = (row_idx, col_idx)
+
+    def _nav(self, grid: list[list[str]], grid_pos: dict[str, tuple[int, int]],
+             fid: str, direction: str) -> bool:
+        if fid not in grid_pos:
+            return False
+        row, col = grid_pos[fid]
+        target_id = None
+        if direction == "up" and row > 0:
+            tc = min(col, len(grid[row - 1]) - 1)
+            target_id = grid[row - 1][tc]
+        elif direction == "down" and row < len(grid) - 1:
+            tc = min(col, len(grid[row + 1]) - 1)
+            target_id = grid[row + 1][tc]
+        elif direction == "left" and col > 0:
+            target_id = grid[row][col - 1]
+        elif direction == "right" and col < len(grid[row]) - 1:
+            target_id = grid[row][col + 1]
+        if target_id is None:
+            return False
+        try:
+            self.query_one(f"#{target_id}").focus()
+            return True
+        except Exception:
+            return False
 
     def on_key(self, event: events.Key) -> None:
         focused = self.app.focused
-        if not isinstance(focused, RadioGroup):
+        if not isinstance(focused, Button):
             return
         fid = focused.id or ""
-        if fid not in self._grid_pos:
+        if event.key not in ("up", "down", "left", "right"):
             return
-        if event.key not in ("up", "down"):
-            return
-        row, col = self._grid_pos[fid]
-        target_row = row - 1 if event.key == "up" else row + 1
-        if 0 <= target_row < len(self._grid):
-            try:
-                self.query_one(f"#{self._grid[target_row][col]}", RadioGroup).focus()
-                event.stop()
-            except Exception:
-                pass
+        for grid, grid_pos in [
+            (self._op_grid, self._op_grid_pos),
+            (self._pm_grid, self._pm_grid_pos),
+        ]:
+            if fid in grid_pos:
+                if self._nav(grid, grid_pos, fid, event.key):
+                    event.stop()
+                return
 
-    @on(RadioGroup.Changed)
+    @on(GridInput.Navigate)
+    def _on_grid_navigate(self, event: GridInput.Navigate) -> None:
+        focused = self.app.focused
+        if focused is None:
+            return
+        fid = focused.id or ""
+        for grid, grid_pos in [
+            (self._op_grid, self._op_grid_pos),
+            (self._pm_grid, self._pm_grid_pos),
+        ]:
+            if fid in grid_pos:
+                self._nav(grid, grid_pos, fid, event.direction)
+                event.stop()
+                return
+        event.stop()
+
+    @on(CycleButton.Changed)
+    @on(GridInput.Changed)
     @on(TextArea.Changed, selector="TextArea")
     def _on_field_changed(self) -> None:
         self.post_message(CervicalTables.Changed())
 
     def collect(self) -> dict:
         data: dict = {}
-        for rg in self.query(RadioGroup):
-            data[rg.id] = rg.value
+        for cb in self.query(CycleButton):
+            data[cb.id] = cb.value
+        for gi in self.query(GridInput):
+            data[gi.id] = gi.value.strip()
         for tid in ("cx_pm_op_notes", "cx_pm_paivm_notes"):
             try:
                 data[tid] = self.query_one(f"#{tid}", TextArea).text
@@ -202,8 +228,10 @@ class CervicalPassiveTables(Static):
         return data
 
     def load(self, data: dict) -> None:
-        for rg in self.query(RadioGroup):
-            rg.set_value(data.get(rg.id))
+        for cb in self.query(CycleButton):
+            cb.set_value(data.get(cb.id))
+        for gi in self.query(GridInput):
+            gi.value = data.get(gi.id, "")
         for tid in ("cx_pm_op_notes", "cx_pm_paivm_notes"):
             try:
                 self.query_one(f"#{tid}", TextArea).text = data.get(tid, "")

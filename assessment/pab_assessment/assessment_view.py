@@ -864,9 +864,6 @@ class AssessmentView(Container):
     def on_neurological_section_field_changed(self) -> None:
         self._schedule_save()
 
-    def on_passive_movement_section_field_changed(self) -> None:
-        self._schedule_save()
-
     def on_sensory_section_field_changed(self) -> None:
         self._schedule_save()
 
