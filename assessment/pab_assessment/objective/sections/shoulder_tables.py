@@ -86,13 +86,16 @@ class ShoulderPassiveTables(Static):
     ShoulderPassiveTables .op_txt      { width: 1fr; height: 3; padding: 0 1; }
 
     /* GH accessory glides */
-    ShoulderPassiveTables .acc_hdr      { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
-    ShoulderPassiveTables .acc_hdr_lbl  { width: 12; }
-    ShoulderPassiveTables .acc_hdr_norm { width: 6; text-align: center; }
-    ShoulderPassiveTables .acc_hdr_txt  { width: 1fr; }
-    ShoulderPassiveTables .acc_row      { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
-    ShoulderPassiveTables .acc_row_lbl  { width: 12; height: 3; content-align: left middle; }
-    ShoulderPassiveTables .acc_txt      { width: 1fr; height: 3; padding: 0 1; }
+    ShoulderPassiveTables .acc_hdr         { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
+    ShoulderPassiveTables .acc_hdr_lbl     { width: 12; }
+    ShoulderPassiveTables .acc_hdr_side    { width: 1fr; text-align: center; }
+    ShoulderPassiveTables .acc_subhdr      { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
+    ShoulderPassiveTables .acc_subhdr_lbl  { width: 12; }
+    ShoulderPassiveTables .acc_subhdr_norm { width: 6; text-align: center; }
+    ShoulderPassiveTables .acc_subhdr_txt  { width: 1fr; }
+    ShoulderPassiveTables .acc_row         { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
+    ShoulderPassiveTables .acc_row_lbl     { width: 12; height: 3; content-align: left middle; }
+    ShoulderPassiveTables .acc_txt         { width: 1fr; height: 3; padding: 0 1; }
 
     /* AC / SC joint — bilateral */
     ShoulderPassiveTables .acsc_hdr      { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
@@ -139,18 +142,26 @@ class ShoulderPassiveTables(Static):
         yield TextArea(id="sh_pm_op_notes", language="plain")
 
         # ── GH Accessory glides ───────────────────────────────────────────────
-        for side, side_label in (("l", "Left"), ("r", "Right")):
-            yield Label(f"GH Accessory — {side_label}", classes="subsection_header")
-            with Horizontal(classes="acc_hdr"):
-                yield Static("",       classes="acc_hdr_lbl")
-                yield Static("Norm",   classes="acc_hdr_norm")
-                yield Static("Notes",  classes="acc_hdr_txt")
-            for dir_label, dir_key in _ACC_DIRS:
-                with Horizontal(classes="acc_row"):
-                    yield Static(dir_label, classes="acc_row_lbl")
-                    yield CycleButton(_NORM_STATE, id=f"sh_acc_{dir_key}_{side}_norm")
-                    yield GridInput(placeholder="grade / findings",
-                                    id=f"sh_acc_{dir_key}_{side}_txt", classes="acc_txt")
+        yield Label("GH Accessory Glides", classes="subsection_header")
+        with Horizontal(classes="acc_hdr"):
+            yield Static("",       classes="acc_hdr_lbl")
+            yield Static("Left",   classes="acc_hdr_side")
+            yield Static("Right",  classes="acc_hdr_side")
+        with Horizontal(classes="acc_subhdr"):
+            yield Static("",       classes="acc_subhdr_lbl")
+            yield Static("Norm",   classes="acc_subhdr_norm")
+            yield Static("Notes",  classes="acc_subhdr_txt")
+            yield Static("Norm",   classes="acc_subhdr_norm")
+            yield Static("Notes",  classes="acc_subhdr_txt")
+        for dir_label, dir_key in _ACC_DIRS:
+            with Horizontal(classes="acc_row"):
+                yield Static(dir_label, classes="acc_row_lbl")
+                yield CycleButton(_NORM_STATE, id=f"sh_acc_{dir_key}_l_norm")
+                yield GridInput(placeholder="grade / findings",
+                                id=f"sh_acc_{dir_key}_l_txt", classes="acc_txt")
+                yield CycleButton(_NORM_STATE, id=f"sh_acc_{dir_key}_r_norm")
+                yield GridInput(placeholder="grade / findings",
+                                id=f"sh_acc_{dir_key}_r_txt", classes="acc_txt")
         yield Label("Accessory notes:")
         yield TextArea(id="sh_pm_acc_notes", language="plain")
 
@@ -183,16 +194,10 @@ class ShoulderPassiveTables(Static):
             self._grid.append(row)
             for col_idx, wid in enumerate(row):
                 self._grid_pos[wid] = (row_idx, col_idx)
-        # GH Acc Left (2 cols)
+        # GH Acc (4 cols, one row per direction)
         for _, dir_key in _ACC_DIRS:
-            row = [f"sh_acc_{dir_key}_l_norm_btn", f"sh_acc_{dir_key}_l_txt"]
-            row_idx = len(self._grid)
-            self._grid.append(row)
-            for col_idx, wid in enumerate(row):
-                self._grid_pos[wid] = (row_idx, col_idx)
-        # GH Acc Right (2 cols)
-        for _, dir_key in _ACC_DIRS:
-            row = [f"sh_acc_{dir_key}_r_norm_btn", f"sh_acc_{dir_key}_r_txt"]
+            row = [f"sh_acc_{dir_key}_l_norm_btn", f"sh_acc_{dir_key}_l_txt",
+                   f"sh_acc_{dir_key}_r_norm_btn", f"sh_acc_{dir_key}_r_txt"]
             row_idx = len(self._grid)
             self._grid.append(row)
             for col_idx, wid in enumerate(row):

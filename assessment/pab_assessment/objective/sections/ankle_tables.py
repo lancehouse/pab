@@ -51,15 +51,16 @@ class AnklePassiveTables(Static):
     AnklePassiveTables { width: 100%; height: auto; }
     AnklePassiveTables CycleButton { width: 6; height: 3; }
 
-    AnklePassiveTables .op_hdr      { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
-    AnklePassiveTables .op_hdr_lbl  { width: 18; }
-    AnklePassiveTables .op_hdr_side { width: 3; text-align: center; }
-    AnklePassiveTables .op_hdr_norm { width: 6; text-align: center; }
-    AnklePassiveTables .op_hdr_txt  { width: 1fr; }
-    AnklePassiveTables .op_row      { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
-    AnklePassiveTables .op_row_lbl  { width: 18; height: 3; content-align: left middle; }
-    AnklePassiveTables .op_side     { width: 3; height: 3; content-align: center middle; color: $text-muted; }
-    AnklePassiveTables .op_txt      { width: 1fr; height: 3; padding: 0 1; }
+    AnklePassiveTables .op_hdr         { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
+    AnklePassiveTables .op_hdr_lbl     { width: 18; }
+    AnklePassiveTables .op_hdr_side    { width: 1fr; text-align: center; }
+    AnklePassiveTables .op_subhdr      { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
+    AnklePassiveTables .op_subhdr_lbl  { width: 18; }
+    AnklePassiveTables .op_subhdr_norm { width: 6; text-align: center; }
+    AnklePassiveTables .op_subhdr_txt  { width: 1fr; }
+    AnklePassiveTables .op_row         { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
+    AnklePassiveTables .op_row_lbl     { width: 18; height: 3; content-align: left middle; }
+    AnklePassiveTables .op_txt         { width: 1fr; height: 3; padding: 0 1; }
 
     AnklePassiveTables TextArea { height: auto; min-height: 3; max-height: 12; padding: 0 1; }
     AnklePassiveTables Label    { height: auto; margin-top: 0; }
@@ -74,47 +75,63 @@ class AnklePassiveTables(Static):
         yield Label("Overpressure", classes="subsection_header")
         with Horizontal(classes="op_hdr"):
             yield Static("",      classes="op_hdr_lbl")
-            yield Static("",      classes="op_hdr_side")
-            yield Static("Norm",  classes="op_hdr_norm")
-            yield Static("Notes", classes="op_hdr_txt")
+            yield Static("Left",  classes="op_hdr_side")
+            yield Static("Right", classes="op_hdr_side")
+        with Horizontal(classes="op_subhdr"):
+            yield Static("",      classes="op_subhdr_lbl")
+            yield Static("Norm",  classes="op_subhdr_norm")
+            yield Static("Notes", classes="op_subhdr_txt")
+            yield Static("Norm",  classes="op_subhdr_norm")
+            yield Static("Notes", classes="op_subhdr_txt")
         for label, prefix in _AK_OP_ROWS:
-            for side in ("l", "r"):
-                with Horizontal(classes="op_row"):
-                    yield Static(label if side == "l" else "", classes="op_row_lbl")
-                    yield Static(side.upper(), classes="op_side")
-                    yield CycleButton(_NORM_STATE, id=f"{prefix}_{side}_norm")
-                    yield GridInput(placeholder="findings / //",
-                                    id=f"{prefix}_{side}_txt", classes="op_txt")
+            with Horizontal(classes="op_row"):
+                yield Static(label, classes="op_row_lbl")
+                yield CycleButton(_NORM_STATE, id=f"{prefix}_l_norm")
+                yield GridInput(placeholder="findings / //",
+                                id=f"{prefix}_l_txt", classes="op_txt")
+                yield CycleButton(_NORM_STATE, id=f"{prefix}_r_norm")
+                yield GridInput(placeholder="findings / //",
+                                id=f"{prefix}_r_txt", classes="op_txt")
 
         yield Label("Accessory Glides", classes="subsection_header")
+        with Horizontal(classes="op_hdr"):
+            yield Static("",      classes="op_hdr_lbl")
+            yield Static("Left",  classes="op_hdr_side")
+            yield Static("Right", classes="op_hdr_side")
+        with Horizontal(classes="op_subhdr"):
+            yield Static("",      classes="op_subhdr_lbl")
+            yield Static("Norm",  classes="op_subhdr_norm")
+            yield Static("Notes", classes="op_subhdr_txt")
+            yield Static("Norm",  classes="op_subhdr_norm")
+            yield Static("Notes", classes="op_subhdr_txt")
         for label, prefix in _AK_ACC_ROWS:
-            for side in ("l", "r"):
-                with Horizontal(classes="op_row"):
-                    yield Static(label if side == "l" else "", classes="op_row_lbl")
-                    yield Static(side.upper(), classes="op_side")
-                    yield CycleButton(_NORM_STATE, id=f"{prefix}_{side}_norm")
-                    yield GridInput(placeholder="grade / findings",
-                                    id=f"{prefix}_{side}_txt", classes="op_txt")
+            with Horizontal(classes="op_row"):
+                yield Static(label, classes="op_row_lbl")
+                yield CycleButton(_NORM_STATE, id=f"{prefix}_l_norm")
+                yield GridInput(placeholder="grade / findings",
+                                id=f"{prefix}_l_txt", classes="op_txt")
+                yield CycleButton(_NORM_STATE, id=f"{prefix}_r_norm")
+                yield GridInput(placeholder="grade / findings",
+                                id=f"{prefix}_r_txt", classes="op_txt")
 
         yield Label("OP notes:")
         yield TextArea(id="ak_op_notes", language="plain")
 
     def on_mount(self) -> None:
-        row_idx = 0
         for _, prefix in _AK_OP_ROWS:
-            for side in ("l", "r"):
-                row = [f"{prefix}_{side}_norm_btn", f"{prefix}_{side}_txt"]
-                self._op_grid.append(row)
-                for col_idx, wid in enumerate(row):
-                    self._op_grid_pos[wid] = (row_idx, col_idx)
-                row_idx += 1
+            row = [f"{prefix}_l_norm_btn", f"{prefix}_l_txt",
+                   f"{prefix}_r_norm_btn", f"{prefix}_r_txt"]
+            row_idx = len(self._op_grid)
+            self._op_grid.append(row)
+            for col_idx, wid in enumerate(row):
+                self._op_grid_pos[wid] = (row_idx, col_idx)
         for _, prefix in _AK_ACC_ROWS:
-            for side in ("l", "r"):
-                row = [f"{prefix}_{side}_norm_btn", f"{prefix}_{side}_txt"]
-                self._op_grid.append(row)
-                for col_idx, wid in enumerate(row):
-                    self._op_grid_pos[wid] = (row_idx, col_idx)
-                row_idx += 1
+            row = [f"{prefix}_l_norm_btn", f"{prefix}_l_txt",
+                   f"{prefix}_r_norm_btn", f"{prefix}_r_txt"]
+            row_idx = len(self._op_grid)
+            self._op_grid.append(row)
+            for col_idx, wid in enumerate(row):
+                self._op_grid_pos[wid] = (row_idx, col_idx)
 
     def _nav(self, fid: str, direction: str) -> bool:
         if fid not in self._op_grid_pos:
