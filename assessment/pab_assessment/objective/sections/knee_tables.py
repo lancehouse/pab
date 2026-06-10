@@ -60,7 +60,7 @@ class KneePassiveTables(Static):
     KneePassiveTables .op_side     { width: 3; height: 3; content-align: center middle; color: $text-muted; }
     KneePassiveTables .op_txt      { width: 1fr; height: 3; padding: 0 1; }
 
-    KneePassiveTables TextArea { height: auto; min-height: 2; padding: 0 1; }
+    KneePassiveTables TextArea { height: 3; min-height: 2; padding: 0 1; }
     KneePassiveTables Label    { height: auto; margin-top: 0; }
     """
 
@@ -200,6 +200,7 @@ class KneeMuscleTables(Static):
     KneeMuscleTables .str_lbl     { width: 22; height: 3; content-align: left middle; }
     KneeMuscleTables .str_inp     { width: 1fr; height: 3; padding: 0 1; }
     KneeMuscleTables Label        { height: auto; margin-top: 0; }
+    KneeMuscleTables TextArea     { height: 3; min-height: 2; padding: 0 1; }
     """
 
     def __init__(self, **kwargs) -> None:
