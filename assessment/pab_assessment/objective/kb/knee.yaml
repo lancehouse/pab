@@ -1,0 +1,209 @@
+# Knee Knowledge Base
+# Keys match YAML row ids (section yaml/knee.yaml special_tests).
+# Sn/Sp from Scholten et al. 2003 and Kocher et al. 2001 unless noted.
+
+# ── ACL ───────────────────────────────────────────────────────────────────────
+
+kn_lachman:
+  label: "Lachman Test"
+  purpose: >
+    Primary ACL integrity test. Most sensitive single test for ACL rupture.
+    Tests anteromedial bundle primarily.
+  position: "Supine. Knee 20–30° flexion, hip slightly externally rotated."
+  procedure: >
+    Stabilise distal femur with one hand. Apply anterior force to proximal
+    tibia with opposite hand. Positive = soft/absent endpoint or > 5 mm
+    anterior tibial translation compared to contralateral.
+  sn_sp: "Sn 87% / Sp 93% (meta-analysis; Scholten 2003)"
+  cluster: "ACL cluster: Lachman + Anterior Drawer + Pivot Shift — Lachman is first-line; Pivot Shift most specific."
+  note: "Sensitivity lower in acute injuries due to guarding/swelling. Repeat at 2–4 weeks if inconclusive."
+
+kn_ant_draw:
+  label: "Anterior Drawer Test"
+  purpose: >
+    Assesses ACL integrity with knee at 90° (less sensitive than Lachman
+    due to posterior horn meniscus as secondary stabiliser).
+  position: "Supine. Hip flexed 45°, knee flexed 90°. Examiner sits on patient's foot."
+  procedure: >
+    Grip proximal tibia (thumbs on joint line). Apply anterior force.
+    Positive = > 5 mm anterior translation compared to contralateral or
+    absent hard endpoint.
+  sn_sp: "Sn 54% / Sp 90% (acute); Sn 78% / Sp 94% (chronic)"
+  cluster: "ACL cluster: lower sensitivity than Lachman — most useful when Lachman is equivocal."
+
+kn_pivot:
+  label: "Pivot Shift Test"
+  purpose: >
+    Most specific test for ACL rupture. Recreates functional anterolateral
+    rotatory instability by simulating the subluxation-reduction event.
+  position: "Supine. Hip flexed ~30°, internally rotated."
+  procedure: >
+    Hold foot in IR, apply valgus force, and slowly flex from 0° to ~30°.
+    Positive = sudden clunk (subluxation/reduction) of lateral tibial plateau
+    at ~20–30° flexion. Grade: glide, clunk, or gross.
+  sn_sp: "Sn 28–48% (acute) / Sn 82–98% (under anaesthesia) / Sp 98%"
+  cluster: "ACL cluster: highest specificity — positive pivot shift virtually confirms ACL rupture."
+  note: "Often negative in acute phase due to pain/guarding. Best performed under anaesthesia for grading."
+
+# ── PCL ───────────────────────────────────────────────────────────────────────
+
+kn_post_draw:
+  label: "Posterior Drawer Test"
+  purpose: >
+    Primary test for PCL integrity. Assesses posterior tibial translation
+    relative to femur with knee at 90°.
+  position: "Supine. Hip flexed 45°, knee flexed 90°."
+  procedure: >
+    Apply posterior force to proximal tibia. Positive = > 5 mm posterior
+    translation or absent posterior endpoint. Grade I: 0–5 mm, Grade II:
+    5–10 mm, Grade III: > 10 mm.
+  sn_sp: "Sn 90% / Sp 99% for PCL (Rubinstein 1994)"
+  cluster: "PCL cluster: Posterior Drawer is most sensitive — combine with Posterior Sag for confirmation."
+
+kn_post_sag:
+  label: "Posterior Sag (Godfrey) Test"
+  purpose: >
+    Passive test for PCL rupture via gravity-assisted posterior tibial
+    subluxation. Useful when drawer tests are painful.
+  position: "Supine. Hip and knee both at 90°. Examiner supports leg under heel."
+  procedure: >
+    Allow gravity to act on proximal tibia. Positive = visible posterior
+    sag of tibial tuberosity compared to contralateral limb when viewed
+    from the side.
+  sn_sp: "Sn 79% / Sp 100% (PCL)"
+  cluster: "PCL cluster: Posterior Sag is highly specific — best confirmatory test when positive."
+
+# ── Meniscus ──────────────────────────────────────────────────────────────────
+
+kn_mcmurray:
+  label: "McMurray's Test"
+  purpose: >
+    Screens for meniscal tears by applying rotational shear force to
+    the meniscus during flexion/extension.
+  position: "Supine. Hip and knee in full flexion."
+  procedure: >
+    For medial: valgus stress + ER of tibia, extend slowly. For lateral:
+    varus + IR of tibia, extend slowly. Positive = click, clunk, or pain
+    at joint line during arc of motion.
+  sn_sp: "Sn 53% / Sp 59% (Hegedus 2007); specificity higher if click present"
+  cluster: "Meniscus cluster: McMurray + Thessaly + JLT — 2/3 positive increases diagnostic confidence."
+  note: "Clicking alone without pain is not specific. Pain at joint line during arc is more significant."
+
+kn_thessaly:
+  label: "Thessaly Test"
+  purpose: >
+    Functional meniscal load test performed at 5° and 20° knee flexion
+    with medial/lateral rotation. More sensitive than McMurray in studies.
+  position: "Standing on test limb at 5° knee flexion. Examiner supports patient's hands."
+  procedure: >
+    Patient rotates body medially and laterally 3 times at 5°, then at
+    20° flexion. Positive = medial or lateral joint line pain, locking,
+    or catching at 20°.
+  sn_sp: "Sn 89% / Sp 97% (Karachalios 2005) — at 20° flexion"
+  cluster: "Meniscus cluster: Thessaly at 20° is most sensitive functional meniscal test."
+
+kn_jlt:
+  label: "Joint Line Tenderness"
+  purpose: >
+    Palpation of medial and lateral joint lines as a proxy for meniscal
+    pathology, combined with provocation tests to improve specificity.
+  position: "Supine. Knee flexed 90°."
+  procedure: >
+    Palpate along medial then lateral joint line with firm pressure.
+    Positive = pain at joint line, particularly if focal and maximal
+    at posteromedial or posterolateral corner.
+  sn_sp: "Sn 77% (medial) / Sp 90% (lateral) — Hegedus 2007"
+  cluster: "Meniscus cluster: JLT alone is suggestive; reliability highest when combined with McMurray or Thessaly."
+
+# ── MCL ───────────────────────────────────────────────────────────────────────
+
+kn_valgus_0:
+  label: "Valgus Stress at 0°"
+  purpose: >
+    Tests integrity of both MCL and posterior capsule. At full extension,
+    a positive test implicates posterior capsule in addition to MCL.
+  position: "Supine. Knee in full extension (0°)."
+  procedure: >
+    Apply valgus stress with one hand at lateral knee, other hand
+    stabilises ankle. Positive = medial joint line pain or laxity (>
+    5 mm) compared to contralateral.
+  sn_sp: "Sn 86% / Sp 88% (combined MCL + posterior capsule)"
+  cluster: "MCL cluster: positive at 0° = involves posterior capsule; positive at 30° only = isolated MCL."
+
+kn_valgus_30:
+  label: "Valgus Stress at 30°"
+  purpose: >
+    Isolates MCL by releasing posterior capsule tension. Most specific
+    test for isolated medial collateral ligament injury.
+  position: "Supine. Knee in 30° flexion."
+  procedure: >
+    Apply valgus stress. Positive = medial pain or > 5 mm laxity. Grade
+    by laxity: I (< 5 mm), II (5–10 mm, partial), III (> 10 mm, complete).
+  sn_sp: "Sn 91% / Sp 93% (isolated MCL)"
+  cluster: "MCL cluster: 30° valgus isolates MCL — positive at 30° but negative at 0° = isolated MCL injury."
+
+# ── LCL ───────────────────────────────────────────────────────────────────────
+
+kn_varus_0:
+  label: "Varus Stress at 0°"
+  purpose: >
+    Tests LCL and posterolateral corner (PLC) integrity at full extension.
+    At 0°, posterior capsule also contributes.
+  position: "Supine. Knee in full extension."
+  procedure: >
+    Apply varus force. Positive = lateral joint line pain or > 5 mm
+    laxity compared to contralateral.
+  sn_sp: "Sn 82% / Sp 90% (LCL + PLC at 0°)"
+  cluster: "LCL cluster: positive at 0° and 30° suggests PLC involvement. Isolated at 30° = LCL only."
+
+kn_varus_30:
+  label: "Varus Stress at 30°"
+  purpose: >
+    Isolates lateral collateral ligament by relaxing posterior capsule.
+  position: "Supine. Knee in 30° flexion."
+  procedure: >
+    Apply varus force. Positive = lateral pain or laxity > 5 mm.
+  sn_sp: "Sn 88% / Sp 92% (isolated LCL)"
+  cluster: "LCL cluster: at 30° isolates LCL — PLC injury if positive at both 0° and 30°."
+
+# ── PFJ ───────────────────────────────────────────────────────────────────────
+
+kn_clarkes:
+  label: "Clarke's Test (Grind Test)"
+  purpose: >
+    Screens for patellofemoral pain syndrome by compressing the
+    patella against the trochlear groove during isometric quad contraction.
+  position: "Supine. Knee extended. Examiner applies distal pressure on superior patella."
+  procedure: >
+    Apply firm distal pressure proximal to patella. Ask patient to
+    contract quadriceps. Positive = retropatellar pain reproduced. Stop
+    if significant pain — can exacerbate symptoms.
+  sn_sp: "Sn 49% / Sp 75% (PFPS — Sweitzer 2010)"
+  cluster: "PFJ cluster: Clarke's alone is low sensitivity; positive PFJ cluster (tilt + grind + Clarke's) increases confidence."
+  note: "High false-positive rate in asymptomatic subjects. Most useful when pain reproduces presenting complaint."
+
+kn_pat_tilt:
+  label: "Patella Tilt Test"
+  purpose: >
+    Assesses lateral retinacular tightness contributing to patellar
+    maltracking and patellofemoral pain.
+  position: "Supine. Knee in full extension and quadriceps relaxed."
+  procedure: >
+    Attempt to lift the lateral border of the patella above horizontal.
+    Positive = lateral border cannot be elevated above horizontal plane
+    (tight lateral retinaculum).
+  sn_sp: "Sn 43% / Sp 90% for lateral retinacular tightness"
+  cluster: "PFJ cluster: positive tilt with PFPS symptoms — consider lateral retinaculum release or taping."
+
+kn_pat_grind:
+  label: "Patella Grind Test"
+  purpose: >
+    Detects articular cartilage pathology at the patellofemoral joint
+    by translating the patella under compression.
+  position: "Supine. Knee extended."
+  procedure: >
+    Apply direct compression to the patella, then translate superiorly
+    and inferiorly. Positive = pain or crepitus with grind. Crepitus
+    without pain may be non-specific.
+  sn_sp: "Sn 41% / Sp 86% for chondromalacia"
+  cluster: "PFJ cluster: positive grind with crepitus and anterior knee pain pattern — consider articular cartilage involvement."

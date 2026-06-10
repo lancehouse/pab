@@ -1,0 +1,60 @@
+region: hip
+label: Hip
+
+# ── 02 Active Movement ──────────────────────────────────────────────────────
+# All hip movements bilateral: false — separate L/R (asymmetric presentation
+# is clinically significant for hip pathology).
+active_movement:
+  groups:
+    - label: "Hip ROM"
+      notes_id: am_hp_notes
+      rows:
+        - {id: hp_flex, label: "Flexion",       bilateral: false}
+        - {id: hp_ext,  label: "Extension",      bilateral: false}
+        - {id: hp_abd,  label: "Abduction",      bilateral: false}
+        - {id: hp_add,  label: "Adduction",      bilateral: false}
+        - {id: hp_ir,   label: "Int Rotation",   bilateral: false}
+        - {id: hp_er,   label: "Ext Rotation",   bilateral: false}
+
+# ── 08 Special Tests ─────────────────────────────────────────────────────────
+# All row IDs prefixed hp_ to avoid collision with lumbar hip-screen (st_faber,
+# st_fadir). Lumbar hip-screen and hip-primary tests are independent datasets.
+#
+# FAI / Impingement cluster: FADIR + Anterior Impingement — 2/2 = strong FAI
+# Hip OA cluster: FABER + Scour + Log Roll — pattern matches early hip OA
+# GTPS cluster: Ober + Trendelenburg + SLS — lateral hip tendon loading
+# Hamstring origin: Puranen-Orava + BKS — proximal hamstring tendinopathy
+# Adductor: Squeeze — adductor-related groin pain
+special_tests:
+  notes_id: st_hp_notes
+  groups:
+    - label: "FAI / Impingement"
+      cluster_id: hip_fai
+      rows:
+        - {id: hp_fadir,   label: "FADIR"}
+        - {id: hp_ant_imp, label: "Ant Impingement"}
+
+    - label: "Hip OA"
+      cluster_id: hip_oa
+      rows:
+        - {id: hp_faber,     label: "FABER"}
+        - {id: hp_hip_scour, label: "Hip Scour"}
+        - {id: hp_log_roll,  label: "Log Roll"}
+
+    - label: "GTPS / Lateral Hip"
+      cluster_id: gtps
+      rows:
+        - {id: hp_ober,         label: "Ober"}
+        - {id: hp_trendelenburg, label: "Trendelenburg"}
+        - {id: hp_sls_hip,      label: "SLS"}
+
+    - label: "Hamstring Origin"
+      cluster_id: hamstring_origin
+      rows:
+        - {id: hp_puranen_orava, label: "Puranen-Orava"}
+        - {id: hp_bks,           label: "BKS"}
+
+    - label: "Adductor"
+      cluster_id: hip_adductor
+      rows:
+        - {id: hp_squeeze, label: "Squeeze"}

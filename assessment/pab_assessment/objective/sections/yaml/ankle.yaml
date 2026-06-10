@@ -1,0 +1,59 @@
+region: ankle
+label: Ankle
+
+# ── 02 Active Movement ──────────────────────────────────────────────────────
+active_movement:
+  groups:
+    - label: "Ankle ROM"
+      notes_id: am_ak_notes
+      rows:
+        - {id: ak_df,   label: "Dorsiflexion",    bilateral: false}
+        - {id: ak_pf,   label: "Plantarflexion",  bilateral: false}
+        - {id: ak_inv,  label: "Inversion",        bilateral: false}
+        - {id: ak_ev,   label: "Eversion",         bilateral: false}
+        - {id: ak_wbdf, label: "WB DF (lunge)",    bilateral: false}
+
+# ── 08 Special Tests ─────────────────────────────────────────────────────────
+# All IDs prefixed ak_ for namespace isolation.
+#
+# Lateral ligament: Anterior Drawer + Talar Tilt — standard ATFL/CFL screen
+# Achilles: Thompson (rupture) + Royal London (tendinopathy load test) +
+#           Heel Raise (calf endurance; also in muscle testing as numeric reps)
+# Syndesmosis: Squeeze (fibula) + ER Stress + Cotton Test (lateral mortise)
+# Ottawa Rules: 4 bone landmarks — mandate imaging criteria
+# Peroneal tendon: Peroneal Provocation (resisted eversion arc)
+special_tests:
+  notes_id: st_ak_notes
+  groups:
+    - label: "Lateral Ligament"
+      cluster_id: ankle_lateral_lig
+      rows:
+        - {id: ak_ant_draw,   label: "Ant Drawer"}
+        - {id: ak_talar_tilt, label: "Talar Tilt"}
+
+    - label: "Achilles"
+      cluster_id: ankle_achilles
+      rows:
+        - {id: ak_thompson,    label: "Thompson"}
+        - {id: ak_royal_london, label: "Royal London"}
+        - {id: ak_heel_raise,  label: "Heel Raise"}
+
+    - label: "Syndesmosis"
+      cluster_id: ankle_syndesmosis
+      rows:
+        - {id: ak_squeeze,   label: "Squeeze"}
+        - {id: ak_er_stress, label: "ER Stress"}
+        - {id: ak_cotton,    label: "Cotton"}
+
+    - label: "Ottawa Rules"
+      cluster_id: ankle_ottawa
+      rows:
+        - {id: ak_ott_lat_mal, label: "Lat Malleolus"}
+        - {id: ak_ott_med_mal, label: "Med Malleolus"}
+        - {id: ak_ott_nav,     label: "Navicular"}
+        - {id: ak_ott_5mt,     label: "5th Met Base"}
+
+    - label: "Peroneal Tendon"
+      cluster_id: peroneal_tendon
+      rows:
+        - {id: ak_per_prov, label: "Peroneal Prov"}

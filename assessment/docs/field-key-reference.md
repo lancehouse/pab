@@ -829,6 +829,177 @@ Field IDs: `sh_acc_{direction}_{side}_{type}` — direction: `inf`, `post`, `ant
 
 ---
 
+## Objective — Hip YAML fields (02/03/06/08)
+
+### Hip — 02 Active Movement
+
+| Left field | Right field | Notes |
+|---|---|---|
+| `hp_flex_ax_l_range` | `hp_flex_ax_r_range` | Flexion range (°) |
+| `hp_flex_ax_l_ps` | `hp_flex_ax_r_ps` | Pain/Stiff qualifier |
+| `hp_ext_ax_l_range` | `hp_ext_ax_r_range` | Extension range |
+| `hp_abd_ax_l_range` | `hp_abd_ax_r_range` | Abduction range |
+| `hp_add_ax_l_range` | `hp_add_ax_r_range` | Adduction range |
+| `hp_ir_ax_l_range` | `hp_ir_ax_r_range` | Int Rotation range |
+| `hp_er_ax_l_range` | `hp_er_ax_r_range` | Ext Rotation range |
+| `am_hp_notes` | — | Active movement notes (TextArea) |
+
+### Hip — 03 Passive / OP (`hip_tables.py`)
+
+| Left field | Right field | Notes |
+|---|---|---|
+| `hp_op_flex_l_norm` | `hp_op_flex_r_norm` | Flexion OP Normal toggle |
+| `hp_op_flex_l_txt` | `hp_op_flex_r_txt` | Flexion OP text findings |
+| `hp_op_ext_l_norm` | `hp_op_ext_r_norm` | Extension OP |
+| `hp_op_abd_l_norm` | `hp_op_abd_r_norm` | Abduction OP |
+| `hp_op_add_l_norm` | `hp_op_add_r_norm` | Adduction OP |
+| `hp_op_ir_l_norm` | `hp_op_ir_r_norm` | Int Rotation OP |
+| `hp_op_er_l_norm` | `hp_op_er_r_norm` | Ext Rotation OP |
+| `hp_acc_dist_l_norm` | `hp_acc_dist_r_norm` | Distraction accessory |
+| `hp_acc_lat_l_norm` | `hp_acc_lat_r_norm` | Lateral accessory |
+| `hp_op_notes` | — | OP notes (TextArea) |
+
+### Hip — 06 Muscle (`hip_tables.py`)
+
+| Left field | Right field | Notes |
+|---|---|---|
+| `hp_str_flex_l` | `hp_str_flex_r` | Hip flexion strength |
+| `hp_str_ext_l` | `hp_str_ext_r` | Hip extension strength |
+| `hp_str_abd_l` | `hp_str_abd_r` | Hip abduction strength |
+| `hp_str_add_l` | `hp_str_add_r` | Hip adduction strength |
+| `hp_str_ir_l` | `hp_str_ir_r` | Hip int rotation strength |
+| `hp_str_er_l` | `hp_str_er_r` | Hip ext rotation strength |
+| `mu_hp_notes` | — | Muscle notes (TextArea) |
+
+### Hip — 08 Special Tests (YAML-driven, KB key in parentheses)
+
+| Left field | Right field | KB key | Test |
+|---|---|---|---|
+| `st_hp_fadir_l` | `st_hp_fadir_r` | `hp_fadir` | FADIR (FAI) |
+| `st_hp_ant_imp_l` | `st_hp_ant_imp_r` | `hp_ant_imp` | Anterior Impingement |
+| `st_hp_faber_l` | `st_hp_faber_r` | `hp_faber` | FABER (OA/SIJ) |
+| `st_hp_hip_scour_l` | `st_hp_hip_scour_r` | `hp_hip_scour` | Hip Scour |
+| `st_hp_log_roll_l` | `st_hp_log_roll_r` | `hp_log_roll` | Log Roll |
+| `st_hp_ober_l` | `st_hp_ober_r` | `hp_ober` | Ober's (ITB/TFL) |
+| `st_hp_trendelenburg_l` | `st_hp_trendelenburg_r` | `hp_trendelenburg` | Trendelenburg |
+| `st_hp_sls_hip_l` | `st_hp_sls_hip_r` | `hp_sls_hip` | Single-Leg Stance |
+| `st_hp_puranen_orava_l` | `st_hp_puranen_orava_r` | `hp_puranen_orava` | Puranen-Orava |
+| `st_hp_bks_l` | `st_hp_bks_r` | `hp_bks` | Bent Knee Stretch |
+| `st_hp_squeeze_l` | `st_hp_squeeze_r` | `hp_squeeze` | Squeeze (adductor) |
+| `st_hp_notes` | — | — | Special tests notes (TextArea) |
+
+---
+
+## Objective — Knee YAML fields (02/03/06/08)
+
+### Knee — 02 Active Movement
+
+| Left field | Right field | Notes |
+|---|---|---|
+| `kn_flex_ax_l_range` | `kn_flex_ax_r_range` | Flexion range (°) |
+| `kn_ext_ax_l_range` | `kn_ext_ax_r_range` | Extension range |
+| `am_kn_notes` | — | Active movement notes (TextArea) |
+
+### Knee — 03 Passive / OP (`knee_tables.py`)
+
+| Left field | Right field | Notes |
+|---|---|---|
+| `kn_op_flex_l_norm` | `kn_op_flex_r_norm` | Flexion OP Normal toggle |
+| `kn_op_flex_l_txt` | `kn_op_flex_r_txt` | Flexion OP text findings |
+| `kn_op_ext_l_norm` | `kn_op_ext_r_norm` | Extension OP |
+| `kn_acc_ap_l_norm` | `kn_acc_ap_r_norm` | AP Glide accessory |
+| `kn_acc_pmed_l_norm` | `kn_acc_pmed_r_norm` | Patella medial glide |
+| `kn_acc_plat_l_norm` | `kn_acc_plat_r_norm` | Patella lateral glide |
+| `kn_op_notes` | — | OP notes (TextArea) |
+
+### Knee — 06 Muscle (`knee_tables.py`)
+
+| Left field | Right field | Notes |
+|---|---|---|
+| `kn_str_ext_l` | `kn_str_ext_r` | Knee extension / quads |
+| `kn_str_flex_l` | `kn_str_flex_r` | Knee flexion / hamstrings |
+| `kn_str_calf_l` | `kn_str_calf_r` | Calf / heel raise |
+| `mu_kn_notes` | — | Muscle notes (TextArea) |
+
+### Knee — 08 Special Tests (YAML-driven, KB key in parentheses)
+
+| Left field | Right field | KB key | Test |
+|---|---|---|---|
+| `st_kn_lachman_l` | `st_kn_lachman_r` | `kn_lachman` | Lachman (ACL) |
+| `st_kn_ant_draw_l` | `st_kn_ant_draw_r` | `kn_ant_draw` | Anterior Drawer (ACL) |
+| `st_kn_pivot_l` | `st_kn_pivot_r` | `kn_pivot` | Pivot Shift (ACL) |
+| `st_kn_post_draw_l` | `st_kn_post_draw_r` | `kn_post_draw` | Posterior Drawer (PCL) |
+| `st_kn_post_sag_l` | `st_kn_post_sag_r` | `kn_post_sag` | Posterior Sag (PCL) |
+| `st_kn_mcmurray_l` | `st_kn_mcmurray_r` | `kn_mcmurray` | McMurray's (meniscus) |
+| `st_kn_thessaly_l` | `st_kn_thessaly_r` | `kn_thessaly` | Thessaly (meniscus) |
+| `st_kn_jlt_l` | `st_kn_jlt_r` | `kn_jlt` | Joint Line Tenderness |
+| `st_kn_valgus_0_l` | `st_kn_valgus_0_r` | `kn_valgus_0` | Valgus 0° (MCL/capsule) |
+| `st_kn_valgus_30_l` | `st_kn_valgus_30_r` | `kn_valgus_30` | Valgus 30° (MCL) |
+| `st_kn_varus_0_l` | `st_kn_varus_0_r` | `kn_varus_0` | Varus 0° (LCL/capsule) |
+| `st_kn_varus_30_l` | `st_kn_varus_30_r` | `kn_varus_30` | Varus 30° (LCL) |
+| `st_kn_clarkes_l` | `st_kn_clarkes_r` | `kn_clarkes` | Clarke's (PFJ) |
+| `st_kn_pat_tilt_l` | `st_kn_pat_tilt_r` | `kn_pat_tilt` | Patella Tilt (PFJ) |
+| `st_kn_pat_grind_l` | `st_kn_pat_grind_r` | `kn_pat_grind` | Patella Grind (PFJ) |
+| `st_kn_notes` | — | — | Special tests notes (TextArea) |
+
+---
+
+## Objective — Ankle YAML fields (02/03/06/08)
+
+### Ankle — 02 Active Movement
+
+| Left field | Right field | Notes |
+|---|---|---|
+| `ak_df_ax_l_range` | `ak_df_ax_r_range` | Dorsiflexion range (°) |
+| `ak_pf_ax_l_range` | `ak_pf_ax_r_range` | Plantarflexion range |
+| `ak_inv_ax_l_range` | `ak_inv_ax_r_range` | Inversion range |
+| `ak_ev_ax_l_range` | `ak_ev_ax_r_range` | Eversion range |
+| `ak_wbdf_ax_l_range` | `ak_wbdf_ax_r_range` | WB Dorsiflexion (lunge) |
+| `am_ak_notes` | — | Active movement notes (TextArea) |
+
+### Ankle — 03 Passive / OP (`ankle_tables.py`)
+
+| Left field | Right field | Notes |
+|---|---|---|
+| `ak_op_df_l_norm` | `ak_op_df_r_norm` | Dorsiflexion OP Normal toggle |
+| `ak_op_df_l_txt` | `ak_op_df_r_txt` | Dorsiflexion OP text findings |
+| `ak_op_pf_l_norm` | `ak_op_pf_r_norm` | Plantarflexion OP |
+| `ak_op_inv_l_norm` | `ak_op_inv_r_norm` | Inversion OP |
+| `ak_op_ev_l_norm` | `ak_op_ev_r_norm` | Eversion OP |
+| `ak_acc_ap_l_norm` | `ak_acc_ap_r_norm` | AP Glide accessory |
+| `ak_acc_st_l_norm` | `ak_acc_st_r_norm` | Subtalar accessory |
+| `ak_op_notes` | — | OP notes (TextArea) |
+
+### Ankle — 06 Muscle (`ankle_tables.py`)
+
+| Left field | Right field | Notes |
+|---|---|---|
+| `ak_str_df_l` | `ak_str_df_r` | Dorsiflexion (TA) strength |
+| `ak_str_pf_l` | `ak_str_pf_r` | Plantarflexion (GS) strength |
+| `ak_str_ev_l` | `ak_str_ev_r` | Eversion (peroneals) strength |
+| `mu_ak_notes` | — | Muscle notes (TextArea) |
+
+### Ankle — 08 Special Tests (YAML-driven, KB key in parentheses)
+
+| Left field | Right field | KB key | Test |
+|---|---|---|---|
+| `st_ak_ant_draw_l` | `st_ak_ant_draw_r` | `ak_ant_draw` | Ankle Ant Drawer (ATFL) |
+| `st_ak_talar_tilt_l` | `st_ak_talar_tilt_r` | `ak_talar_tilt` | Talar Tilt (CFL) |
+| `st_ak_thompson_l` | `st_ak_thompson_r` | `ak_thompson` | Thompson (Achilles rupture) |
+| `st_ak_royal_london_l` | `st_ak_royal_london_r` | `ak_royal_london` | Royal London (tendinopathy) |
+| `st_ak_heel_raise_l` | `st_ak_heel_raise_r` | `ak_heel_raise` | Heel Raise (calf endurance) |
+| `st_ak_squeeze_l` | `st_ak_squeeze_r` | `ak_squeeze` | Squeeze (syndesmosis) |
+| `st_ak_er_stress_l` | `st_ak_er_stress_r` | `ak_er_stress` | ER Stress (syndesmosis) |
+| `st_ak_cotton_l` | `st_ak_cotton_r` | `ak_cotton` | Cotton Test (mortise) |
+| `st_ak_ott_lat_mal_l` | `st_ak_ott_lat_mal_r` | `ak_ott_lat_mal` | Ottawa: Lat Malleolus |
+| `st_ak_ott_med_mal_l` | `st_ak_ott_med_mal_r` | `ak_ott_med_mal` | Ottawa: Med Malleolus |
+| `st_ak_ott_nav_l` | `st_ak_ott_nav_r` | `ak_ott_nav` | Ottawa: Navicular |
+| `st_ak_ott_5mt_l` | `st_ak_ott_5mt_r` | `ak_ott_5mt` | Ottawa: 5th Met Base |
+| `st_ak_per_prov_l` | `st_ak_per_prov_r` | `ak_per_prov` | Peroneal Provocation |
+| `st_ak_notes` | — | — | Special tests notes (TextArea) |
+
+---
+
 ## Maintenance Notes
 
 - **This file must be updated whenever a field is added or renamed** in any

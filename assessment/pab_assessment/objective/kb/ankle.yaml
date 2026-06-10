@@ -1,0 +1,184 @@
+# Ankle Knowledge Base
+# Keys match YAML row ids (section yaml/ankle.yaml special_tests).
+# Sn/Sp from van Dijk et al. 1996, Maffulli 1998, and Bachmann 2003 unless noted.
+
+# ── Lateral Ligament ──────────────────────────────────────────────────────────
+
+ak_ant_draw:
+  label: "Anterior Drawer Test (Ankle)"
+  purpose: >
+    Primary test for ATFL (anterior talofibular ligament) integrity.
+    Most commonly injured ligament in ankle inversion sprains.
+  position: "Supine or seated. Ankle in 10–20° plantarflexion (ATFL parallel to foot)."
+  procedure: >
+    Stabilise distal tibia with one hand. Apply anterior force to the
+    calcaneus/posterior talus. Positive = > 10 mm anterior translation
+    (dimple sign) or absent endpoint compared to contralateral.
+  sn_sp: "Sn 71% / Sp 33% acute; Sn 96% / Sp 84% at 5+ days post-injury"
+  cluster: "Lateral ligament cluster: ATFL most commonly torn — positive Ant Drawer + Talar Tilt = combined ATFL + CFL injury."
+  note: "Perform at 5 days post-injury when guarding reduced. Manual test alone unreliable acutely."
+
+ak_talar_tilt:
+  label: "Talar Tilt Test (Inversion Stress)"
+  purpose: >
+    Assesses CFL (calcaneofibular ligament) integrity. Positive with
+    excessive inversion tilt of the talus in the mortise.
+  position: "Supine or seated. Ankle in neutral (0°)."
+  procedure: >
+    Stabilise distal tibia with one hand. Apply inversion force to the
+    calcaneus. Positive = > 5° talar tilt vs contralateral (stress
+    X-ray gold standard) or gross laxity/clunk.
+  sn_sp: "Sn 50% / Sp 88% (manual, 5+ days post-injury)"
+  cluster: "Lateral ligament cluster: CFL tear typically occurs after ATFL — positive Talar Tilt = CFL involvement."
+
+# ── Achilles ──────────────────────────────────────────────────────────────────
+
+ak_thompson:
+  label: "Thompson Test (Simmonds)"
+  purpose: >
+    Screening test for complete Achilles tendon rupture. Tests the
+    muscle-tendon unit passive excursion.
+  position: "Prone. Knee flexed 90°. Foot hanging over end of table."
+  procedure: >
+    Squeeze the calf bulk firmly. Positive = absent plantarflexion of
+    foot (complete rupture). Partial ruptures may still show movement.
+  sn_sp: "Sn 96% / Sp 93% for complete Achilles rupture (Maffulli 1998)"
+  cluster: "Achilles cluster: Thompson is primary screen — negative Thompson rules out complete rupture with high confidence."
+  note: "Positive only for complete rupture. Partial tears and tendinopathy will be Thompson negative."
+
+ak_royal_london:
+  label: "Royal London Hospital Test"
+  purpose: >
+    Provocative load test for mid-portion Achilles tendinopathy.
+    Distinguishes tendinopathy from paratendinitis.
+  position: "Standing. Ankle at neutral."
+  procedure: >
+    Identify point of maximum tenderness on the Achilles (typically
+    2–6 cm above insertion). Ask patient to slowly perform a single-leg
+    calf raise. Positive = reduction or abolition of palpation pain during
+    loaded calf raise (pain is relieved by loading = typical tendinopathy).
+  sn_sp: "Sn 78% / Sp 100% for mid-portion Achilles tendinopathy (Maffulli 2001)"
+  cluster: "Achilles cluster: Royal London positive confirms mid-portion tendinopathy — direct loading rehabilitation priority."
+  note: "Distinguish from insertional Achilles tendinopathy (pain at insertion, often worse with heel drop below neutral)."
+
+ak_heel_raise:
+  label: "Heel Raise Endurance Test"
+  purpose: >
+    Assesses calf endurance as a functional outcome and load tolerance
+    measure for Achilles tendinopathy rehabilitation.
+  position: "Standing on one leg. Hands lightly on wall for balance."
+  procedure: >
+    Perform maximum single-leg calf raises through full range
+    (10–20 mm height). Count total reps before failure. Target ≥ 25 reps
+    (healthy < 40 yrs). Record height if possible.
+  sn_sp: "Normative: 25 reps (Svensson 2021); < 20 = significant deficit"
+  cluster: "Achilles cluster: Heel Raise deficit guides loading progression. See also ankle muscle testing (numeric reps)."
+  note: "Cross-reference with ankle plantarflexion strength (ak_str_pf). Reps and force output together guide progression."
+
+# ── Syndesmosis ───────────────────────────────────────────────────────────────
+
+ak_squeeze:
+  label: "Squeeze Test (Syndesmosis)"
+  purpose: >
+    Screens for syndesmotic injury by compressing the fibula against
+    the tibia mid-calf, transmitting force to the distal tibiofibular joint.
+  position: "Supine or seated."
+  procedure: >
+    Compress the tibia and fibula together at the mid-calf level. Positive
+    = pain at the anterior ankle or distal tibiofibular joint.
+  sn_sp: "Sn 30% / Sp 93% (Syndesmosis — Beumer 2003)"
+  cluster: "Syndesmosis cluster: Squeeze + ER Stress + Cotton — 2/3 positive strongly suggests syndesmotic injury."
+  note: "Low sensitivity but high specificity. Use as cluster with ER stress test."
+
+ak_er_stress:
+  label: "External Rotation Stress Test"
+  purpose: >
+    Assesses distal tibiofibular syndesmosis stability by externally
+    rotating the foot against a fixed tibia.
+  position: "Seated. Knee flexed 90°. Foot in neutral."
+  procedure: >
+    Stabilise the distal tibia/fibula. Apply ER force to the foot/calcaneus
+    with the other hand. Positive = anterior ankle pain or syndesmotic
+    widening on stress X-ray.
+  sn_sp: "Sn 71% / Sp 63% (manual); Sn 93% / Sp 100% (with stress X-ray)"
+  cluster: "Syndesmosis cluster: ER Stress is most sensitive manual test for syndesmosis."
+
+ak_cotton:
+  label: "Cotton Test (Lateral Mortise)"
+  purpose: >
+    Assesses lateral talar displacement indicating mortise instability
+    with syndesmotic disruption.
+  position: "Supine. Ankle in neutral."
+  procedure: >
+    Stabilise the distal tibia and fibula with one hand. Apply lateral
+    translation force to the talus with the other hand. Positive =
+    > 3 mm lateral translation felt or visible dimpling.
+  sn_sp: "Sp 100% (syndesmotic rupture with deltoid disruption — Beumer 2003)"
+  cluster: "Syndesmosis cluster: Cotton Test positive = complete mortise disruption — urgent referral."
+
+# ── Ottawa Rules ──────────────────────────────────────────────────────────────
+
+ak_ott_lat_mal:
+  label: "Ottawa: Lateral Malleolus"
+  purpose: >
+    Ottawa Ankle Rules: bone tenderness at the posterior edge or tip
+    of the lateral malleolus mandates X-ray (6 cm zone).
+  position: "Seated. Ankle exposed."
+  procedure: >
+    Palpate the posterior edge and tip of the lateral malleolus (distal
+    6 cm). Positive = point tenderness in this zone.
+  sn_sp: "Sn 99% / Sp 40% for fibular fracture (Ottawa criteria)"
+  cluster: "Ottawa Rules: any single Ottawa criteria positive = X-ray required. Rules apply within 10 days of injury."
+  note: "Ottawa Rules Sn: 99.5% — near 100% sensitivity means negative Ottawa reliably rules out ankle fracture."
+
+ak_ott_med_mal:
+  label: "Ottawa: Medial Malleolus"
+  purpose: >
+    Ottawa Ankle Rules: bone tenderness at the posterior edge or tip
+    of the medial malleolus mandates X-ray.
+  position: "Seated. Ankle exposed."
+  procedure: >
+    Palpate the posterior edge and tip of the medial malleolus (distal
+    6 cm). Positive = point tenderness.
+  sn_sp: "Sn 96% / Sp 51% for tibial fracture (Ottawa criteria)"
+  cluster: "Ottawa Rules: positive medial malleolus = deltoid force injury mechanism — consider syndesmotic assessment."
+
+ak_ott_nav:
+  label: "Ottawa: Navicular"
+  purpose: >
+    Ottawa Foot Rules: bone tenderness at the navicular (zone N)
+    mandates midfoot X-ray.
+  position: "Seated. Foot exposed."
+  procedure: >
+    Palpate the dorsum of the navicular bone. Positive = point tenderness.
+  sn_sp: "Sn 99% / Sp 42% for navicular fracture"
+  cluster: "Ottawa Rules: Ottawa Foot Rules apply — navicular and 5th Met Base are the two foot zones."
+
+ak_ott_5mt:
+  label: "Ottawa: 5th Metatarsal Base"
+  purpose: >
+    Ottawa Foot Rules: bone tenderness at the base of the 5th metatarsal
+    (styloid process / zone P) mandates midfoot X-ray.
+  position: "Seated. Foot exposed."
+  procedure: >
+    Palpate the base of the 5th metatarsal (styloid process and proximal
+    5 cm). Positive = point tenderness.
+  sn_sp: "Sn 98% / Sp 61% for 5th MT fracture"
+  cluster: "Ottawa Rules: inversion mechanism with 5th MT base tenderness = Jones/Pseudo-Jones fracture until proven otherwise."
+
+# ── Peroneal Tendon ───────────────────────────────────────────────────────────
+
+ak_per_prov:
+  label: "Peroneal Provocation Test"
+  purpose: >
+    Screens for peroneal tendon pathology (tendinopathy, subluxation,
+    or split tear) using resisted eversion in the arc of tendon movement.
+  position: "Seated. Foot in slight plantarflexion."
+  procedure: >
+    Apply resistance to eversion while passively circumducting the foot
+    from plantarflexion-inversion to dorsiflexion-eversion. Positive =
+    pain over the peroneal tendons posterior to the lateral malleolus,
+    or audible/visible subluxation of tendons over the malleolus.
+  sn_sp: "Sn 80% / Sp 67% for peroneal tendon pathology (Munn 2003)"
+  cluster: "Peroneal tendon cluster: positive provocation + retro-malleolar tenderness = peroneal tendinopathy or subluxation."
+  note: "If subluxation is visible or palpable, refer for superior peroneal retinaculum assessment."
