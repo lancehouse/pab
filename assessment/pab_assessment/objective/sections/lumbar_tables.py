@@ -34,15 +34,14 @@ _NORM_STATE = [("Norm", "success")]
 
 # ── Row / level definitions ───────────────────────────────────────────────────
 
-_OP_ROWS: list[tuple[str, str]] = [
-    ("Tx Flexion",   "op_tx_flex"),
-    ("Tx Extension", "op_tx_ext"),
-    ("Tx Rot L",     "op_tx_rot_l"),
-    ("Tx Rot R",     "op_tx_rot_r"),
-    ("Lx Flexion",   "op_lx_flex"),
-    ("Lx Extension", "op_lx_ext"),
-    ("Lx Lat Fl L",  "op_lx_lf_l"),
-    ("Lx Lat Fl R",  "op_lx_lf_r"),
+# (label, prefix, bilateral) — bilateral rows show L | R columns in one row
+_OP_ROWS: list[tuple[str, str, bool]] = [
+    ("Tx Flexion",   "op_tx_flex",  False),
+    ("Tx Extension", "op_tx_ext",   False),
+    ("Tx Rotation",  "op_tx_rot",   True),
+    ("Lx Flexion",   "op_lx_flex",  False),
+    ("Lx Extension", "op_lx_ext",   False),
+    ("Lx Lat Flex",  "op_lx_lf",    True),
 ]
 
 _PAIVM_LEVELS: list[str] = [
@@ -78,13 +77,14 @@ class LumbarPassiveTables(Static):
     LumbarPassiveTables { width: 100%; height: auto; }
     LumbarPassiveTables CycleButton { width: 6; height: 3; }
 
-    LumbarPassiveTables .op_hdr     { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
-    LumbarPassiveTables .op_hdr_lbl { width: 16; }
+    LumbarPassiveTables .op_hdr      { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
+    LumbarPassiveTables .op_hdr_lbl  { width: 16; }
     LumbarPassiveTables .op_hdr_norm { width: 6; text-align: center; }
-    LumbarPassiveTables .op_hdr_txt { width: 1fr; }
-    LumbarPassiveTables .op_row     { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
-    LumbarPassiveTables .op_row_lbl { width: 16; height: 3; content-align: left middle; }
-    LumbarPassiveTables .op_txt     { width: 1fr; height: 3; padding: 0 1; }
+    LumbarPassiveTables .op_hdr_txt  { width: 1fr; }
+    LumbarPassiveTables .op_row      { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
+    LumbarPassiveTables .op_row_lbl  { width: 16; height: 3; content-align: left middle; }
+    LumbarPassiveTables .op_side     { width: 2; height: 3; content-align: left middle; color: $text-muted; }
+    LumbarPassiveTables .op_txt      { width: 1fr; height: 3; padding: 0 1; }
 
     LumbarPassiveTables .paivm_hdr      { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
     LumbarPassiveTables .paivm_hdr_lbl  { width: 6; }
@@ -112,12 +112,22 @@ class LumbarPassiveTables(Static):
             yield Static("",       classes="op_hdr_lbl")
             yield Static("Norm",   classes="op_hdr_norm")
             yield Static("Notes",  classes="op_hdr_txt")
-        for label, prefix in _OP_ROWS:
+        for label, prefix, bilateral in _OP_ROWS:
             with Horizontal(classes="op_row"):
                 yield Static(label, classes="op_row_lbl")
-                yield CycleButton(_NORM_STATE, id=f"{prefix}_norm")
-                yield GridInput(placeholder="findings / // reassessment",
-                                id=f"{prefix}_txt", classes="op_txt")
+                if bilateral:
+                    yield Static("L", classes="op_side")
+                    yield CycleButton(_NORM_STATE, id=f"{prefix}_l_norm")
+                    yield GridInput(placeholder="findings / //",
+                                    id=f"{prefix}_l_txt", classes="op_txt")
+                    yield Static("R", classes="op_side")
+                    yield CycleButton(_NORM_STATE, id=f"{prefix}_r_norm")
+                    yield GridInput(placeholder="findings / //",
+                                    id=f"{prefix}_r_txt", classes="op_txt")
+                else:
+                    yield CycleButton(_NORM_STATE, id=f"{prefix}_norm")
+                    yield GridInput(placeholder="findings / // reassessment",
+                                    id=f"{prefix}_txt", classes="op_txt")
         yield Label("OP notes:")
         yield TextArea(id="pm_op_notes", language="plain")
 
@@ -141,8 +151,12 @@ class LumbarPassiveTables(Static):
         yield TextArea(id="pm_paivm_notes", language="plain")
 
     def on_mount(self) -> None:
-        for row_idx, (_, prefix) in enumerate(_OP_ROWS):
-            row = [f"{prefix}_norm_btn", f"{prefix}_txt"]
+        for row_idx, (_, prefix, bilateral) in enumerate(_OP_ROWS):
+            if bilateral:
+                row = [f"{prefix}_l_norm_btn", f"{prefix}_l_txt",
+                       f"{prefix}_r_norm_btn", f"{prefix}_r_txt"]
+            else:
+                row = [f"{prefix}_norm_btn", f"{prefix}_txt"]
             self._op_grid.append(row)
             for col_idx, wid in enumerate(row):
                 self._op_grid_pos[wid] = (row_idx, col_idx)

@@ -33,15 +33,13 @@ _NORM_STATE = [("Norm", "success")]
 
 # ── Row / level definitions ───────────────────────────────────────────────────
 
-_CX_OP_ROWS: list[tuple[str, str]] = [
-    ("Cx Flexion",    "cx_op_flex"),
-    ("Cx Extension",  "cx_op_ext"),
-    ("Cx Lat Fl L",   "cx_op_lf_l"),
-    ("Cx Lat Fl R",   "cx_op_lf_r"),
-    ("Cx Rotation L", "cx_op_rot_l"),
-    ("Cx Rotation R", "cx_op_rot_r"),
-    ("Cx Quadrant L", "cx_op_quad_l"),
-    ("Cx Quadrant R", "cx_op_quad_r"),
+# (label, prefix, bilateral) — bilateral rows show L | R columns in one row
+_CX_OP_ROWS: list[tuple[str, str, bool]] = [
+    ("Cx Flexion",   "cx_op_flex",  False),
+    ("Cx Extension", "cx_op_ext",   False),
+    ("Cx Lat Flex",  "cx_op_lf",    True),
+    ("Cx Rotation",  "cx_op_rot",   True),
+    ("Cx Quadrant",  "cx_op_quad",  True),
 ]
 
 # (display_label, id_key) — id_key avoids slashes for use in field IDs
@@ -83,6 +81,7 @@ class CervicalPassiveTables(Static):
     CervicalPassiveTables .op_hdr_txt  { width: 1fr; }
     CervicalPassiveTables .op_row      { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
     CervicalPassiveTables .op_row_lbl  { width: 16; height: 3; content-align: left middle; }
+    CervicalPassiveTables .op_side     { width: 2; height: 3; content-align: left middle; color: $text-muted; }
     CervicalPassiveTables .op_txt      { width: 1fr; height: 3; padding: 0 1; }
 
     CervicalPassiveTables .paivm_hdr      { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
@@ -111,12 +110,22 @@ class CervicalPassiveTables(Static):
             yield Static("",       classes="op_hdr_lbl")
             yield Static("Norm",   classes="op_hdr_norm")
             yield Static("Notes",  classes="op_hdr_txt")
-        for label, prefix in _CX_OP_ROWS:
+        for label, prefix, bilateral in _CX_OP_ROWS:
             with Horizontal(classes="op_row"):
                 yield Static(label, classes="op_row_lbl")
-                yield CycleButton(_NORM_STATE, id=f"{prefix}_norm")
-                yield GridInput(placeholder="findings / // reassessment",
-                                id=f"{prefix}_txt", classes="op_txt")
+                if bilateral:
+                    yield Static("L", classes="op_side")
+                    yield CycleButton(_NORM_STATE, id=f"{prefix}_l_norm")
+                    yield GridInput(placeholder="findings / //",
+                                    id=f"{prefix}_l_txt", classes="op_txt")
+                    yield Static("R", classes="op_side")
+                    yield CycleButton(_NORM_STATE, id=f"{prefix}_r_norm")
+                    yield GridInput(placeholder="findings / //",
+                                    id=f"{prefix}_r_txt", classes="op_txt")
+                else:
+                    yield CycleButton(_NORM_STATE, id=f"{prefix}_norm")
+                    yield GridInput(placeholder="findings / // reassessment",
+                                    id=f"{prefix}_txt", classes="op_txt")
         yield Label("OP notes:")
         yield TextArea(id="cx_pm_op_notes", language="plain")
 
@@ -140,8 +149,12 @@ class CervicalPassiveTables(Static):
         yield TextArea(id="cx_pm_paivm_notes", language="plain")
 
     def on_mount(self) -> None:
-        for row_idx, (_, prefix) in enumerate(_CX_OP_ROWS):
-            row = [f"{prefix}_norm_btn", f"{prefix}_txt"]
+        for row_idx, (_, prefix, bilateral) in enumerate(_CX_OP_ROWS):
+            if bilateral:
+                row = [f"{prefix}_l_norm_btn", f"{prefix}_l_txt",
+                       f"{prefix}_r_norm_btn", f"{prefix}_r_txt"]
+            else:
+                row = [f"{prefix}_norm_btn", f"{prefix}_txt"]
             self._op_grid.append(row)
             for col_idx, wid in enumerate(row):
                 self._op_grid_pos[wid] = (row_idx, col_idx)

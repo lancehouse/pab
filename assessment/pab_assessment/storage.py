@@ -565,12 +565,16 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
 
     if pas:
         sl = []
-        op_def = [("Tx Flexion","op_tx_flex"),("Tx Extension","op_tx_ext"),
-                  ("Tx Rot L","op_tx_rot_l"),("Tx Rot R","op_tx_rot_r"),
-                  ("Lx Flexion","op_lx_flex"),("Lx Extension","op_lx_ext"),
-                  ("Lx Lat Fl L","op_lx_lf_l"),("Lx Lat Fl R","op_lx_lf_r")]
-        op_rows = [[lbl, _fmt_pas(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
-                   for lbl, p in op_def]
+        # (label, prefix, bilateral)
+        _lx_op = [("Tx Flexion","op_tx_flex",False),("Tx Extension","op_tx_ext",False),
+                  ("Tx Rotation","op_tx_rot",True),
+                  ("Lx Flexion","op_lx_flex",False),("Lx Extension","op_lx_ext",False),
+                  ("Lx Lat Flex","op_lx_lf",True)]
+        op_rows = [[lbl,
+                    (f"L: {_fmt_pas(pas.get(f'{p}_l_norm'),pas.get(f'{p}_l_txt'))} / "
+                     f"R: {_fmt_pas(pas.get(f'{p}_r_norm'),pas.get(f'{p}_r_txt'))}")
+                    if bi else _fmt_pas(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
+                   for lbl, p, bi in _lx_op]
         _maybe_table(sl, "Overpressure", ["Movement", "Findings"], op_rows)
         paivm_levels = ["T8","T9","T10","T11","T12","L1","L2","L3","L4","L5"]
         paivm_rows = [[lv,
@@ -583,12 +587,14 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         for key, lbl in [("pm_op_notes","*OP notes*"),("pm_paivm_notes","*PAIVM notes*")]:
             _maybe_note(sl, lbl, pas.get(key, "").strip())
         if any(k.startswith("cx_op_") or k.startswith("cx_pm_") for k in pas):
-            cx_op_def = [("Flexion","cx_op_flex"),("Extension","cx_op_ext"),
-                         ("Lat Fl L","cx_op_lf_l"),("Lat Fl R","cx_op_lf_r"),
-                         ("Rotation L","cx_op_rot_l"),("Rotation R","cx_op_rot_r"),
-                         ("Quadrant L","cx_op_quad_l"),("Quadrant R","cx_op_quad_r")]
-            cx_op_rows = [[lbl, _fmt_pas(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
-                          for lbl, p in cx_op_def]
+            _cx_op = [("Flexion","cx_op_flex",False),("Extension","cx_op_ext",False),
+                      ("Lat Flex","cx_op_lf",True),("Rotation","cx_op_rot",True),
+                      ("Quadrant","cx_op_quad",True)]
+            cx_op_rows = [[lbl,
+                           (f"L: {_fmt_pas(pas.get(f'{p}_l_norm'),pas.get(f'{p}_l_txt'))} / "
+                            f"R: {_fmt_pas(pas.get(f'{p}_r_norm'),pas.get(f'{p}_r_txt'))}")
+                           if bi else _fmt_pas(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
+                          for lbl, p, bi in _cx_op]
             _maybe_table(sl, "Cervical OP", ["Movement","Findings"], cx_op_rows)
             cx_paivm_levels = [("C0/1","C0_1"),("C1/2","C1_2"),("C2","C2"),("C3","C3"),
                                ("C4","C4"),("C5","C5"),("C6","C6"),("C7","C7"),
@@ -1097,12 +1103,15 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
 
     if pas:
         sl = []
-        op_def = [("Tx Flexion","op_tx_flex"),("Tx Extension","op_tx_ext"),
-                  ("Tx Rot L","op_tx_rot_l"),("Tx Rot R","op_tx_rot_r"),
-                  ("Lx Flexion","op_lx_flex"),("Lx Extension","op_lx_ext"),
-                  ("Lx Lat Fl L","op_lx_lf_l"),("Lx Lat Fl R","op_lx_lf_r")]
-        op_rows = [[lbl, _fmt_pas_r(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
-                   for lbl, p in op_def]
+        _lx_op_r = [("Tx Flexion","op_tx_flex",False),("Tx Extension","op_tx_ext",False),
+                    ("Tx Rotation","op_tx_rot",True),
+                    ("Lx Flexion","op_lx_flex",False),("Lx Extension","op_lx_ext",False),
+                    ("Lx Lat Flex","op_lx_lf",True)]
+        op_rows = [[lbl,
+                    (f"L: {_fmt_pas_r(pas.get(f'{p}_l_norm'),pas.get(f'{p}_l_txt'))} / "
+                     f"R: {_fmt_pas_r(pas.get(f'{p}_r_norm'),pas.get(f'{p}_r_txt'))}")
+                    if bi else _fmt_pas_r(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
+                   for lbl, p, bi in _lx_op_r]
         _maybe_table(sl, ["Overpressure", "Findings"], op_rows)
         paivm_levels = ["T8","T9","T10","T11","T12","L1","L2","L3","L4","L5"]
         paivm_rows = [[lv,
@@ -1119,12 +1128,14 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
             elif not clean:
                 sl.append(f"  {lbl}: (empty)")
         if any(k.startswith("cx_op_") or k.startswith("cx_pm_") for k in pas):
-            cx_op_def_r = [("Flexion","cx_op_flex"),("Extension","cx_op_ext"),
-                           ("Lat Fl L","cx_op_lf_l"),("Lat Fl R","cx_op_lf_r"),
-                           ("Rotation L","cx_op_rot_l"),("Rotation R","cx_op_rot_r"),
-                           ("Quadrant L","cx_op_quad_l"),("Quadrant R","cx_op_quad_r")]
-            cx_op_rows_r = [[lbl, _fmt_pas_r(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
-                            for lbl, p in cx_op_def_r]
+            _cx_op_r = [("Flexion","cx_op_flex",False),("Extension","cx_op_ext",False),
+                        ("Lat Flex","cx_op_lf",True),("Rotation","cx_op_rot",True),
+                        ("Quadrant","cx_op_quad",True)]
+            cx_op_rows_r = [[lbl,
+                             (f"L: {_fmt_pas_r(pas.get(f'{p}_l_norm'),pas.get(f'{p}_l_txt'))} / "
+                              f"R: {_fmt_pas_r(pas.get(f'{p}_r_norm'),pas.get(f'{p}_r_txt'))}")
+                             if bi else _fmt_pas_r(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
+                            for lbl, p, bi in _cx_op_r]
             _maybe_table(sl, ["Cervical OP","Findings"], cx_op_rows_r)
             cx_paivm_levels_r = [("C0/1","C0_1"),("C1/2","C1_2"),("C2","C2"),("C3","C3"),
                                  ("C4","C4"),("C5","C5"),("C6","C6"),("C7","C7"),
