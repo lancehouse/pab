@@ -813,7 +813,8 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         _flush_section("### 05 Sensory", sl)
 
     # ── 06 Muscle Testing ─────────────────────────────────────────────────────
-    if mus:
+    _lower_regions = set(active_regions or [])
+    if mus or _lower_regions & {"hip", "knee", "ankle"}:
         sl = []
         ml_def = [("QL (side sit)","ml_ql"),("Thomas test","ml_thomas"),
                   ("Hamstrings SLR","ml_ham")]
@@ -886,7 +887,7 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
                            for lbl, p in sh_str_def]
             _maybe_table(sl, "Shoulder Strength (kg or 0–5)", ["Movement","Left","Right"], sh_str_rows)
             _maybe_note(sl, "*Shoulder muscle notes*", mus.get("mu_sh_notes", "").strip())
-        if any(k.startswith("hp_str_") for k in mus):
+        if "hip" in _lower_regions or any(k.startswith("hp_str_") for k in mus):
             hp_str_def = [("Flexion","hp_str_flex"),("Extension","hp_str_ext"),
                           ("Abduction","hp_str_abd"),("Adduction","hp_str_add"),
                           ("Int Rot","hp_str_ir"),("Ext Rot","hp_str_er")]
@@ -894,7 +895,7 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
                            for lbl, p in hp_str_def]
             _maybe_table(sl, "Hip Strength (kg or 0–5)", ["Movement","Left","Right"], hp_str_rows)
             _maybe_note(sl, "*Hip muscle notes*", mus.get("mu_hp_notes", "").strip())
-        if any(k.startswith("kn_str_") for k in mus):
+        if "knee" in _lower_regions or any(k.startswith("kn_str_") for k in mus):
             kn_str_def = [("Extension (quads)","kn_str_ext"),
                           ("Flexion (hamstring)","kn_str_flex"),
                           ("Calf (heel raise)","kn_str_calf")]
@@ -902,7 +903,7 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
                            for lbl, p in kn_str_def]
             _maybe_table(sl, "Knee/Calf Strength (kg or 0–5)", ["Movement","Left","Right"], kn_str_rows)
             _maybe_note(sl, "*Knee muscle notes*", mus.get("mu_kn_notes", "").strip())
-        if any(k.startswith("ak_str_") for k in mus):
+        if "ankle" in _lower_regions or any(k.startswith("ak_str_") for k in mus):
             ak_str_def = [("Dorsiflexion (TA)","ak_str_df"),
                           ("Plantarflexion (GS)","ak_str_pf"),
                           ("Eversion (peroneals)","ak_str_ev")]
@@ -1570,7 +1571,8 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         _flush_section("05 Sensory", sl)
 
     # ── 06 Muscle Testing ─────────────────────────────────────────────────────
-    if mus:
+    _lower_regions_r = set(active_regions or [])
+    if mus or _lower_regions_r & {"hip", "knee", "ankle"}:
         sl = []
         ml_def = [("QL (side sit)","ml_ql"),("Thomas test","ml_thomas"),
                   ("Hamstrings SLR","ml_ham")]
@@ -1653,7 +1655,7 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
                 sl.append(f"  Shoulder muscle notes: {v}")
             elif not clean:
                 sl.append("  Shoulder muscle notes: (empty)")
-        if any(k.startswith("hp_str_") for k in mus):
+        if "hip" in _lower_regions_r or any(k.startswith("hp_str_") for k in mus):
             hp_str_def_r = [("Flexion","hp_str_flex"),("Extension","hp_str_ext"),
                             ("Abduction","hp_str_abd"),("Adduction","hp_str_add"),
                             ("Int Rot","hp_str_ir"),("Ext Rot","hp_str_er")]
@@ -1665,7 +1667,7 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
                 sl.append(f"  Hip muscle notes: {v}")
             elif not clean:
                 sl.append("  Hip muscle notes: (empty)")
-        if any(k.startswith("kn_str_") for k in mus):
+        if "knee" in _lower_regions_r or any(k.startswith("kn_str_") for k in mus):
             kn_str_def_r = [("Extension (quads)","kn_str_ext"),
                             ("Flexion (hamstring)","kn_str_flex"),
                             ("Calf (heel raise)","kn_str_calf")]
@@ -1677,7 +1679,7 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
                 sl.append(f"  Knee muscle notes: {v}")
             elif not clean:
                 sl.append("  Knee muscle notes: (empty)")
-        if any(k.startswith("ak_str_") for k in mus):
+        if "ankle" in _lower_regions_r or any(k.startswith("ak_str_") for k in mus):
             ak_str_def_r = [("Dorsiflexion (TA)","ak_str_df"),
                             ("Plantarflexion (GS)","ak_str_pf"),
                             ("Eversion (peroneals)","ak_str_ev")]
