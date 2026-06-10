@@ -187,6 +187,35 @@ buttons use `on_key()` to catch arrow keys. Handler calls `_nav(direction, focus
 For `CycleButton` in grids: track the **inner button ID** (`f"{cb.id}_btn"`) in `_grid_pos`,
 not the outer Static ID.
 
+## TextArea height — mandatory pattern
+
+**Never use bare `height: auto` on a `TextArea` inside a `Static`-subclass widget.**
+
+The objective content area is a `ScrollableContainer → Vertical(height:auto)`. Inside this
+tree, a `TextArea` with `height: auto` expands to consume ALL remaining vertical space — hiding
+any sibling widgets below it (e.g., a second `RegionContainer` stacked after the first).
+
+The only safe pattern for a notes `TextArea` that expands with content but does not swallow
+its siblings:
+
+```css
+MyWidget TextArea { height: auto; min-height: 3; max-height: 12; padding: 0 1; }
+```
+
+- `height: auto` — grows with typed content
+- `min-height: 3` — always at least 3 rows visible
+- `max-height: 12` — capped at 12 rows; beyond that the TextArea scrolls internally
+
+Do **not** use:
+- `height: auto` alone — swallows all available vertical space
+- `height: 1fr` — fills parent height, same problem
+- `height: N` (fixed) — correct size but content silently overflows without growing
+
+This applies to any `Static` subclass (e.g., `*PassiveTables`, `*MuscleTables`) that embeds
+its own `TextArea`. Widgets that yield `TextArea` directly into `RegionContainer.compose()`
+(via `_compose_yaml_widgets`) are unaffected because they are direct children of the `Vertical`
+and Textual resolves their height from the outer `ScrollableContainer` context instead.
+
 ## Assessment sections — key field IDs
 
 | Section | Key IDs (examples) |

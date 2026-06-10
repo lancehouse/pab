@@ -61,7 +61,7 @@ class AnklePassiveTables(Static):
     AnklePassiveTables .op_side     { width: 3; height: 3; content-align: center middle; color: $text-muted; }
     AnklePassiveTables .op_txt      { width: 1fr; height: 3; padding: 0 1; }
 
-    AnklePassiveTables TextArea { height: 3; min-height: 2; padding: 0 1; }
+    AnklePassiveTables TextArea { height: auto; min-height: 3; max-height: 12; padding: 0 1; }
     AnklePassiveTables Label    { height: auto; margin-top: 0; }
     """
 
@@ -201,7 +201,7 @@ class AnkleMuscleTables(Static):
     AnkleMuscleTables .str_lbl     { width: 22; height: 3; content-align: left middle; }
     AnkleMuscleTables .str_inp     { width: 1fr; height: 3; padding: 0 1; }
     AnkleMuscleTables Label        { height: auto; margin-top: 0; }
-    AnkleMuscleTables TextArea     { height: 3; min-height: 2; padding: 0 1; }
+    AnkleMuscleTables TextArea     { height: auto; min-height: 3; max-height: 12; padding: 0 1; }
     """
 
     def __init__(self, **kwargs) -> None:

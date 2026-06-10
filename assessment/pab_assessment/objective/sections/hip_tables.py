@@ -67,7 +67,7 @@ class HipPassiveTables(Static):
     HipPassiveTables .op_side     { width: 3; height: 3; content-align: center middle; color: $text-muted; }
     HipPassiveTables .op_txt      { width: 1fr; height: 3; padding: 0 1; }
 
-    HipPassiveTables TextArea { height: 3; min-height: 2; padding: 0 1; }
+    HipPassiveTables TextArea { height: auto; min-height: 3; max-height: 12; padding: 0 1; }
     HipPassiveTables Label    { height: auto; margin-top: 0; }
     """
 
@@ -207,7 +207,7 @@ class HipMuscleTables(Static):
     HipMuscleTables .str_lbl     { width: 18; height: 3; content-align: left middle; }
     HipMuscleTables .str_inp     { width: 1fr; height: 3; padding: 0 1; }
     HipMuscleTables Label        { height: auto; margin-top: 0; }
-    HipMuscleTables TextArea     { height: 3; min-height: 2; padding: 0 1; }
+    HipMuscleTables TextArea     { height: auto; min-height: 3; max-height: 12; padding: 0 1; }
     """
 
     def __init__(self, **kwargs) -> None:
