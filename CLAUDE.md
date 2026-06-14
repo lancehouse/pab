@@ -55,10 +55,16 @@ introduce binary formats or database files. Files are used individually for vari
 
 These rules are non-negotiable and override any other instruction in this session:
 
-| Branch | Launch command | Purpose |
-|--------|---------------|---------|
-| `dev`  | `pabd`        | All active development — may be broken at any time |
-| `main` | `pab` / `pabs` | Stable, tested code only — never written to during dev |
+| Launcher | Bodychart binary | TUI binary | Git branch |
+|----------|-----------------|------------|------------|
+| `pabd`   | `bodychart/build/bodychart` | `assessment` → `assessment/.venv` | `dev` |
+| `pab`    | `pab-stable/bodychart/build-stable/bodychart` | `assessments` → `pab-stable/assessment/.venv` | `main` |
+
+These two streams are completely isolated. **Never mix them.**
+- `bodychart/src/integration.c` must always call `assessment` (dev TUI).
+- `pab-stable/bodychart/src/integration.c` must always call `assessments` (stable TUI).
+- `~/.local/bin/assessment` → symlink to dev venv.
+- `~/.local/bin/assessments` → script pointing to stable venv.
 
 1. **All development work goes to `dev` first.** Every code change, bug fix, or feature
    lands on the `dev` branch. No exceptions.
