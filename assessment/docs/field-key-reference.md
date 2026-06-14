@@ -457,6 +457,8 @@ Bilateral fields exist as `{key}_l` and `{key}_r`.
 | `nr_umn_clonus` | Clonus present |
 | `nr_umn_romberg` | Romberg positive |
 | `nr_umn_coord` | Coordination impaired |
+| `nr_umn_hoffman` | Hoffman's sign positive (FlagButton) |
+| `nr_umn_tromner` | Tromner sign positive (FlagButton) |
 | `nr_ul_reflex_notes` | UL Reflexes subsection free-text notes |
 | `nr_ul_myotome_notes` | UL Myotomes subsection free-text notes |
 | `nr_ul_derm_notes` | UL Dermatomes subsection free-text notes |

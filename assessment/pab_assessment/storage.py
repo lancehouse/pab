@@ -780,7 +780,8 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         _maybe_note(sl, "*LL Neurodynamics Notes:*", neu.get("nr_ll_nd_notes", "").strip())
         umn_items = [("Hyperreflexia","nr_umn_hyper"),("Babinski +","nr_umn_bab"),
                      ("Clonus","nr_umn_clonus"),("Romberg +","nr_umn_romberg"),
-                     ("Coord impaired","nr_umn_coord")]
+                     ("Coord impaired","nr_umn_coord"),
+                     ("Hoffman's","nr_umn_hoffman"),("Tromner","nr_umn_tromner")]
         umn_rows = [[lbl, "Yes" if neu.get(uid) is True else "No" if neu.get(uid) is False else "*(not answered)*"]
                     for lbl, uid in umn_items]
         _maybe_table(sl, "UMN Signs", ["Sign", "Result"], umn_rows)
@@ -1555,7 +1556,8 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         elif not clean: sl.append("  LL Neurodynamics notes: (empty)")
         umn_items = [("Hyperreflexia","nr_umn_hyper"),("Babinski +","nr_umn_bab"),
                      ("Clonus","nr_umn_clonus"),("Romberg +","nr_umn_romberg"),
-                     ("Coord impaired","nr_umn_coord")]
+                     ("Coord impaired","nr_umn_coord"),
+                     ("Hoffman's","nr_umn_hoffman"),("Tromner","nr_umn_tromner")]
         for lbl, uid in umn_items:
             v = neu.get(uid)
             if clean and v is None:

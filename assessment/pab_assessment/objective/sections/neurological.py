@@ -7,7 +7,7 @@ from textual.message import Message
 from textual.widgets import Input, Label, Static, TextArea
 
 from ...sections.base import BaseSection
-from ...widgets import CheckButton, RadioGroup
+from ...widgets import CheckButton, FlagButton, RadioGroup
 
 
 # ---------------------------------------------------------------------------
@@ -91,7 +91,10 @@ _UMN_ITEMS: list[tuple[str, str]] = [
     ("Clonus",         "nr_umn_clonus"),
     ("Romberg +",      "nr_umn_romberg"),
     ("Coord impaired", "nr_umn_coord"),
+    ("Hoffman's",      "nr_umn_hoffman"),
+    ("Tromner",        "nr_umn_tromner"),
 ]
+_UMN_FLAG_IDS = {"nr_umn_hoffman", "nr_umn_tromner"}
 
 _GAP = 2   # char gap between adjacent gangs
 
@@ -305,7 +308,10 @@ class NeurologicalSection(BaseSection):
         yield Label("UMN Signs", classes="subsection_header", id="nr_umn")
         with Horizontal(classes="umn_row"):
             for label, uid in _UMN_ITEMS:
-                yield CheckButton(label, id=uid)
+                if uid in _UMN_FLAG_IDS:
+                    yield FlagButton(label, id=uid)
+                else:
+                    yield CheckButton(label, id=uid)
         yield TextArea(id="nr_umn_notes", language="plain")
 
         # ── General Notes ─────────────────────────────────────────────────────
