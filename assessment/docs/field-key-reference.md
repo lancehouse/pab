@@ -457,7 +457,16 @@ Bilateral fields exist as `{key}_l` and `{key}_r`.
 | `nr_umn_clonus` | Clonus present |
 | `nr_umn_romberg` | Romberg positive |
 | `nr_umn_coord` | Coordination impaired |
-| `nr_notes` | Neurological free-text notes |
+| `nr_ul_reflex_notes` | UL Reflexes subsection free-text notes |
+| `nr_ul_myotome_notes` | UL Myotomes subsection free-text notes |
+| `nr_ul_derm_notes` | UL Dermatomes subsection free-text notes |
+| `nr_ul_nd_notes` | UL Neurodynamics subsection free-text notes |
+| `nr_ll_reflex_notes` | LL Reflexes subsection free-text notes |
+| `nr_ll_myotome_notes` | LL Myotomes subsection free-text notes |
+| `nr_ll_derm_notes` | LL Dermatomes subsection free-text notes |
+| `nr_ll_nd_notes` | LL Neurodynamics subsection free-text notes |
+| `nr_umn_notes` | UMN Signs subsection free-text notes |
+| `nr_notes` | Neurological general free-text notes |
 
 ---
 
