@@ -427,7 +427,7 @@ def _mount_bpi(body: Vertical) -> None:
         ),
         Horizontal(
             Horizontal(Label("Enjoyment:", classes="bpi_lbl2"), Input(id="bpi_enjoyment", placeholder="0–10", classes="bpi_sc2"), classes="bpi_pair"),
-            Horizontal(Label("Avg /7:", classes="bpi_lbl2"), Static("—", id="bpi_total", classes="bpi_total_disp"), classes="bpi_pair"),
+            Horizontal(Label("Avg:", classes="bpi_lbl2"), Static("—", id="bpi_total", classes="bpi_total_disp"), classes="bpi_pair"),
             classes="bpi_row2",
         ),
     )
@@ -694,7 +694,12 @@ class OutcomeMeasuresSection(BaseSection):
                 if raw.replace(".", "", 1).lstrip("-").isdigit():
                     values.append(float(raw))
             total = self.query_one("#bpi_total", Static)
-            total.update(f"{sum(values)/7:.1f}/10" if values else "—")
+            if values:
+                avg = sum(values) / len(values)
+                suffix = f"({len(values)}/7)" if len(values) < 7 else ""
+                total.update(f"{avg:.1f}/10 {suffix}".strip())
+            else:
+                total.update("—")
         except Exception:
             pass
 
