@@ -2322,14 +2322,6 @@ def export_session_report(session_file: str, clean: bool = False) -> str:  # noq
         f("rf_gait_disturbance",       m)
         txt("spinal_cord_action",      m)
 
-    sub("Upper Motor Neurone Signs")
-    f("umn_hyperreflexia",    m)
-    f("umn_babinski",         m)
-    f("umn_clonus",           m)
-    f("umn_romberg",          m)
-    f("umn_coordination",     m)
-    txt("umn_interpretation", m)
-
     sub("Differential — Ankylosing Spondylitis")
     f("diff_as_insidious",          m)
     f("diff_as_lumbar_sij",         m)
@@ -3259,12 +3251,6 @@ LABELS: dict[str, str] = {
     "rf_bowel_disturbance":             "Red flag: Bowel disturbance",
     "rf_bilateral_paraesthesia":        "Red flag: Bilateral paraesthesia",
     "rf_gait_disturbance":              "Red flag: Gait disturbance",
-    "umn_hyperreflexia":                "UMN sign: Hyperreflexia",
-    "umn_babinski":                     "UMN sign: Babinski positive",
-    "umn_clonus":                       "UMN sign: Clonus",
-    "umn_romberg":                      "UMN sign: Romberg positive",
-    "umn_coordination":                 "UMN sign: Coordination impaired",
-    "umn_interpretation":               "UMN interpretation",
     "cauda_equina_action":              "Cauda equina action taken",
     "spinal_cord_action":               "Spinal cord compression action taken",
     "diff_as_insidious":                "Diff AS: Insidious onset",
@@ -3971,14 +3957,6 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
         f("rf_bilateral_paraesthesia", m)
         f("rf_gait_disturbance",      m)
         txt("spinal_cord_action",     m)
-
-    sub("Upper Motor Neurone Signs")
-    f("umn_hyperreflexia",   m)
-    f("umn_babinski",        m)
-    f("umn_clonus",          m)
-    f("umn_romberg",         m)
-    f("umn_coordination",    m)
-    txt("umn_interpretation", m)
 
     sub("Differential — Ankylosing Spondylitis")
     f("diff_as_insidious",         m)

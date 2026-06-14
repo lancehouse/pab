@@ -171,7 +171,6 @@ These fields are defined in `pab_assessment/sections/yaml/subj_sleep_pilot.yaml`
 | `rf_infection_comment` | Infection red flag — clinician comment |
 | `cauda_equina_action` | Cauda equina — action taken |
 | `spinal_cord_action` | Spinal cord compression — action taken |
-| `umn_interpretation` | UMN signs — interpretation |
 | `diff_as_action` | Ankylosing spondylitis screening — action |
 | `diff_aaa_action` | Abdominal aortic aneurysm screening — action |
 | `diff_vc_action` | Vascular claudication screening — action |

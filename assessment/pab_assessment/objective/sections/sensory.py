@@ -10,7 +10,7 @@ from textual.message import Message
 from textual.widgets import Input, Label, Static, TextArea
 
 from ...sections.base import BaseSection
-from ...widgets import CheckButton, RadioGroup
+from ...widgets import FlagButton, RadioGroup
 
 
 # ---------------------------------------------------------------------------
@@ -75,9 +75,9 @@ class SensorySection(BaseSection):
     SensorySection .ppt_gap    { width: 2;  height: 3; }
     SensorySection .ppt_detail { height: 3; width: 1fr; }
 
-    /* Sensory finding rows — CheckButton (≤25%) + optional detail Input (1fr) */
+    /* Sensory finding rows — FlagButton (≤25%) + optional detail Input (1fr) */
     SensorySection .sn_row     { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
-    SensorySection CheckButton { width: 25%; height: 3; min-width: 0; }
+    SensorySection FlagButton  { width: 25%; height: 3; min-width: 0; }
     SensorySection .sn_detail  { width: 1fr; height: 3; padding: 0 1; }
 
     SensorySection TextArea { height: auto; min-height: 2; padding: 0 1; }
@@ -95,7 +95,7 @@ class SensorySection(BaseSection):
         yield Label("Reduced Sensory Acuity (hyposensitivity)", classes="subsection_header", id="sn_hyposensitivity")
         for label, sid, has_detail in _HYPO_ITEMS:
             with Horizontal(classes="sn_row"):
-                yield CheckButton(label, id=sid)
+                yield FlagButton(label, id=sid)
                 if has_detail:
                     yield Input(placeholder="region / detail",
                                 id=f"{sid}_detail", classes="sn_detail")
@@ -114,7 +114,7 @@ class SensorySection(BaseSection):
 
         for label, sid, has_detail in _HYPER_ITEMS:
             with Horizontal(classes="sn_row"):
-                yield CheckButton(label, id=sid)
+                yield FlagButton(label, id=sid)
                 if has_detail:
                     yield Input(placeholder="region / value",
                                 id=f"{sid}_detail", classes="sn_detail")
@@ -128,7 +128,7 @@ class SensorySection(BaseSection):
     # ------------------------------------------------------------------
 
     @on(RadioGroup.Changed)
-    @on(CheckButton.Changed)
+    @on(FlagButton.Changed)
     @on(Input.Changed, selector="Input")
     @on(TextArea.Changed, selector="TextArea")
     def _on_field_changed(self) -> None:
@@ -149,11 +149,11 @@ class SensorySection(BaseSection):
             data["sn_ppt_detail"] = self.query_one("#sn_ppt_detail", Input).value
         except Exception:
             data["sn_ppt_detail"] = ""
-        # CheckButton findings + detail inputs
+        # FlagButton findings + detail inputs
         for items in (_HYPO_ITEMS, _HYPER_ITEMS):
             for _, sid, has_detail in items:
                 try:
-                    data[sid] = self.query_one(f"#{sid}", CheckButton).value
+                    data[sid] = self.query_one(f"#{sid}", FlagButton).value
                 except Exception:
                     data[sid] = None
                 if has_detail:
@@ -181,7 +181,7 @@ class SensorySection(BaseSection):
             for items in (_HYPO_ITEMS, _HYPER_ITEMS):
                 for _, sid, has_detail in items:
                     try:
-                        self.query_one(f"#{sid}", CheckButton).set_value(data.get(sid))
+                        self.query_one(f"#{sid}", FlagButton).set_value(data.get(sid))
                     except Exception:
                         pass
                     if has_detail:

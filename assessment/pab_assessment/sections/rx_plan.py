@@ -310,35 +310,30 @@ class RxPlanSection(BaseSection):
         try:
             rp = data if isinstance(data, dict) else {}
             for fid in _TOGGLE_FIELDS:
-                if fid in rp:
-                    try:
-                        self.query_one(f"#{fid}", CheckButton).set_value(rp[fid])
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", CheckButton).set_value(rp.get(fid))
+                except Exception:
+                    pass
             for nid in _NOTE_FIELDS:
-                if nid in rp:
-                    try:
-                        self.query_one(f"#{nid}", Input).value = rp[nid]
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{nid}", Input).value = rp.get(nid, "")
+                except Exception:
+                    pass
             for fid in _CYCLE_FIELDS:
-                if fid in rp:
-                    try:
-                        self.query_one(f"#{fid}", CycleField).set_value(rp[fid])
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", CycleField).set_value(rp.get(fid))
+                except Exception:
+                    pass
             for fid in _INPUT_FIELDS:
-                if fid in rp:
-                    try:
-                        self.query_one(f"#{fid}", Input).value = rp[fid]
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", Input).value = rp.get(fid, "")
+                except Exception:
+                    pass
             for fid in _TEXT_FIELDS:
-                if fid in rp:
-                    try:
-                        self.query_one(f"#{fid}", TextArea).text = rp[fid]
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", TextArea).text = rp.get(fid, "")
+                except Exception:
+                    pass
         finally:
             self._loading = False
 

@@ -326,11 +326,10 @@ class OutcomeBlock(Vertical):
     def store_data(self, data: dict) -> None:
         """Called by section load() — store plan checkbox always; defer rest if unmounted."""
         plan_key = f"plan_{self._measure_id}"
-        if plan_key in data:
-            try:
-                self.query_one(f"#{plan_key}", CheckButton).set_value(data[plan_key])
-            except Exception:
-                pass
+        try:
+            self.query_one(f"#{plan_key}", CheckButton).set_value(data.get(plan_key))
+        except Exception:
+            pass
         if not self._mounted:
             # Only keep fields owned by this block — prevents stale pending data
             # from overwriting another block's freshly-collected live values in collect().
@@ -354,17 +353,16 @@ class OutcomeBlock(Vertical):
         except Exception:
             return
         for inp in body.query(Input):
-            if inp.id in data:
-                inp.value = data[inp.id]
+            inp.value = data.get(inp.id, "")
         for ta in body.query(TextArea):
             if ta.id in data:
                 ta.load_text(data[ta.id])
+            else:
+                ta.load_text("")
         for cf in body.query(CycleField):
-            if cf.id in data:
-                cf.set_value(data[cf.id])
+            cf.set_value(data.get(cf.id))
         for cb in body.query(CheckButton):
-            if cb.id in data:
-                cb.set_value(data[cb.id])
+            cb.set_value(data.get(cb.id))
 
     def collect_data(self) -> dict:
         """Return all field values — plan checkbox always, body fields from pending or widgets."""
@@ -847,12 +845,10 @@ class OutcomeMeasuresSection(BaseSection):
             for i in range(self._hyp_row_count):
                 for col in _HYP_COLS:
                     fid = f"hyp_{i}_{col}"
-                    val = self._hyp_pending.get(fid, "")
-                    if val:
-                        try:
-                            self.query_one(f"#{fid}", Input).value = val
-                        except Exception:
-                            pass
+                    try:
+                        self.query_one(f"#{fid}", Input).value = self._hyp_pending.get(fid, "")
+                    except Exception:
+                        pass
         finally:
             self._loading = False
         self._hyp_pending = {}

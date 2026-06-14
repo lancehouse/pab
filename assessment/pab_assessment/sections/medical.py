@@ -153,7 +153,6 @@ class MedicalSection(BaseSection):
         "rf_weight_loss", "rf_cancer_history", "rf_age_50_spinal", "rf_failed_conservative",
         "rf_trauma", "rf_corticosteroids_fracture", "rf_osteoporosis_fracture",
         "rf_fever", "rf_immunosuppressed", "rf_spinal_procedure",
-        "umn_hyperreflexia", "umn_babinski", "umn_clonus", "umn_romberg", "umn_coordination",
     ]
     _RF_URGENT_CAUDA = ["rf_saddle_anaesthesia", "rf_bladder_disturbance", "rf_bowel_disturbance"]
     _RF_URGENT_CORD  = ["rf_bilateral_paraesthesia", "rf_gait_disturbance"]
@@ -173,7 +172,6 @@ class MedicalSection(BaseSection):
         "rf_fever", "rf_immunosuppressed", "rf_spinal_procedure",
         "rf_saddle_anaesthesia", "rf_bladder_disturbance", "rf_bowel_disturbance",
         "rf_bilateral_paraesthesia", "rf_gait_disturbance",
-        "umn_hyperreflexia", "umn_babinski", "umn_clonus", "umn_romberg", "umn_coordination",
         "diff_as_insidious", "diff_as_lumbar_sij", "diff_as_inflammatory",
         "diff_as_breathing", "diff_as_fever_weight_loss",
         "diff_aaa_pulsating", "diff_aaa_age_50", "diff_aaa_cvd_risk", "diff_aaa_ruptured",
@@ -186,7 +184,7 @@ class MedicalSection(BaseSection):
     _TEXT_FIELDS = [
         "previous_injuries", "comorbid_other",
         "rf_malignancy_comment", "rf_fracture_comment", "rf_infection_comment",
-        "cauda_equina_action", "spinal_cord_action", "umn_interpretation",
+        "cauda_equina_action", "spinal_cord_action",
         "diff_as_action", "diff_aaa_action", "diff_vc_action",
     ]
 
@@ -292,17 +290,6 @@ class MedicalSection(BaseSection):
         with Horizontal(classes="field_row"):
             yield Label("Action taken:")
             yield TextArea(id="spinal_cord_action", language="plain")
-
-        yield Label("Upper Motor Neurone Signs:", classes="subgroup_header", id="rf_umn_signs")
-        with Horizontal(classes="btn_row"):
-            yield FlagButton("Hyperreflexia",          id="umn_hyperreflexia")
-            yield FlagButton("Babinski +ve",           id="umn_babinski")
-            yield FlagButton("Clonus",                 id="umn_clonus")
-            yield FlagButton("Romberg impaired",       id="umn_romberg")
-            yield FlagButton("Coordination impaired",  id="umn_coordination")
-        with Horizontal(classes="field_row"):
-            yield Label("Interpretation:")
-            yield TextArea(id="umn_interpretation", language="plain")
 
         # ── Differential Screening ───────────────────────────────────────
         yield Label("— Differential Screening —", classes="subsection_header", id="med_differential")
@@ -488,25 +475,23 @@ class MedicalSection(BaseSection):
         try:
             medical = data if isinstance(data, dict) else {}
             for fid in self._TOGGLE_FIELDS:
-                if fid in medical:
-                    try:
-                        self.query_one(f"#{fid}", CheckButton).set_value(medical[fid])
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", CheckButton).set_value(medical.get(fid))
+                except Exception:
+                    pass
             for fid in self._LIKELIHOOD_FIELDS:
-                if fid in medical:
-                    try:
-                        self.query_one(f"#{fid}", LikelihoodField).set_value(medical[fid])
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", LikelihoodField).set_value(medical.get(fid))
+                except Exception:
+                    pass
             for fid in self._TEXT_FIELDS:
-                if fid in medical:
-                    try:
-                        self.query_one(f"#{fid}", TextArea).text = medical[fid]
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", TextArea).text = medical.get(fid, "")
+                except Exception:
+                    pass
             meds = medical.get("medications", [])
-            for i, med in enumerate(meds[:4]):
+            for i in range(4):
+                med = meds[i] if i < len(meds) else {}
                 for col in _MED_COLS:
                     try:
                         self.query_one(f"#med_{i}_{col}", Input).value = med.get(col, "")

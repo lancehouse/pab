@@ -138,7 +138,7 @@ class NeurologicalSection(BaseSection):
     NeurologicalSection .nd_sub_resp { width: 30; text-align: center; }
     NeurologicalSection .nd_row      { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
     NeurologicalSection .nd_lbl      { width: 8;  height: 3; content-align: left middle; }
-    NeurologicalSection .nd_deg      { width: 6;  height: 3; padding: 0 1; }
+    NeurologicalSection .nd_deg      { width: 8;  height: 3; padding: 0 1; }
     NeurologicalSection .nd_gap      { width: 2;  height: 3; }
     NeurologicalSection .nd_resp     { width: 1fr; height: 3; padding: 0 1; }
     NeurologicalSection .nd_hdr_col  { width: 1fr; text-align: center; }

@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from textual.app import ComposeResult, on
-from textual.containers import ScrollableContainer
+from textual.containers import Horizontal, ScrollableContainer
 from textual.widgets import Label, Input, TextArea, Static
 from textual.message import Message
 
@@ -122,14 +122,22 @@ class DiagnosisSection(BaseSection):
         padding: 0 1;
     }
 
-    .section_title     { text-style: bold; margin-bottom: 0; }
-    .reference_note    { color: $text-muted; margin-bottom: 0; }
+    .section_title  { text-style: bold; margin-bottom: 0; }
+    .reference_note { color: $text-muted; margin-bottom: 0; }
 
-    Label  { margin-bottom: 0; }
-    Input  { height: auto; min-height: 1; margin-bottom: 0; }
+    Label    { margin-bottom: 0; }
+    Input    { height: auto; min-height: 1; margin-bottom: 0; }
     TextArea { height: auto; min-height: 2; margin-bottom: 0; }
 
-    .toggle_btn { width: 100%; height: 3; margin-bottom: 0; }
+    /* Compact check buttons — auto-size to their label */
+    CheckButton { width: auto; height: auto; min-width: 16; margin: 0 1 1 0; }
+
+    /* Horizontal button rows */
+    .btn_row { height: auto; width: 100%; margin-bottom: 0; }
+
+    /* CycleField (subtype / severity) — expand to fill row and show full label */
+    CycleField        { width: 1fr; height: auto; margin-bottom: 1; }
+    CycleField Button { width: 1fr; height: auto; }
 
     .xref_badge {
         width: 100%; height: auto; padding: 0 1;
@@ -147,7 +155,8 @@ class DiagnosisSection(BaseSection):
         # ── Pathway selection ──────────────────────────────────
         yield Label("— ICD-11 Pathway Selection —", classes="subsection_header", id="dx_overview")
         yield Label("(Nicholas et al 2019, Schug et al 2019, Perrot et al 2019, Scholz et al 2019)", classes="reference_note")
-        yield CheckButton("Duration >3 months", id="duration_over_3_months", classes="toggle_btn")
+        with Horizontal(classes="btn_row"):
+            yield CheckButton("Duration >3 months", id="duration_over_3_months")
         yield Static("", id="xref_dx_duration", classes="xref_badge")
         yield Label("Mechanism:")
         yield CycleField("mechanism", _MECHANISM_OPTIONS)
@@ -157,8 +166,9 @@ class DiagnosisSection(BaseSection):
         yield Label("— Chronic Primary Pain —", classes="subsection_header", id="dx_primary")
         yield Label("(Nicholas et al 2019)", classes="reference_note")
         yield Static("", id="xref_dx_primary", classes="xref_badge")
-        yield CheckButton("Significant emotional distress or functional limitation", id="primary_distress", classes="toggle_btn")
-        yield CheckButton("Not better accounted for by another diagnosis", id="primary_not_other_dx", classes="toggle_btn")
+        with Horizontal(classes="btn_row"):
+            yield CheckButton("Significant emotional distress or functional limitation", id="primary_distress")
+            yield CheckButton("Not better accounted for by another diagnosis", id="primary_not_other_dx")
         yield Label("Subtype:")
         yield CycleField("primary_subtype", _PRIMARY_SUBTYPE_OPTIONS)
         yield Label("Severity:")
@@ -350,29 +360,25 @@ class DiagnosisSection(BaseSection):
         try:
             dx = data if isinstance(data, dict) else {}
             for fid in _CYCLE_FIELDS:
-                if fid in dx:
-                    try:
-                        self.query_one(f"#{fid}", CycleField).set_value(dx[fid])
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", CycleField).set_value(dx.get(fid))
+                except Exception:
+                    pass
             for fid in _TOGGLE_FIELDS:
-                if fid in dx:
-                    try:
-                        self.query_one(f"#{fid}", CheckButton).set_value(dx[fid])
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", CheckButton).set_value(dx.get(fid))
+                except Exception:
+                    pass
             for fid in _INPUT_FIELDS:
-                if fid in dx:
-                    try:
-                        self.query_one(f"#{fid}", Input).value = dx[fid]
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", Input).value = dx.get(fid, "")
+                except Exception:
+                    pass
             for fid in _TEXT_FIELDS:
-                if fid in dx:
-                    try:
-                        self.query_one(f"#{fid}", TextArea).text = dx[fid]
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", TextArea).text = dx.get(fid, "")
+                except Exception:
+                    pass
         finally:
             self._loading = False
             self.update_cross_refs()
