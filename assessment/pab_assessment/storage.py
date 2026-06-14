@@ -551,42 +551,101 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
             for key, lbl in [("am_sh_notes","*Shoulder notes*"),
                               ("am_tx_sh_notes","*Thoracic (Sh) notes*")]:
                 _maybe_note(sl, lbl, act.get(key, "").strip())
+        if any(k.startswith("hp_") for k in act):
+            def _hp_cell(p, s):
+                v  = act.get(f"{p}_{s}_range", "") or ""
+                ps = act.get(f"{p}_{s}_ps") or ""
+                txt = f"{v}°" if v else "—"
+                return f"{txt} {ps}".strip() if ps else txt
+            hp_rom_def = [("Flexion","hp_flex"),("Extension","hp_ext"),
+                          ("Abduction","hp_abd"),("Adduction","hp_add"),
+                          ("Int Rotation","hp_ir"),("Ext Rotation","hp_er")]
+            hp_tbl = [[lbl, _hp_cell(p,"ax_l"), _hp_cell(p,"ax_r"),
+                            _hp_cell(p,"reax_l"), _hp_cell(p,"reax_r")]
+                      for lbl, p in hp_rom_def]
+            _maybe_table(sl, "Hip ROM", ["","Ax L","Ax R","ReAx L","ReAx R"], hp_tbl)
+            _maybe_note(sl, "*Hip notes*", act.get("am_hp_notes", "").strip())
+        if any(k.startswith("kn_") for k in act):
+            def _kn_cell(p, s):
+                v  = act.get(f"{p}_{s}_range", "") or ""
+                ps = act.get(f"{p}_{s}_ps") or ""
+                txt = f"{v}°" if v else "—"
+                return f"{txt} {ps}".strip() if ps else txt
+            kn_rom_def = [("Flexion","kn_flex"),("Extension","kn_ext")]
+            kn_tbl = [[lbl, _kn_cell(p,"ax_l"), _kn_cell(p,"ax_r"),
+                            _kn_cell(p,"reax_l"), _kn_cell(p,"reax_r")]
+                      for lbl, p in kn_rom_def]
+            _maybe_table(sl, "Knee ROM", ["","Ax L","Ax R","ReAx L","ReAx R"], kn_tbl)
+            _maybe_note(sl, "*Knee notes*", act.get("am_kn_notes", "").strip())
+        if any(k.startswith("ak_") for k in act):
+            def _ak_cell(p, s):
+                v  = act.get(f"{p}_{s}_range", "") or ""
+                ps = act.get(f"{p}_{s}_ps") or ""
+                txt = f"{v}°" if v else "—"
+                return f"{txt} {ps}".strip() if ps else txt
+            ak_rom_def = [("Dorsiflexion","ak_df"),("Plantarflexion","ak_pf"),
+                          ("Inversion","ak_inv"),("Eversion","ak_ev"),
+                          ("WB DF (lunge)","ak_wbdf")]
+            ak_tbl = [[lbl, _ak_cell(p,"ax_l"), _ak_cell(p,"ax_r"),
+                            _ak_cell(p,"reax_l"), _ak_cell(p,"reax_r")]
+                      for lbl, p in ak_rom_def]
+            _maybe_table(sl, "Ankle ROM", ["","Ax L","Ax R","ReAx L","ReAx R"], ak_tbl)
+            _maybe_note(sl, "*Ankle notes*", act.get("am_ak_notes", "").strip())
         _flush_section("### 02 Active Movement", sl)
 
     # ── 03 Passive Movement ───────────────────────────────────────────────────
+    def _fmt_pas(norm: str | None, txt: str | None) -> str:
+        n = norm == "Norm"
+        t = (txt or "").strip()
+        if n and t:
+            return f"Normal; {t}"
+        if n:
+            return "Normal"
+        return t or "—"
+
     if pas:
         sl = []
-        op_def = [("Tx Flexion","op_tx_flex"),("Tx Extension","op_tx_ext"),
-                  ("Tx Rot L","op_tx_rot_l"),("Tx Rot R","op_tx_rot_r"),
-                  ("Lx Flexion","op_lx_flex"),("Lx Extension","op_lx_ext"),
-                  ("Lx Lat Fl L","op_lx_lf_l"),("Lx Lat Fl R","op_lx_lf_r")]
-        op_rows = [[lbl, pas.get(f"{p}_ef") or "—", pas.get(f"{p}_resp") or "—"]
-                   for lbl, p in op_def]
-        _maybe_table(sl, "Overpressure", ["Movement", "End-feel", "Response"], op_rows)
-        paivm_levels = ["L5","L4","L3","L2","L1","T12","T11","T10","T9","T8"]
-        paivm_rows = [[lv, pas.get(f"pm_{lv}_c") or "—",
-                          pas.get(f"pm_{lv}_ul_l") or "—",
-                          pas.get(f"pm_{lv}_ul_r") or "—"]
+        # (label, prefix, bilateral)
+        _lx_op = [("Tx Flexion","op_tx_flex",False),("Tx Extension","op_tx_ext",False),
+                  ("Tx Rotation","op_tx_rot",True),
+                  ("Lx Flexion","op_lx_flex",False),("Lx Extension","op_lx_ext",False),
+                  ("Lx Lat Flex","op_lx_lf",True)]
+        op_rows = [[lbl,
+                    (f"L: {_fmt_pas(pas.get(f'{p}_l_norm'),pas.get(f'{p}_l_txt'))} / "
+                     f"R: {_fmt_pas(pas.get(f'{p}_r_norm'),pas.get(f'{p}_r_txt'))}")
+                    if bi else _fmt_pas(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
+                   for lbl, p, bi in _lx_op]
+        _maybe_table(sl, "Overpressure", ["Movement", "Findings"], op_rows)
+        paivm_levels = ["T8","T9","T10","T11","T12","L1","L2","L3","L4","L5"]
+        paivm_rows = [[lv,
+                       _fmt_pas(pas.get(f"pm_{lv}_l_norm"), None),
+                       _fmt_pas(pas.get(f"pm_{lv}_c_norm"), None),
+                       _fmt_pas(pas.get(f"pm_{lv}_r_norm"), None),
+                       (pas.get(f"pm_{lv}_txt") or "").strip() or "—"]
                       for lv in paivm_levels]
-        _maybe_table(sl, "PAIVMs", ["Level", "Central", "UL Left", "UL Right"], paivm_rows)
+        _maybe_table(sl, "PAIVMs", ["Level", "L", "C", "R", "Notes"], paivm_rows)
         for key, lbl in [("pm_op_notes","*OP notes*"),("pm_paivm_notes","*PAIVM notes*")]:
             _maybe_note(sl, lbl, pas.get(key, "").strip())
         if any(k.startswith("cx_op_") or k.startswith("cx_pm_") for k in pas):
-            cx_op_def = [("Flexion","cx_op_flex"),("Extension","cx_op_ext"),
-                         ("Lat Fl L","cx_op_lf_l"),("Lat Fl R","cx_op_lf_r"),
-                         ("Rotation L","cx_op_rot_l"),("Rotation R","cx_op_rot_r"),
-                         ("Quadrant L","cx_op_quad_l"),("Quadrant R","cx_op_quad_r")]
-            cx_op_rows = [[lbl, pas.get(f"{p}_ef") or "—", pas.get(f"{p}_resp") or "—"]
-                          for lbl, p in cx_op_def]
-            _maybe_table(sl, "Cervical OP", ["Movement","End-feel","Response"], cx_op_rows)
+            _cx_op = [("Flexion","cx_op_flex",False),("Extension","cx_op_ext",False),
+                      ("Lat Flex","cx_op_lf",True),("Rotation","cx_op_rot",True),
+                      ("Quadrant","cx_op_quad",True)]
+            cx_op_rows = [[lbl,
+                           (f"L: {_fmt_pas(pas.get(f'{p}_l_norm'),pas.get(f'{p}_l_txt'))} / "
+                            f"R: {_fmt_pas(pas.get(f'{p}_r_norm'),pas.get(f'{p}_r_txt'))}")
+                           if bi else _fmt_pas(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
+                          for lbl, p, bi in _cx_op]
+            _maybe_table(sl, "Cervical OP", ["Movement","Findings"], cx_op_rows)
             cx_paivm_levels = [("C0/1","C0_1"),("C1/2","C1_2"),("C2","C2"),("C3","C3"),
                                ("C4","C4"),("C5","C5"),("C6","C6"),("C7","C7"),
                                ("T1","T1"),("T2","T2"),("T3","T3"),("T4","T4")]
-            cx_paivm_rows = [[lv, pas.get(f"cx_pm_{k}_ul_l") or "—",
-                                  pas.get(f"cx_pm_{k}_c") or "—",
-                                  pas.get(f"cx_pm_{k}_ul_r") or "—"]
+            cx_paivm_rows = [[lv,
+                               _fmt_pas(pas.get(f"cx_pm_{k}_l_norm"), None),
+                               _fmt_pas(pas.get(f"cx_pm_{k}_c_norm"), None),
+                               _fmt_pas(pas.get(f"cx_pm_{k}_r_norm"), None),
+                               (pas.get(f"cx_pm_{k}_txt") or "").strip() or "—"]
                              for lv, k in cx_paivm_levels]
-            _maybe_table(sl, "Cervical PAIVMs", ["Level","UL Left","Central","UL Right"], cx_paivm_rows)
+            _maybe_table(sl, "Cervical PAIVMs", ["Level","L","C","R","Notes"], cx_paivm_rows)
             for key, lbl in [("cx_pm_op_notes","*Cervical OP notes*"),
                               ("cx_pm_paivm_notes","*Cervical PAIVM notes*")]:
                 _maybe_note(sl, lbl, pas.get(key, "").strip())
@@ -596,17 +655,20 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
                          ("Abduction","sh_op_abd"),("Int Rot","sh_op_ir"),
                          ("Ext Rot","sh_op_er"),("Horiz Add","sh_op_hadd"),
                          ("Horiz Abd","sh_op_habd")]
-            sh_op_rows = [[lbl, pas.get(f"{p}_ef") or "—", pas.get(f"{p}_resp") or "—"]
+            sh_op_rows = [[lbl,
+                           _fmt_pas(pas.get(f"{p}_l_norm"), pas.get(f"{p}_l_txt")),
+                           _fmt_pas(pas.get(f"{p}_r_norm"), pas.get(f"{p}_r_txt"))]
                           for lbl, p in sh_op_def]
-            _maybe_table(sl, "Shoulder OP", ["Movement","End-feel","Response"], sh_op_rows)
+            _maybe_table(sl, "Shoulder OP", ["Movement","Left","Right"], sh_op_rows)
             for side, side_lbl in (("l","Left"),("r","Right")):
                 acc_rows = [[dir_lbl,
-                             pas.get(f"sh_acc_{dk}_{side}_grade") or "—",
-                             pas.get(f"sh_acc_{dk}_{side}_resp") or "—"]
+                             _fmt_pas(pas.get(f"sh_acc_{dk}_{side}_norm"),
+                                      pas.get(f"sh_acc_{dk}_{side}_txt"))]
                             for dir_lbl, dk in (("Inferior","inf"),("Posterior","post"),("Anterior","ant"))]
-                _maybe_table(sl, f"GH Accessory — {side_lbl}",
-                             ["Direction","Grade","Response"], acc_rows)
-            acsc_rows = [[lbl, pas.get(f"{pfx}_l") or "—", pas.get(f"{pfx}_r") or "—"]
+                _maybe_table(sl, f"GH Accessory — {side_lbl}", ["Direction","Findings"], acc_rows)
+            acsc_rows = [[lbl,
+                          _fmt_pas(pas.get(f"{pfx}_l_norm"), pas.get(f"{pfx}_l_txt")),
+                          _fmt_pas(pas.get(f"{pfx}_r_norm"), pas.get(f"{pfx}_r_txt"))]
                          for lbl, pfx in (("AC Stress","sh_ac_pm_stress"),
                                           ("AC Palp","sh_ac_pm_palp"),
                                           ("SC Stress","sh_sc_pm_stress"))]
@@ -614,6 +676,52 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
             for key, lbl in [("sh_pm_op_notes","*Shoulder OP notes*"),
                               ("sh_pm_acc_notes","*Accessory notes*")]:
                 _maybe_note(sl, lbl, pas.get(key, "").strip())
+        if any(k.startswith("hp_op_") or k.startswith("hp_acc_") for k in pas):
+            hp_op_def = [("Flexion","hp_op_flex"),("Extension","hp_op_ext"),
+                         ("Abduction","hp_op_abd"),("Adduction","hp_op_add"),
+                         ("Int Rot","hp_op_ir"),("Ext Rot","hp_op_er")]
+            hp_op_rows = [[lbl,
+                           _fmt_pas(pas.get(f"{p}_l_norm"), pas.get(f"{p}_l_txt")),
+                           _fmt_pas(pas.get(f"{p}_r_norm"), pas.get(f"{p}_r_txt"))]
+                          for lbl, p in hp_op_def]
+            _maybe_table(sl, "Hip OP", ["Movement","Left","Right"], hp_op_rows)
+            hp_acc_def = [("Distraction","hp_acc_dist"),("Lateral","hp_acc_lat")]
+            hp_acc_rows = [[lbl,
+                            _fmt_pas(pas.get(f"{p}_l_norm"), pas.get(f"{p}_l_txt")),
+                            _fmt_pas(pas.get(f"{p}_r_norm"), pas.get(f"{p}_r_txt"))]
+                           for lbl, p in hp_acc_def]
+            _maybe_table(sl, "Hip Accessory", ["Direction","Left","Right"], hp_acc_rows)
+            _maybe_note(sl, "*Hip OP notes*", pas.get("hp_op_notes", "").strip())
+        if any(k.startswith("kn_op_") or k.startswith("kn_acc_") for k in pas):
+            kn_op_def = [("Flexion","kn_op_flex"),("Extension","kn_op_ext")]
+            kn_op_rows = [[lbl,
+                           _fmt_pas(pas.get(f"{p}_l_norm"), pas.get(f"{p}_l_txt")),
+                           _fmt_pas(pas.get(f"{p}_r_norm"), pas.get(f"{p}_r_txt"))]
+                          for lbl, p in kn_op_def]
+            _maybe_table(sl, "Knee OP", ["Movement","Left","Right"], kn_op_rows)
+            kn_acc_def = [("AP Glide","kn_acc_ap"),("Patella Med","kn_acc_pmed"),
+                          ("Patella Lat","kn_acc_plat")]
+            kn_acc_rows = [[lbl,
+                            _fmt_pas(pas.get(f"{p}_l_norm"), pas.get(f"{p}_l_txt")),
+                            _fmt_pas(pas.get(f"{p}_r_norm"), pas.get(f"{p}_r_txt"))]
+                           for lbl, p in kn_acc_def]
+            _maybe_table(sl, "Knee Accessory", ["Direction","Left","Right"], kn_acc_rows)
+            _maybe_note(sl, "*Knee OP notes*", pas.get("kn_op_notes", "").strip())
+        if any(k.startswith("ak_op_") or k.startswith("ak_acc_") for k in pas):
+            ak_op_def = [("Dorsiflexion","ak_op_df"),("Plantarflexion","ak_op_pf"),
+                         ("Inversion","ak_op_inv"),("Eversion","ak_op_ev")]
+            ak_op_rows = [[lbl,
+                           _fmt_pas(pas.get(f"{p}_l_norm"), pas.get(f"{p}_l_txt")),
+                           _fmt_pas(pas.get(f"{p}_r_norm"), pas.get(f"{p}_r_txt"))]
+                          for lbl, p in ak_op_def]
+            _maybe_table(sl, "Ankle OP", ["Movement","Left","Right"], ak_op_rows)
+            ak_acc_def = [("AP Glide","ak_acc_ap"),("Subtalar","ak_acc_st")]
+            ak_acc_rows = [[lbl,
+                            _fmt_pas(pas.get(f"{p}_l_norm"), pas.get(f"{p}_l_txt")),
+                            _fmt_pas(pas.get(f"{p}_r_norm"), pas.get(f"{p}_r_txt"))]
+                           for lbl, p in ak_acc_def]
+            _maybe_table(sl, "Ankle Accessory", ["Direction","Left","Right"], ak_acc_rows)
+            _maybe_note(sl, "*Ankle OP notes*", pas.get("ak_op_notes", "").strip())
         _flush_section("### 03 Passive Movement & Overpressure", sl)
 
     # ── 04 Neurological ───────────────────────────────────────────────────────
@@ -705,7 +813,8 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         _flush_section("### 05 Sensory", sl)
 
     # ── 06 Muscle Testing ─────────────────────────────────────────────────────
-    if mus:
+    _lower_regions = set(active_regions or [])
+    if mus or _lower_regions & {"hip", "knee", "ankle"}:
         sl = []
         ml_def = [("QL (side sit)","ml_ql"),("Thomas test","ml_thomas"),
                   ("Hamstrings SLR","ml_ham")]
@@ -778,6 +887,30 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
                            for lbl, p in sh_str_def]
             _maybe_table(sl, "Shoulder Strength (kg or 0–5)", ["Movement","Left","Right"], sh_str_rows)
             _maybe_note(sl, "*Shoulder muscle notes*", mus.get("mu_sh_notes", "").strip())
+        if "hip" in _lower_regions or any(k.startswith("hp_str_") for k in mus):
+            hp_str_def = [("Flexion","hp_str_flex"),("Extension","hp_str_ext"),
+                          ("Abduction","hp_str_abd"),("Adduction","hp_str_add"),
+                          ("Int Rot","hp_str_ir"),("Ext Rot","hp_str_er")]
+            hp_str_rows = [[lbl, mus.get(f"{p}_l") or "—", mus.get(f"{p}_r") or "—"]
+                           for lbl, p in hp_str_def]
+            _maybe_table(sl, "Hip Strength (kg or 0–5)", ["Movement","Left","Right"], hp_str_rows)
+            _maybe_note(sl, "*Hip muscle notes*", mus.get("mu_hp_notes", "").strip())
+        if "knee" in _lower_regions or any(k.startswith("kn_str_") for k in mus):
+            kn_str_def = [("Extension (quads)","kn_str_ext"),
+                          ("Flexion (hamstring)","kn_str_flex"),
+                          ("Calf (heel raise)","kn_str_calf")]
+            kn_str_rows = [[lbl, mus.get(f"{p}_l") or "—", mus.get(f"{p}_r") or "—"]
+                           for lbl, p in kn_str_def]
+            _maybe_table(sl, "Knee/Calf Strength (kg or 0–5)", ["Movement","Left","Right"], kn_str_rows)
+            _maybe_note(sl, "*Knee muscle notes*", mus.get("mu_kn_notes", "").strip())
+        if "ankle" in _lower_regions or any(k.startswith("ak_str_") for k in mus):
+            ak_str_def = [("Dorsiflexion (TA)","ak_str_df"),
+                          ("Plantarflexion (GS)","ak_str_pf"),
+                          ("Eversion (peroneals)","ak_str_ev")]
+            ak_str_rows = [[lbl, mus.get(f"{p}_l") or "—", mus.get(f"{p}_r") or "—"]
+                           for lbl, p in ak_str_def]
+            _maybe_table(sl, "Ankle Strength (kg or 0–5)", ["Movement","Left","Right"], ak_str_rows)
+            _maybe_note(sl, "*Ankle muscle notes*", mus.get("mu_ak_notes", "").strip())
         _flush_section("### 06 Muscle Testing", sl)
 
     # ── 07 Functional ─────────────────────────────────────────────────────────
@@ -858,6 +991,54 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
                               for lbl, sid in rows]
                 _maybe_table(sl, f"Shoulder — {grp_lbl}", ["Test","Left","Right"], sh_st_rows)
             _maybe_note(sl, "*Shoulder test notes*", spl.get("st_sh_notes", "").strip())
+        _HP_ST_GROUPS = [
+            ("FAI/Impingement", [("FADIR","st_hp_fadir"),("Ant Impingement","st_hp_ant_imp")]),
+            ("Hip OA",          [("FABER","st_hp_faber"),("Hip Scour","st_hp_hip_scour"),
+                                 ("Log Roll","st_hp_log_roll")]),
+            ("GTPS",            [("Ober","st_hp_ober"),("Trendelenburg","st_hp_trendelenburg"),
+                                 ("SLS","st_hp_sls_hip")]),
+            ("Hamstring Origin",[("Puranen-Orava","st_hp_puranen_orava"),("BKS","st_hp_bks")]),
+            ("Adductor",        [("Squeeze","st_hp_squeeze")]),
+        ]
+        if any(f"{sid}_l" in spl for _, rows in _HP_ST_GROUPS for _, sid in rows):
+            for grp_lbl, rows in _HP_ST_GROUPS:
+                hp_st_rows = [[lbl, spl.get(f"{sid}_l") or "—", spl.get(f"{sid}_r") or "—"]
+                              for lbl, sid in rows]
+                _maybe_table(sl, f"Hip — {grp_lbl}", ["Test","Left","Right"], hp_st_rows)
+            _maybe_note(sl, "*Hip test notes*", spl.get("st_hp_notes", "").strip())
+        _KN_ST_GROUPS = [
+            ("ACL",     [("Lachman","st_kn_lachman"),("Ant Drawer","st_kn_ant_draw"),
+                         ("Pivot Shift","st_kn_pivot")]),
+            ("PCL",     [("Post Drawer","st_kn_post_draw"),("Post Sag","st_kn_post_sag")]),
+            ("Meniscus",[("McMurray","st_kn_mcmurray"),("Thessaly","st_kn_thessaly"),
+                         ("JLT","st_kn_jlt")]),
+            ("MCL",     [("Valgus 0°","st_kn_valgus_0"),("Valgus 30°","st_kn_valgus_30")]),
+            ("LCL",     [("Varus 0°","st_kn_varus_0"),("Varus 30°","st_kn_varus_30")]),
+            ("PFJ",     [("Clarke's","st_kn_clarkes"),("Pat Tilt","st_kn_pat_tilt"),
+                         ("Pat Grind","st_kn_pat_grind")]),
+        ]
+        if any(f"{sid}_l" in spl for _, rows in _KN_ST_GROUPS for _, sid in rows):
+            for grp_lbl, rows in _KN_ST_GROUPS:
+                kn_st_rows = [[lbl, spl.get(f"{sid}_l") or "—", spl.get(f"{sid}_r") or "—"]
+                              for lbl, sid in rows]
+                _maybe_table(sl, f"Knee — {grp_lbl}", ["Test","Left","Right"], kn_st_rows)
+            _maybe_note(sl, "*Knee test notes*", spl.get("st_kn_notes", "").strip())
+        _AK_ST_GROUPS = [
+            ("Lateral Lig",  [("Ant Drawer","st_ak_ant_draw"),("Talar Tilt","st_ak_talar_tilt")]),
+            ("Achilles",     [("Thompson","st_ak_thompson"),("Royal London","st_ak_royal_london"),
+                              ("Heel Raise","st_ak_heel_raise")]),
+            ("Syndesmosis",  [("Squeeze","st_ak_squeeze"),("ER Stress","st_ak_er_stress"),
+                              ("Cotton","st_ak_cotton")]),
+            ("Ottawa Rules", [("Lat Malleolus","st_ak_ott_lat_mal"),("Med Malleolus","st_ak_ott_med_mal"),
+                              ("Navicular","st_ak_ott_nav"),("5th Met Base","st_ak_ott_5mt")]),
+            ("Peroneal",     [("Peroneal Prov","st_ak_per_prov")]),
+        ]
+        if any(f"{sid}_l" in spl for _, rows in _AK_ST_GROUPS for _, sid in rows):
+            for grp_lbl, rows in _AK_ST_GROUPS:
+                ak_st_rows = [[lbl, spl.get(f"{sid}_l") or "—", spl.get(f"{sid}_r") or "—"]
+                              for lbl, sid in rows]
+                _maybe_table(sl, f"Ankle — {grp_lbl}", ["Test","Left","Right"], ak_st_rows)
+            _maybe_note(sl, "*Ankle test notes*", spl.get("st_ak_notes", "").strip())
         _flush_section("### 08 Special Tests", sl)
 
     if not lines:
@@ -1067,24 +1248,108 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
                     sl.append(f"  {lbl}: {v}")
                 elif not clean:
                     sl.append(f"  {lbl}: (empty)")
+        if any(k.startswith("hp_") for k in act):
+            def _hp_cell_r(p, s):
+                v  = act.get(f"{p}_{s}_range", "") or ""
+                ps = act.get(f"{p}_{s}_ps") or ""
+                t  = f"{v}°" if v else "-"
+                return f"{t} {ps}".strip() if ps else t
+            hp_rom_def_r = [("Flexion","hp_flex"),("Extension","hp_ext"),
+                            ("Abduction","hp_abd"),("Adduction","hp_add"),
+                            ("Int Rotation","hp_ir"),("Ext Rotation","hp_er")]
+            hp_tbl_r = [[lbl, _hp_cell_r(p,"ax_l"), _hp_cell_r(p,"ax_r"),
+                              _hp_cell_r(p,"reax_l"), _hp_cell_r(p,"reax_r")]
+                        for lbl, p in hp_rom_def_r]
+            filtered = _filter_rows(hp_tbl_r)
+            if filtered:
+                sl.append("  Hip ROM:")
+                sl.extend(_raw_table(["","Ax L","Ax R","ReAx L","ReAx R"], filtered))
+            elif not clean:
+                sl.append("  Hip ROM:")
+                sl.extend(_raw_table(["","Ax L","Ax R","ReAx L","ReAx R"], hp_tbl_r))
+            v = act.get("am_hp_notes", "").strip()
+            if v:
+                sl.append(f"  Hip notes: {v}")
+            elif not clean:
+                sl.append("  Hip notes: (empty)")
+        if any(k.startswith("kn_") for k in act):
+            def _kn_cell_r(p, s):
+                v  = act.get(f"{p}_{s}_range", "") or ""
+                ps = act.get(f"{p}_{s}_ps") or ""
+                t  = f"{v}°" if v else "-"
+                return f"{t} {ps}".strip() if ps else t
+            kn_rom_def_r = [("Flexion","kn_flex"),("Extension","kn_ext")]
+            kn_tbl_r = [[lbl, _kn_cell_r(p,"ax_l"), _kn_cell_r(p,"ax_r"),
+                              _kn_cell_r(p,"reax_l"), _kn_cell_r(p,"reax_r")]
+                        for lbl, p in kn_rom_def_r]
+            filtered = _filter_rows(kn_tbl_r)
+            if filtered:
+                sl.append("  Knee ROM:")
+                sl.extend(_raw_table(["","Ax L","Ax R","ReAx L","ReAx R"], filtered))
+            elif not clean:
+                sl.append("  Knee ROM:")
+                sl.extend(_raw_table(["","Ax L","Ax R","ReAx L","ReAx R"], kn_tbl_r))
+            v = act.get("am_kn_notes", "").strip()
+            if v:
+                sl.append(f"  Knee notes: {v}")
+            elif not clean:
+                sl.append("  Knee notes: (empty)")
+        if any(k.startswith("ak_") for k in act):
+            def _ak_cell_r(p, s):
+                v  = act.get(f"{p}_{s}_range", "") or ""
+                ps = act.get(f"{p}_{s}_ps") or ""
+                t  = f"{v}°" if v else "-"
+                return f"{t} {ps}".strip() if ps else t
+            ak_rom_def_r = [("Dorsiflexion","ak_df"),("Plantarflexion","ak_pf"),
+                            ("Inversion","ak_inv"),("Eversion","ak_ev"),
+                            ("WB DF (lunge)","ak_wbdf")]
+            ak_tbl_r = [[lbl, _ak_cell_r(p,"ax_l"), _ak_cell_r(p,"ax_r"),
+                              _ak_cell_r(p,"reax_l"), _ak_cell_r(p,"reax_r")]
+                        for lbl, p in ak_rom_def_r]
+            filtered = _filter_rows(ak_tbl_r)
+            if filtered:
+                sl.append("  Ankle ROM:")
+                sl.extend(_raw_table(["","Ax L","Ax R","ReAx L","ReAx R"], filtered))
+            elif not clean:
+                sl.append("  Ankle ROM:")
+                sl.extend(_raw_table(["","Ax L","Ax R","ReAx L","ReAx R"], ak_tbl_r))
+            v = act.get("am_ak_notes", "").strip()
+            if v:
+                sl.append(f"  Ankle notes: {v}")
+            elif not clean:
+                sl.append("  Ankle notes: (empty)")
         _flush_section("02 Active Movement", sl)
 
     # ── 03 Passive Movement ───────────────────────────────────────────────────
+    def _fmt_pas_r(norm: str | None, txt: str | None) -> str:
+        n = norm == "Norm"
+        t = (txt or "").strip()
+        if n and t:
+            return f"Normal; {t}"
+        if n:
+            return "Normal"
+        return t or "-"
+
     if pas:
         sl = []
-        op_def = [("Tx Flexion","op_tx_flex"),("Tx Extension","op_tx_ext"),
-                  ("Tx Rot L","op_tx_rot_l"),("Tx Rot R","op_tx_rot_r"),
-                  ("Lx Flexion","op_lx_flex"),("Lx Extension","op_lx_ext"),
-                  ("Lx Lat Fl L","op_lx_lf_l"),("Lx Lat Fl R","op_lx_lf_r")]
-        op_rows = [[lbl, pas.get(f"{p}_ef") or "-", pas.get(f"{p}_resp") or "-"]
-                   for lbl, p in op_def]
-        _maybe_table(sl, ["Overpressure", "End-feel", "Response"], op_rows)
-        paivm_levels = ["L5","L4","L3","L2","L1","T12","T11","T10","T9","T8"]
-        paivm_rows = [[lv, pas.get(f"pm_{lv}_c") or "-",
-                          pas.get(f"pm_{lv}_ul_l") or "-",
-                          pas.get(f"pm_{lv}_ul_r") or "-"]
+        _lx_op_r = [("Tx Flexion","op_tx_flex",False),("Tx Extension","op_tx_ext",False),
+                    ("Tx Rotation","op_tx_rot",True),
+                    ("Lx Flexion","op_lx_flex",False),("Lx Extension","op_lx_ext",False),
+                    ("Lx Lat Flex","op_lx_lf",True)]
+        op_rows = [[lbl,
+                    (f"L: {_fmt_pas_r(pas.get(f'{p}_l_norm'),pas.get(f'{p}_l_txt'))} / "
+                     f"R: {_fmt_pas_r(pas.get(f'{p}_r_norm'),pas.get(f'{p}_r_txt'))}")
+                    if bi else _fmt_pas_r(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
+                   for lbl, p, bi in _lx_op_r]
+        _maybe_table(sl, ["Overpressure", "Findings"], op_rows)
+        paivm_levels = ["T8","T9","T10","T11","T12","L1","L2","L3","L4","L5"]
+        paivm_rows = [[lv,
+                       _fmt_pas_r(pas.get(f"pm_{lv}_l_norm"), None),
+                       _fmt_pas_r(pas.get(f"pm_{lv}_c_norm"), None),
+                       _fmt_pas_r(pas.get(f"pm_{lv}_r_norm"), None),
+                       (pas.get(f"pm_{lv}_txt") or "").strip() or "-"]
                       for lv in paivm_levels]
-        _maybe_table(sl, ["PAIVM", "Central", "UL Left", "UL Right"], paivm_rows)
+        _maybe_table(sl, ["PAIVM", "L", "C", "R", "Notes"], paivm_rows)
         for key, lbl in [("pm_op_notes","OP notes"),("pm_paivm_notes","PAIVM notes")]:
             v = pas.get(key, "").strip()
             if v:
@@ -1092,21 +1357,25 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
             elif not clean:
                 sl.append(f"  {lbl}: (empty)")
         if any(k.startswith("cx_op_") or k.startswith("cx_pm_") for k in pas):
-            cx_op_def_r = [("Flexion","cx_op_flex"),("Extension","cx_op_ext"),
-                           ("Lat Fl L","cx_op_lf_l"),("Lat Fl R","cx_op_lf_r"),
-                           ("Rotation L","cx_op_rot_l"),("Rotation R","cx_op_rot_r"),
-                           ("Quadrant L","cx_op_quad_l"),("Quadrant R","cx_op_quad_r")]
-            cx_op_rows_r = [[lbl, pas.get(f"{p}_ef") or "-", pas.get(f"{p}_resp") or "-"]
-                            for lbl, p in cx_op_def_r]
-            _maybe_table(sl, ["Cervical OP","End-feel","Response"], cx_op_rows_r)
+            _cx_op_r = [("Flexion","cx_op_flex",False),("Extension","cx_op_ext",False),
+                        ("Lat Flex","cx_op_lf",True),("Rotation","cx_op_rot",True),
+                        ("Quadrant","cx_op_quad",True)]
+            cx_op_rows_r = [[lbl,
+                             (f"L: {_fmt_pas_r(pas.get(f'{p}_l_norm'),pas.get(f'{p}_l_txt'))} / "
+                              f"R: {_fmt_pas_r(pas.get(f'{p}_r_norm'),pas.get(f'{p}_r_txt'))}")
+                             if bi else _fmt_pas_r(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
+                            for lbl, p, bi in _cx_op_r]
+            _maybe_table(sl, ["Cervical OP","Findings"], cx_op_rows_r)
             cx_paivm_levels_r = [("C0/1","C0_1"),("C1/2","C1_2"),("C2","C2"),("C3","C3"),
                                  ("C4","C4"),("C5","C5"),("C6","C6"),("C7","C7"),
                                  ("T1","T1"),("T2","T2"),("T3","T3"),("T4","T4")]
-            cx_paivm_rows_r = [[lv, pas.get(f"cx_pm_{k}_ul_l") or "-",
-                                     pas.get(f"cx_pm_{k}_c") or "-",
-                                     pas.get(f"cx_pm_{k}_ul_r") or "-"]
+            cx_paivm_rows_r = [[lv,
+                                 _fmt_pas_r(pas.get(f"cx_pm_{k}_l_norm"), None),
+                                 _fmt_pas_r(pas.get(f"cx_pm_{k}_c_norm"), None),
+                                 _fmt_pas_r(pas.get(f"cx_pm_{k}_r_norm"), None),
+                                 (pas.get(f"cx_pm_{k}_txt") or "").strip() or "-"]
                                 for lv, k in cx_paivm_levels_r]
-            _maybe_table(sl, ["Cervical PAIVMs","UL Left","Central","UL Right"], cx_paivm_rows_r)
+            _maybe_table(sl, ["Cervical PAIVMs","L","C","R","Notes"], cx_paivm_rows_r)
             for key, lbl in [("cx_pm_op_notes","Cervical OP notes"),
                               ("cx_pm_paivm_notes","Cervical PAIVM notes")]:
                 v = pas.get(key, "").strip()
@@ -1120,16 +1389,20 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
                            ("Abduction","sh_op_abd"),("Int Rot","sh_op_ir"),
                            ("Ext Rot","sh_op_er"),("Horiz Add","sh_op_hadd"),
                            ("Horiz Abd","sh_op_habd")]
-            sh_op_rows_r = [[lbl, pas.get(f"{p}_ef") or "-", pas.get(f"{p}_resp") or "-"]
+            sh_op_rows_r = [[lbl,
+                             _fmt_pas_r(pas.get(f"{p}_l_norm"), pas.get(f"{p}_l_txt")),
+                             _fmt_pas_r(pas.get(f"{p}_r_norm"), pas.get(f"{p}_r_txt"))]
                             for lbl, p in sh_op_def_r]
-            _maybe_table(sl, ["Shoulder OP","End-feel","Response"], sh_op_rows_r)
+            _maybe_table(sl, ["Shoulder OP","Left","Right"], sh_op_rows_r)
             for side, side_lbl in (("l","Left"),("r","Right")):
                 acc_rows_r = [[dir_lbl,
-                               pas.get(f"sh_acc_{dk}_{side}_grade") or "-",
-                               pas.get(f"sh_acc_{dk}_{side}_resp") or "-"]
+                               _fmt_pas_r(pas.get(f"sh_acc_{dk}_{side}_norm"),
+                                          pas.get(f"sh_acc_{dk}_{side}_txt"))]
                               for dir_lbl, dk in (("Inferior","inf"),("Posterior","post"),("Anterior","ant"))]
-                _maybe_table(sl, [f"GH Accessory {side_lbl}","Grade","Response"], acc_rows_r)
-            acsc_rows_r = [[lbl, pas.get(f"{pfx}_l") or "-", pas.get(f"{pfx}_r") or "-"]
+                _maybe_table(sl, [f"GH Accessory {side_lbl}","Findings"], acc_rows_r)
+            acsc_rows_r = [[lbl,
+                            _fmt_pas_r(pas.get(f"{pfx}_l_norm"), pas.get(f"{pfx}_l_txt")),
+                            _fmt_pas_r(pas.get(f"{pfx}_r_norm"), pas.get(f"{pfx}_r_txt"))]
                            for lbl, pfx in (("AC Stress","sh_ac_pm_stress"),
                                             ("AC Palp","sh_ac_pm_palp"),
                                             ("SC Stress","sh_sc_pm_stress"))]
@@ -1141,6 +1414,64 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
                     sl.append(f"  {lbl}: {v}")
                 elif not clean:
                     sl.append(f"  {lbl}: (empty)")
+        if any(k.startswith("hp_op_") or k.startswith("hp_acc_") for k in pas):
+            hp_op_def_r = [("Flexion","hp_op_flex"),("Extension","hp_op_ext"),
+                           ("Abduction","hp_op_abd"),("Adduction","hp_op_add"),
+                           ("Int Rot","hp_op_ir"),("Ext Rot","hp_op_er")]
+            hp_op_rows_r = [[lbl,
+                             _fmt_pas_r(pas.get(f"{p}_l_norm"), pas.get(f"{p}_l_txt")),
+                             _fmt_pas_r(pas.get(f"{p}_r_norm"), pas.get(f"{p}_r_txt"))]
+                            for lbl, p in hp_op_def_r]
+            _maybe_table(sl, ["Hip OP","Left","Right"], hp_op_rows_r)
+            hp_acc_def_r = [("Distraction","hp_acc_dist"),("Lateral","hp_acc_lat")]
+            hp_acc_rows_r = [[lbl,
+                              _fmt_pas_r(pas.get(f"{p}_l_norm"), pas.get(f"{p}_l_txt")),
+                              _fmt_pas_r(pas.get(f"{p}_r_norm"), pas.get(f"{p}_r_txt"))]
+                             for lbl, p in hp_acc_def_r]
+            _maybe_table(sl, ["Hip Accessory","Left","Right"], hp_acc_rows_r)
+            v = pas.get("hp_op_notes", "").strip()
+            if v:
+                sl.append(f"  Hip OP notes: {v}")
+            elif not clean:
+                sl.append("  Hip OP notes: (empty)")
+        if any(k.startswith("kn_op_") or k.startswith("kn_acc_") for k in pas):
+            kn_op_def_r = [("Flexion","kn_op_flex"),("Extension","kn_op_ext")]
+            kn_op_rows_r = [[lbl,
+                             _fmt_pas_r(pas.get(f"{p}_l_norm"), pas.get(f"{p}_l_txt")),
+                             _fmt_pas_r(pas.get(f"{p}_r_norm"), pas.get(f"{p}_r_txt"))]
+                            for lbl, p in kn_op_def_r]
+            _maybe_table(sl, ["Knee OP","Left","Right"], kn_op_rows_r)
+            kn_acc_def_r = [("AP Glide","kn_acc_ap"),("Patella Med","kn_acc_pmed"),
+                            ("Patella Lat","kn_acc_plat")]
+            kn_acc_rows_r = [[lbl,
+                              _fmt_pas_r(pas.get(f"{p}_l_norm"), pas.get(f"{p}_l_txt")),
+                              _fmt_pas_r(pas.get(f"{p}_r_norm"), pas.get(f"{p}_r_txt"))]
+                             for lbl, p in kn_acc_def_r]
+            _maybe_table(sl, ["Knee Accessory","Left","Right"], kn_acc_rows_r)
+            v = pas.get("kn_op_notes", "").strip()
+            if v:
+                sl.append(f"  Knee OP notes: {v}")
+            elif not clean:
+                sl.append("  Knee OP notes: (empty)")
+        if any(k.startswith("ak_op_") or k.startswith("ak_acc_") for k in pas):
+            ak_op_def_r = [("Dorsiflexion","ak_op_df"),("Plantarflexion","ak_op_pf"),
+                           ("Inversion","ak_op_inv"),("Eversion","ak_op_ev")]
+            ak_op_rows_r = [[lbl,
+                             _fmt_pas_r(pas.get(f"{p}_l_norm"), pas.get(f"{p}_l_txt")),
+                             _fmt_pas_r(pas.get(f"{p}_r_norm"), pas.get(f"{p}_r_txt"))]
+                            for lbl, p in ak_op_def_r]
+            _maybe_table(sl, ["Ankle OP","Left","Right"], ak_op_rows_r)
+            ak_acc_def_r = [("AP Glide","ak_acc_ap"),("Subtalar","ak_acc_st")]
+            ak_acc_rows_r = [[lbl,
+                              _fmt_pas_r(pas.get(f"{p}_l_norm"), pas.get(f"{p}_l_txt")),
+                              _fmt_pas_r(pas.get(f"{p}_r_norm"), pas.get(f"{p}_r_txt"))]
+                             for lbl, p in ak_acc_def_r]
+            _maybe_table(sl, ["Ankle Accessory","Left","Right"], ak_acc_rows_r)
+            v = pas.get("ak_op_notes", "").strip()
+            if v:
+                sl.append(f"  Ankle OP notes: {v}")
+            elif not clean:
+                sl.append("  Ankle OP notes: (empty)")
         _flush_section("03 Passive Movement & Overpressure", sl)
 
     # ── 04 Neurological ───────────────────────────────────────────────────────
@@ -1240,7 +1571,8 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         _flush_section("05 Sensory", sl)
 
     # ── 06 Muscle Testing ─────────────────────────────────────────────────────
-    if mus:
+    _lower_regions_r = set(active_regions or [])
+    if mus or _lower_regions_r & {"hip", "knee", "ankle"}:
         sl = []
         ml_def = [("QL (side sit)","ml_ql"),("Thomas test","ml_thomas"),
                   ("Hamstrings SLR","ml_ham")]
@@ -1323,6 +1655,42 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
                 sl.append(f"  Shoulder muscle notes: {v}")
             elif not clean:
                 sl.append("  Shoulder muscle notes: (empty)")
+        if "hip" in _lower_regions_r or any(k.startswith("hp_str_") for k in mus):
+            hp_str_def_r = [("Flexion","hp_str_flex"),("Extension","hp_str_ext"),
+                            ("Abduction","hp_str_abd"),("Adduction","hp_str_add"),
+                            ("Int Rot","hp_str_ir"),("Ext Rot","hp_str_er")]
+            hp_str_rows_r = [[lbl, mus.get(f"{p}_l") or "-", mus.get(f"{p}_r") or "-"]
+                             for lbl, p in hp_str_def_r]
+            _maybe_table(sl, ["Hip Strength (kg/0-5)","Left","Right"], hp_str_rows_r)
+            v = mus.get("mu_hp_notes", "").strip()
+            if v:
+                sl.append(f"  Hip muscle notes: {v}")
+            elif not clean:
+                sl.append("  Hip muscle notes: (empty)")
+        if "knee" in _lower_regions_r or any(k.startswith("kn_str_") for k in mus):
+            kn_str_def_r = [("Extension (quads)","kn_str_ext"),
+                            ("Flexion (hamstring)","kn_str_flex"),
+                            ("Calf (heel raise)","kn_str_calf")]
+            kn_str_rows_r = [[lbl, mus.get(f"{p}_l") or "-", mus.get(f"{p}_r") or "-"]
+                             for lbl, p in kn_str_def_r]
+            _maybe_table(sl, ["Knee/Calf Strength (kg/0-5)","Left","Right"], kn_str_rows_r)
+            v = mus.get("mu_kn_notes", "").strip()
+            if v:
+                sl.append(f"  Knee muscle notes: {v}")
+            elif not clean:
+                sl.append("  Knee muscle notes: (empty)")
+        if "ankle" in _lower_regions_r or any(k.startswith("ak_str_") for k in mus):
+            ak_str_def_r = [("Dorsiflexion (TA)","ak_str_df"),
+                            ("Plantarflexion (GS)","ak_str_pf"),
+                            ("Eversion (peroneals)","ak_str_ev")]
+            ak_str_rows_r = [[lbl, mus.get(f"{p}_l") or "-", mus.get(f"{p}_r") or "-"]
+                             for lbl, p in ak_str_def_r]
+            _maybe_table(sl, ["Ankle Strength (kg/0-5)","Left","Right"], ak_str_rows_r)
+            v = mus.get("mu_ak_notes", "").strip()
+            if v:
+                sl.append(f"  Ankle muscle notes: {v}")
+            elif not clean:
+                sl.append("  Ankle muscle notes: (empty)")
         _flush_section("06 Muscle Testing", sl)
 
     # ── 07 Functional ─────────────────────────────────────────────────────────
@@ -1415,6 +1783,66 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
                 sl.append(f"  Shoulder test notes: {v}")
             elif not clean:
                 sl.append("  Shoulder test notes: (empty)")
+        _HP_ST_GROUPS_R = [
+            ("FAI/Impingement", [("FADIR","st_hp_fadir"),("Ant Impingement","st_hp_ant_imp")]),
+            ("Hip OA",          [("FABER","st_hp_faber"),("Hip Scour","st_hp_hip_scour"),
+                                 ("Log Roll","st_hp_log_roll")]),
+            ("GTPS",            [("Ober","st_hp_ober"),("Trendelenburg","st_hp_trendelenburg"),
+                                 ("SLS","st_hp_sls_hip")]),
+            ("Hamstring Origin",[("Puranen-Orava","st_hp_puranen_orava"),("BKS","st_hp_bks")]),
+            ("Adductor",        [("Squeeze","st_hp_squeeze")]),
+        ]
+        if any(f"{sid}_l" in spl for _, rows in _HP_ST_GROUPS_R for _, sid in rows):
+            for grp_lbl, rows in _HP_ST_GROUPS_R:
+                hp_st_rows_r = [[lbl, spl.get(f"{sid}_l") or "-", spl.get(f"{sid}_r") or "-"]
+                                for lbl, sid in rows]
+                _maybe_table(sl, [f"Hip {grp_lbl}","Left","Right"], hp_st_rows_r)
+            v = spl.get("st_hp_notes", "").strip()
+            if v:
+                sl.append(f"  Hip test notes: {v}")
+            elif not clean:
+                sl.append("  Hip test notes: (empty)")
+        _KN_ST_GROUPS_R = [
+            ("ACL",     [("Lachman","st_kn_lachman"),("Ant Drawer","st_kn_ant_draw"),
+                         ("Pivot Shift","st_kn_pivot")]),
+            ("PCL",     [("Post Drawer","st_kn_post_draw"),("Post Sag","st_kn_post_sag")]),
+            ("Meniscus",[("McMurray","st_kn_mcmurray"),("Thessaly","st_kn_thessaly"),
+                         ("JLT","st_kn_jlt")]),
+            ("MCL",     [("Valgus 0°","st_kn_valgus_0"),("Valgus 30°","st_kn_valgus_30")]),
+            ("LCL",     [("Varus 0°","st_kn_varus_0"),("Varus 30°","st_kn_varus_30")]),
+            ("PFJ",     [("Clarke's","st_kn_clarkes"),("Pat Tilt","st_kn_pat_tilt"),
+                         ("Pat Grind","st_kn_pat_grind")]),
+        ]
+        if any(f"{sid}_l" in spl for _, rows in _KN_ST_GROUPS_R for _, sid in rows):
+            for grp_lbl, rows in _KN_ST_GROUPS_R:
+                kn_st_rows_r = [[lbl, spl.get(f"{sid}_l") or "-", spl.get(f"{sid}_r") or "-"]
+                                for lbl, sid in rows]
+                _maybe_table(sl, [f"Knee {grp_lbl}","Left","Right"], kn_st_rows_r)
+            v = spl.get("st_kn_notes", "").strip()
+            if v:
+                sl.append(f"  Knee test notes: {v}")
+            elif not clean:
+                sl.append("  Knee test notes: (empty)")
+        _AK_ST_GROUPS_R = [
+            ("Lateral Lig",  [("Ant Drawer","st_ak_ant_draw"),("Talar Tilt","st_ak_talar_tilt")]),
+            ("Achilles",     [("Thompson","st_ak_thompson"),("Royal London","st_ak_royal_london"),
+                              ("Heel Raise","st_ak_heel_raise")]),
+            ("Syndesmosis",  [("Squeeze","st_ak_squeeze"),("ER Stress","st_ak_er_stress"),
+                              ("Cotton","st_ak_cotton")]),
+            ("Ottawa Rules", [("Lat Malleolus","st_ak_ott_lat_mal"),("Med Malleolus","st_ak_ott_med_mal"),
+                              ("Navicular","st_ak_ott_nav"),("5th Met Base","st_ak_ott_5mt")]),
+            ("Peroneal",     [("Peroneal Prov","st_ak_per_prov")]),
+        ]
+        if any(f"{sid}_l" in spl for _, rows in _AK_ST_GROUPS_R for _, sid in rows):
+            for grp_lbl, rows in _AK_ST_GROUPS_R:
+                ak_st_rows_r = [[lbl, spl.get(f"{sid}_l") or "-", spl.get(f"{sid}_r") or "-"]
+                                for lbl, sid in rows]
+                _maybe_table(sl, [f"Ankle {grp_lbl}","Left","Right"], ak_st_rows_r)
+            v = spl.get("st_ak_notes", "").strip()
+            if v:
+                sl.append(f"  Ankle test notes: {v}")
+            elif not clean:
+                sl.append("  Ankle test notes: (empty)")
         _flush_section("08 Special Tests", sl)
 
 

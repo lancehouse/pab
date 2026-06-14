@@ -1,0 +1,62 @@
+region: knee
+label: Knee
+
+# ── 02 Active Movement ──────────────────────────────────────────────────────
+active_movement:
+  groups:
+    - label: "Knee ROM"
+      notes_id: am_kn_notes
+      rows:
+        - {id: kn_flex, label: "Flexion",   bilateral: false}
+        - {id: kn_ext,  label: "Extension", bilateral: false}
+
+# ── 08 Special Tests ─────────────────────────────────────────────────────────
+# All IDs prefixed kn_ for namespace isolation.
+#
+# ACL cluster: Lachman (most sensitive) + Anterior Drawer + Pivot Shift (most specific)
+# PCL cluster: Posterior Drawer + Posterior Sag (Godfrey)
+# Meniscus cluster: McMurray + Thessaly + JLT (joint line tenderness proxy)
+# MCL cluster: Valgus at 0° (posterior capsule) + Valgus at 30° (isolated MCL)
+# LCL cluster: Varus at 0° + Varus at 30°
+# PFJ cluster: Clarke's + Patella Tilt + Patella Grind
+special_tests:
+  notes_id: st_kn_notes
+  groups:
+    - label: "ACL"
+      cluster_id: knee_acl
+      rows:
+        - {id: kn_lachman,  label: "Lachman"}
+        - {id: kn_ant_draw, label: "Ant Drawer"}
+        - {id: kn_pivot,    label: "Pivot Shift"}
+
+    - label: "PCL"
+      cluster_id: knee_pcl
+      rows:
+        - {id: kn_post_draw, label: "Post Drawer"}
+        - {id: kn_post_sag,  label: "Post Sag"}
+
+    - label: "Meniscus"
+      cluster_id: knee_meniscus
+      rows:
+        - {id: kn_mcmurray, label: "McMurray"}
+        - {id: kn_thessaly, label: "Thessaly"}
+        - {id: kn_jlt,      label: "JLT"}
+
+    - label: "MCL"
+      cluster_id: knee_mcl
+      rows:
+        - {id: kn_valgus_0,  label: "Valgus 0°"}
+        - {id: kn_valgus_30, label: "Valgus 30°"}
+
+    - label: "LCL"
+      cluster_id: knee_lcl
+      rows:
+        - {id: kn_varus_0,  label: "Varus 0°"}
+        - {id: kn_varus_30, label: "Varus 30°"}
+
+    - label: "PFJ"
+      cluster_id: knee_pfj
+      rows:
+        - {id: kn_clarkes,   label: "Clarke's"}
+        - {id: kn_pat_tilt,  label: "Patella Tilt"}
+        - {id: kn_pat_grind, label: "Patella Grind"}

@@ -1,0 +1,158 @@
+# Hip Knowledge Base
+# Keys match YAML row ids (section yaml/hip.yaml special_tests).
+# Sn/Sp sourced from Reiman et al. 2015 BJSM systematic review unless noted.
+
+# ── FAI / Impingement ─────────────────────────────────────────────────────────
+
+hp_fadir:
+  label: "FADIR (Quadrant) Test"
+  purpose: >
+    Femoroacetabular impingement screening: reproduces anterior hip pain
+    by closing the anterior acetabular space via combined FADIR.
+  position: "Supine. Hip and knee both at 90°."
+  procedure: >
+    Passively flex hip to 90°, then adduct and internally rotate to
+    end range or symptom reproduction. Positive = anterior groin pain
+    or recreation of presenting complaint.
+  sn_sp: "Sn 87% / Sp 17% (FAI — high Sn, use to rule out)"
+  cluster: "FAI cluster: FADIR + Anterior Impingement — both positive increases specificity for intra-articular pathology."
+  note: "Low specificity; positive alone is insufficient — consider with imaging and pain response to intra-articular injection."
+
+hp_ant_imp:
+  label: "Anterior Impingement Test"
+  purpose: >
+    Provokes anterior femoroacetabular impingement by loading the
+    anterior capsule and labrum in end-range flexion-ER.
+  position: "Supine."
+  procedure: >
+    Passively flex hip to 90°, abduct slightly, then externally rotate
+    to end range. Positive = anterior groin pain or clunk.
+  sn_sp: "Sn 75% / Sp 41% (FAI — Reiman 2015)"
+  cluster: "FAI cluster: with FADIR, increases diagnostic confidence for cam or pincer morphology."
+
+# ── Hip OA ────────────────────────────────────────────────────────────────────
+
+hp_faber:
+  label: "FABER (Patrick's) Test"
+  purpose: >
+    Hip OA and SIJ screening: combines flexion, abduction, external
+    rotation to stress the anterior hip capsule and SIJ.
+  position: "Supine. Test limb in figure-4 position (foot on opposite knee)."
+  procedure: >
+    Allow test limb to passively drop into abduction/ER. Measure height
+    above table (< 2 cm = positive for reduced ROM). Groin pain =
+    hip; posterior pain = SIJ/piriformis.
+  sn_sp: "Sn 60% / Sp 18% for hip OA; SIJ: Sn 77% / Sp 100% in cluster"
+  cluster: "Hip OA cluster: FABER + Scour + Log Roll — 2/3 positive supports hip OA diagnosis."
+  note: "Most useful for SIJ when part of cluster (distraction, thigh thrust, compression, Gaenslen, FABER — 3/5 positive: Sn 91% Sp 78%)."
+
+hp_hip_scour:
+  label: "Hip Scour (Quadrant) Test"
+  purpose: >
+    Screens for intra-articular hip pathology (OA, labral tear) by
+    loading the femoral head through the acetabulum in multiple planes.
+  position: "Supine. Hip and knee flexed to 90°."
+  procedure: >
+    Apply axial compression through the femur, then passively circumduct
+    the hip through its range. Positive = pain, crepitus, or restriction
+    in a quadrant of movement.
+  sn_sp: "Sn 62% / Sp 75% (hip OA — Mitchell 2003)"
+  cluster: "Hip OA cluster: positive scour with restricted ROM pattern increases likelihood of hip OA."
+
+hp_log_roll:
+  label: "Log Roll Test"
+  purpose: >
+    Passive IR/ER provocation test for hip synovitis, OA, or labral
+    pathology; minimal influence from surrounding soft tissue.
+  position: "Supine. Hip and knee extended."
+  procedure: >
+    Roll the entire lower limb passively into full internal then external
+    rotation. Positive = groin or anterior hip pain, asymmetric end-feel,
+    or reduced range compared to contralateral side.
+  sn_sp: "Low Sn; high specificity if positive — pain = intra-articular source"
+  cluster: "Hip OA cluster: restricted Log Roll with pain pattern supports hip joint pathology."
+
+# ── GTPS / Lateral Hip ────────────────────────────────────────────────────────
+
+hp_ober:
+  label: "Ober's Test"
+  purpose: >
+    Assesses ITB/TFL tightness as a contributing factor to greater
+    trochanteric pain syndrome (GTPS) and lateral hip pain.
+  position: "Side-lying. Test limb uppermost. Pelvis stabilised by examiner."
+  procedure: >
+    Passively extend and abduct the hip, then allow the limb to drop
+    into adduction. Positive = limb does not drop to neutral (tight ITB)
+    or lateral hip pain is reproduced.
+  sn_sp: "Sn 89% / Sp 97% for ITB tightness (Reese 2002)"
+  cluster: "GTPS cluster: Ober + Trendelenburg + SLS — ITB/TFL involvement supports lateral hip tendinopathy."
+
+hp_trendelenburg:
+  label: "Trendelenburg Test"
+  purpose: >
+    Assesses gluteus medius strength and pelvic stability. Positive test
+    indicates weakness or inhibition in the weight-bearing hip abductors.
+  position: "Standing. Patient faces examiner."
+  procedure: >
+    Ask patient to stand on one leg for 30 seconds. Positive = contralateral
+    pelvis drops more than 1 cm, or trunk lateral shift to test side.
+    Grade: mild (1–5 cm), moderate (5–10 cm), severe (> 10 cm).
+  sn_sp: "Sn 72% / Sp 77% for gluteus medius weakness (Hardcastle 1985)"
+  cluster: "GTPS cluster: Trendelenburg weakness identifies load-control deficit in lateral hip."
+
+hp_sls_hip:
+  label: "Single-Leg Stance (Hip)"
+  purpose: >
+    Functional assessment of hip abductor load control and balance.
+    Identifies side-to-side asymmetry relevant to GTPS and running-related
+    lateral hip pain.
+  position: "Standing. Arms crossed over chest or hands on hips."
+  procedure: >
+    Time single-leg stance eyes open (target ≥ 30 s). Observe for pelvic
+    drop, ipsilateral trunk shift, or knee valgus. Positive = < 10 s or
+    significant control deficit vs contralateral limb.
+  sn_sp: "Normative: ≥ 30 s (< 60 yrs). Deficit < 10 s = significant."
+  cluster: "GTPS cluster: SLS deficit combined with Trendelenburg supports abductor load-control rehabilitation priority."
+
+# ── Hamstring Origin ──────────────────────────────────────────────────────────
+
+hp_puranen_orava:
+  label: "Puranen-Orava Test"
+  purpose: >
+    Provocation test for proximal hamstring tendinopathy. Stretches the
+    proximal hamstring insertion on the ischial tuberosity.
+  position: "Standing. Symptomatic limb extended and elevated on a surface at hip height."
+  procedure: >
+    With knee in extension, lean trunk forward to increase neural tension
+    and hamstring stretch. Positive = pain at ischial tuberosity with
+    passive trunk flexion.
+  sn_sp: "Sn 76% / Sp 81% for proximal hamstring tendinopathy (Cacchio 2012)"
+  cluster: "Hamstring origin cluster: Puranen-Orava + BKS — 2/2 positive strongly indicates proximal hamstring tendinopathy."
+
+hp_bks:
+  label: "Bent Knee Stretch (BKS)"
+  purpose: >
+    Provocation test for proximal hamstring tendinopathy reducing neural
+    tension component of standard SLR.
+  position: "Prone."
+  procedure: >
+    Passively flex the knee to 90°, then extend the hip to stretch the
+    hamstring without neural tension. Positive = ischial tuberosity pain
+    reproduced (distinct from posterior thigh neural pain).
+  sn_sp: "Sn 84% / Sp 75% for proximal hamstring tendinopathy (Cacchio 2012)"
+  cluster: "Hamstring origin cluster: with Puranen-Orava, BKS isolates tendon from neural contribution."
+
+# ── Adductor ─────────────────────────────────────────────────────────────────
+
+hp_squeeze:
+  label: "Adductor Squeeze Test"
+  purpose: >
+    Screens for adductor-related groin pain (adductor tendinopathy,
+    athletic pubalgia, osteitis pubis) by isometric adductor loading.
+  position: "Supine. Hips at 0°, 45°, and 90° flexion (test all three)."
+  procedure: >
+    Place fist or sphygmomanometer cuff between knees at each hip angle.
+    Ask patient to maximally squeeze. Positive = groin pain or adductor
+    weakness compared to contralateral side. Record most symptomatic angle.
+  sn_sp: "Sn 56–76% / Sp 86% at 45° hip flexion (Holmich 2004)"
+  cluster: "Adductor cluster: isolated positive = adductor tendinopathy. Combine with symphysis palpation for osteitis pubis."

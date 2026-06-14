@@ -29,7 +29,10 @@ from textual.widgets import Label, Static, TextArea
 
 from ...widgets import CycleButton, GridInput, RadioGroup
 from .active_movement import RangeCell, ROMRow
+from .ankle_tables import AnkleMuscleTables, AnklePassiveTables, AnkleTables
 from .cervical_tables import CervicalMuscleTables, CervicalPassiveTables, CervicalTables
+from .hip_tables import HipMuscleTables, HipPassiveTables, HipTables
+from .knee_tables import KneeMuscleTables, KneePassiveTables, KneeTables
 from .lumbar_tables import LumbarMuscleTables, LumbarPassiveTables, LumbarTables
 from .shoulder_tables import ShoulderMuscleTables, ShoulderPassiveTables, ShoulderTables
 
@@ -576,8 +579,11 @@ class RegionContainer(Static):
     @on(CycleButton.Changed)
     @on(TextArea.Changed)
     @on(GridInput.Changed)
-    @on(LumbarTables.Changed)
+    @on(AnkleTables.Changed)
     @on(CervicalTables.Changed)
+    @on(HipTables.Changed)
+    @on(KneeTables.Changed)
+    @on(LumbarTables.Changed)
     @on(ShoulderTables.Changed)
     def _on_any_field_changed(self) -> None:
         if not self._loading:
@@ -712,10 +718,16 @@ class RegionTabContent(Container):
 # Key: (region_id, section_key)  Value: widget class
 
 REGION_EXTRAS: dict[tuple[str, str], Type] = {
-    ("lumbar",    "passive"): LumbarPassiveTables,
-    ("lumbar",    "muscle"):  LumbarMuscleTables,
-    ("cervical",  "passive"): CervicalPassiveTables,
-    ("cervical",  "muscle"):  CervicalMuscleTables,
-    ("shoulder",  "passive"): ShoulderPassiveTables,
-    ("shoulder",  "muscle"):  ShoulderMuscleTables,
+    ("ankle",    "passive"): AnklePassiveTables,
+    ("ankle",    "muscle"):  AnkleMuscleTables,
+    ("cervical", "passive"): CervicalPassiveTables,
+    ("cervical", "muscle"):  CervicalMuscleTables,
+    ("hip",      "passive"): HipPassiveTables,
+    ("hip",      "muscle"):  HipMuscleTables,
+    ("knee",     "passive"): KneePassiveTables,
+    ("knee",     "muscle"):  KneeMuscleTables,
+    ("lumbar",   "passive"): LumbarPassiveTables,
+    ("lumbar",   "muscle"):  LumbarMuscleTables,
+    ("shoulder", "passive"): ShoulderPassiveTables,
+    ("shoulder", "muscle"):  ShoulderMuscleTables,
 }

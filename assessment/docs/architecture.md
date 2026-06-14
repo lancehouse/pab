@@ -19,11 +19,19 @@ pab/assessment/
 │
 ├── pab_assessment/objective/sections/yaml/
 │   ├── cervical.yaml                ← OBJECTIVE form driver (cervical)
-│   └── lumbar.yaml                  ← OBJECTIVE form driver (lumbar)
+│   ├── lumbar.yaml                  ← OBJECTIVE form driver (lumbar)
+│   ├── shoulder.yaml                ← OBJECTIVE form driver (shoulder)
+│   ├── hip.yaml                     ← OBJECTIVE form driver (hip)
+│   ├── knee.yaml                    ← OBJECTIVE form driver (knee)
+│   └── ankle.yaml                   ← OBJECTIVE form driver (ankle)
 │
 ├── pab_assessment/objective/kb/
 │   ├── cervical.yaml                ← KNOWLEDGE BASE content (cervical)
-│   └── lumbar.yaml                  ← KNOWLEDGE BASE content (lumbar)
+│   ├── lumbar.yaml                  ← KNOWLEDGE BASE content (lumbar)
+│   ├── shoulder.yaml                ← KNOWLEDGE BASE content (shoulder)
+│   ├── hip.yaml                     ← KNOWLEDGE BASE content (hip)
+│   ├── knee.yaml                    ← KNOWLEDGE BASE content (knee)
+│   └── ankle.yaml                   ← KNOWLEDGE BASE content (ankle)
 │
 └── regions/
     ├── cervical_physical_examination.md   ← clinical REFERENCE (not read by app)
@@ -36,7 +44,11 @@ pab/assessment/
 
 **Files:** `sections/yaml/subj_sleep_pilot.yaml`,
            `objective/sections/yaml/cervical.yaml`,
-           `objective/sections/yaml/lumbar.yaml`
+           `objective/sections/yaml/lumbar.yaml`,
+           `objective/sections/yaml/shoulder.yaml`,
+           `objective/sections/yaml/hip.yaml`,
+           `objective/sections/yaml/knee.yaml`,
+           `objective/sections/yaml/ankle.yaml`
 
 These files define the **structure of the form** — which rows exist, what their
 labels are, what RadioGroup options are available. The Python rendering code
@@ -62,7 +74,9 @@ and notes can be changed freely.
 
 ## Layer 2 — Knowledge Base YAML (populates the KB panel on field focus)
 
-**Files:** `objective/kb/cervical.yaml`, `objective/kb/lumbar.yaml`
+**Files:** `objective/kb/cervical.yaml`, `objective/kb/lumbar.yaml`,
+           `objective/kb/shoulder.yaml`, `objective/kb/hip.yaml`,
+           `objective/kb/knee.yaml`, `objective/kb/ankle.yaml`
 
 These files supply the text shown in the Ctrl+K KB panel when you focus a
 special test field. Each entry contains: label, purpose, position, procedure,
@@ -92,9 +106,9 @@ KB YAML entry key:  spurling:
 2. Add an entry to the matching KB YAML with that key
 3. Restart the app
 
-Currently the KB only covers objective **special tests** for cervical and lumbar.
-Adding KB entries for muscle tests, neurological fields, or subjective fields is
-straightforward — see `docs/field-key-reference.md` for all available keys.
+The KB covers objective **special tests** for cervical, lumbar, shoulder, hip, knee,
+and ankle. Adding KB entries for muscle tests, neurological fields, or subjective
+fields is straightforward — see `docs/field-key-reference.md` for all available keys.
 
 ---
 
@@ -135,15 +149,26 @@ on_descendant_focus → resolve(region, widget_id) → KBPanel.update()
 
 ---
 
-## Adding a New Region (e.g. Shoulder)
+## Adding a New Region
 
-1. Create `objective/sections/yaml/shoulder.yaml` — define active_movement,
-   muscle_testing, special_tests sections following the cervical/lumbar pattern
-2. Create `objective/kb/shoulder.yaml` — add KB entries for the special tests
-3. Add `("shoulder", "Shoulder")` to `_ALL_REGIONS` in `objective_view.py`
-4. Add shoulder field IDs to `docs/field-key-reference.md`
+Currently implemented regions: cervical, lumbar, shoulder, hip, knee, ankle.
 
-No other Python changes needed for the YAML-driven sections.
+To add another region:
+
+1. Create `objective/sections/yaml/{region}.yaml` — define `active_movement` and
+   `special_tests` sections. Omit `muscle_testing` if using a Python extra table (preferred).
+2. Create `objective/kb/{region}.yaml` — add KB entries for the special tests; keys must
+   exactly match the row `id` values in the YAML (without `_l`/`_r` suffix).
+3. Add `("{region}", "Label")` to `_ALL_REGIONS` in `objective_view.py`.
+4. If the region needs passive OP or muscle tables, create `sections/{region}_tables.py`
+   (see `hip_tables.py`, `knee_tables.py`, `ankle_tables.py` as templates) and add entries
+   to `REGION_EXTRAS` in `region_section.py`.
+5. Add storage rendering blocks to `_render_objective_md` and `_render_objective_raw`
+   in `storage.py`.
+6. Add field IDs to `docs/field-key-reference.md` and entries to `search.py`.
+
+**ID prefix convention:** all field IDs must be prefixed with a region-unique 2–3 char code
+(e.g. `hp_`, `kn_`, `ak_`) to prevent key collisions in the merged `spl` dict in storage.py.
 
 ---
 
