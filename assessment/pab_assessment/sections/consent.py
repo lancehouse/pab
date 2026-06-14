@@ -139,28 +139,17 @@ class ConsentSection(BaseSection):
         try:
             consent = data if isinstance(data, dict) else {}
 
-            if "consent_to_proceed" in consent:
-                self.query_one("#consent_to_proceed", CheckButton).set_value(consent["consent_to_proceed"])
-            if "consent_sensitive_topics" in consent:
-                self.query_one("#consent_sensitive_topics", CheckButton).set_value(consent["consent_sensitive_topics"])
-            if "preferred_name" in consent:
-                self.query_one("#preferred_name_input", Input).value = consent.get("preferred_name", "")
-            if "pain_multifactorial_explained" in consent:
-                self.query_one("#framing_pain_multifactorial", CheckButton).set_value(consent["pain_multifactorial_explained"])
-            if "education_as_treatment_explained" in consent:
-                self.query_one("#framing_education_treatment", CheckButton).set_value(consent["education_as_treatment_explained"])
-            if "patient_expectations" in consent:
-                self.query_one("#patient_expectations", TextArea).text = consent.get("patient_expectations", "")
-            if "reason_for_attending" in consent:
-                self.query_one("#reason_for_attending", TextArea).text = consent.get("reason_for_attending", "")
-            if "cause_understanding" in consent:
-                self.query_one("#cause_understanding", CheckButton).set_value(consent["cause_understanding"])
-            if "cause_understanding_detail" in consent:
-                self.query_one("#cause_understanding_detail", TextArea).text = consent.get("cause_understanding_detail", "")
-            if "prognosis_expectations" in consent:
-                self.query_one("#prognosis_expectations", TextArea).text = consent.get("prognosis_expectations", "")
-            if "treatment_preference" in consent:
-                self.query_one("#treatment_preference", TextArea).text = consent.get("treatment_preference", "")
+            self.query_one("#consent_to_proceed", CheckButton).set_value(consent.get("consent_to_proceed"))
+            self.query_one("#consent_sensitive_topics", CheckButton).set_value(consent.get("consent_sensitive_topics"))
+            self.query_one("#preferred_name_input", Input).value = consent.get("preferred_name", "")
+            self.query_one("#framing_pain_multifactorial", CheckButton).set_value(consent.get("pain_multifactorial_explained"))
+            self.query_one("#framing_education_treatment", CheckButton).set_value(consent.get("education_as_treatment_explained"))
+            self.query_one("#patient_expectations", TextArea).text = consent.get("patient_expectations", "")
+            self.query_one("#reason_for_attending", TextArea).text = consent.get("reason_for_attending", "")
+            self.query_one("#cause_understanding", CheckButton).set_value(consent.get("cause_understanding"))
+            self.query_one("#cause_understanding_detail", TextArea).text = consent.get("cause_understanding_detail", "")
+            self.query_one("#prognosis_expectations", TextArea).text = consent.get("prognosis_expectations", "")
+            self.query_one("#treatment_preference", TextArea).text = consent.get("treatment_preference", "")
         finally:
             self._loading = False
             self._update_status()

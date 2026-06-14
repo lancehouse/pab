@@ -600,25 +600,22 @@ class SubjectiveSection(BaseSection):
                 pass
 
             for fid in self._TOGGLE_FIELDS:
-                if fid in subjective:
-                    try:
-                        self.query_one(f"#{fid}", CheckButton).set_value(subjective[fid])
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", CheckButton).set_value(subjective.get(fid))
+                except Exception:
+                    pass
 
             for fid in self._TEXT_FIELDS:
-                if fid in subjective:
-                    try:
-                        self.query_one(f"#{fid}", TextArea).text = subjective[fid]
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", TextArea).text = subjective.get(fid, "")
+                except Exception:
+                    pass
 
             for fid in self._INPUT_FIELDS:
-                if fid in subjective:
-                    try:
-                        self.query_one(f"#{fid}", Input).value = subjective[fid]
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", Input).value = subjective.get(fid, "")
+                except Exception:
+                    pass
 
             self.query_one("#ys_sleep", YamlSubsection).load(subjective)
 

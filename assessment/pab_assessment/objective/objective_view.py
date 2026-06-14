@@ -542,9 +542,12 @@ class ObjectiveAssessmentView(Container):
             self._save_task.cancel()
         self.post_message(self.SaveStateChanged("pending"))
 
+        save_for = self.session_file  # capture — don't save if session switches before timer fires
+
         async def delayed_save():
             await asyncio.sleep(2.0)
-            await self._do_save()
+            if self.session_file == save_for:
+                await self._do_save()
 
         self._save_task = asyncio.create_task(delayed_save())
 

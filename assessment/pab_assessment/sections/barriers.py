@@ -492,29 +492,25 @@ class BarriersSection(BaseSection):
         try:
             br = data if isinstance(data, dict) else {}
             for fid in _TOGGLE_FIELDS:
-                if fid in br:
-                    try:
-                        self.query_one(f"#{fid}", CheckButton).set_value(br[fid])
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", CheckButton).set_value(br.get(fid))
+                except Exception:
+                    pass
             for fid in _CYCLE_FIELDS:
-                if fid in br:
-                    try:
-                        self.query_one(f"#{fid}", CycleField).set_value(br[fid])
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", CycleField).set_value(br.get(fid))
+                except Exception:
+                    pass
             for fid in _INPUT_FIELDS:
-                if fid in br:
-                    try:
-                        self.query_one(f"#{fid}", Input).value = br[fid]
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", Input).value = br.get(fid, "")
+                except Exception:
+                    pass
             for fid in _TEXT_FIELDS:
-                if fid in br:
-                    try:
-                        self.query_one(f"#{fid}", TextArea).text = br[fid]
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", TextArea).text = br.get(fid, "")
+                except Exception:
+                    pass
         finally:
             self._loading = False
             self.update_cross_refs()

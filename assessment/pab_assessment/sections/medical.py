@@ -475,25 +475,23 @@ class MedicalSection(BaseSection):
         try:
             medical = data if isinstance(data, dict) else {}
             for fid in self._TOGGLE_FIELDS:
-                if fid in medical:
-                    try:
-                        self.query_one(f"#{fid}", CheckButton).set_value(medical[fid])
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", CheckButton).set_value(medical.get(fid))
+                except Exception:
+                    pass
             for fid in self._LIKELIHOOD_FIELDS:
-                if fid in medical:
-                    try:
-                        self.query_one(f"#{fid}", LikelihoodField).set_value(medical[fid])
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", LikelihoodField).set_value(medical.get(fid))
+                except Exception:
+                    pass
             for fid in self._TEXT_FIELDS:
-                if fid in medical:
-                    try:
-                        self.query_one(f"#{fid}", TextArea).text = medical[fid]
-                    except Exception:
-                        pass
+                try:
+                    self.query_one(f"#{fid}", TextArea).text = medical.get(fid, "")
+                except Exception:
+                    pass
             meds = medical.get("medications", [])
-            for i, med in enumerate(meds[:4]):
+            for i in range(4):
+                med = meds[i] if i < len(meds) else {}
                 for col in _MED_COLS:
                     try:
                         self.query_one(f"#med_{i}_{col}", Input).value = med.get(col, "")
