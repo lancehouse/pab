@@ -753,7 +753,7 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         _maybe_table(sl, "Upper Limb Neurodynamics", ["Test", "L Response", "R Response"], ulnt_rows)
         _maybe_note(sl, "*UL Neurodynamics Notes:*", neu.get("nr_ul_nd_notes", "").strip())
         neuro_def = [
-            ("Knee jerk L3/4","nr_knee"),("Ankle jerk S1","nr_ankle"),("Plantar","nr_plantar"),
+            ("Knee jerk L3/4","nr_knee"),("Ankle jerk S1","nr_ankle"),
             ("L2 Hip flex","nr_l2"),("L3 Knee ext","nr_l3"),("L4 Ankle DF","nr_l4"),
             ("L5 GT ext/EHL","nr_l5"),("S1 PF/evert","nr_s1"),("S2 Ham/KF","nr_s2"),
         ]
@@ -1521,7 +1521,6 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         if v: sl.append(f"  UL Neurodynamics notes: {v}")
         elif not clean: sl.append("  UL Neurodynamics notes: (empty)")
         neuro_def = [("Knee jerk L3/4","nr_knee"),("Ankle jerk S1","nr_ankle"),
-                     ("Plantar","nr_plantar"),
                      ("L2 Hip flex","nr_l2"),("L3 Knee ext","nr_l3"),
                      ("L4 Ankle DF","nr_l4"),("L5 GT ext/EHL","nr_l5"),
                      ("S1 PF/evert","nr_s1"),("S2 Ham/KF","nr_s2")]

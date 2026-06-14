@@ -411,7 +411,6 @@ Bilateral fields exist as `{key}_l` and `{key}_r`.
 |---|---|
 | `nr_knee` | Knee jerk (L3/4) — `nr_knee_l`, `nr_knee_r` |
 | `nr_ankle` | Ankle jerk (S1) — `nr_ankle_l`, `nr_ankle_r` |
-| `nr_plantar` | Plantar response (Flexor / Extensor) — `nr_plantar_l`, `nr_plantar_r` |
 
 ### Lower limb myotomes (RadioGroup: 5/5 / 4/5 / 3/5 / 2/5 / 1/5 / 0/5)
 

@@ -60,9 +60,8 @@ _UL_ND_ROWS: list[tuple[str, str, bool]] = [
 # ---------------------------------------------------------------------------
 
 _REFLEX_ROWS: list[tuple[str, str, list]] = [
-    ("Knee jerk  L3/4", "nr_knee",    _REFLEX),
-    ("Ankle jerk  S1",  "nr_ankle",   _REFLEX),
-    ("Plantar",          "nr_plantar", _PLANTAR),
+    ("Knee jerk  L3/4", "nr_knee",  _REFLEX),
+    ("Ankle jerk  S1",  "nr_ankle", _REFLEX),
 ]
 _MYOTOME_ROWS: list[tuple[str, str, list]] = [
     ("L2  Hip flex",   "nr_l2", _MYOTOME),
