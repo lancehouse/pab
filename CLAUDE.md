@@ -51,6 +51,25 @@ introduce binary formats or database files. Files are used individually for vari
 - GTK app: build with `ninja -C build` inside `bodychart/`
 - TUI: Python 3.12 venv inside `assessment/`; activate before running
 
+## Branch and deployment rules — ABSOLUTE
+
+These rules are non-negotiable and override any other instruction in this session:
+
+| Branch | Launch command | Purpose |
+|--------|---------------|---------|
+| `dev`  | `pabd`        | All active development — may be broken at any time |
+| `main` | `pab` / `pabs` | Stable, tested code only — never written to during dev |
+
+1. **All development work goes to `dev` first.** Every code change, bug fix, or feature
+   lands on the `dev` branch. No exceptions.
+2. **`pabd` runs `dev`.** Test everything in `pabd` before considering a merge.
+3. **`main` is never touched during development.** Do not commit, merge, or push to `main`
+   unless the user says explicitly — in that same message — "merge to main", "push to main",
+   or equivalent. Finishing a feature, fixing a bug, or completing a task is NOT permission
+   to merge.
+4. **No mid-session merges.** Even if a fix is confirmed working in `pabd`, it stays on
+   `dev` until the user explicitly requests the merge in a separate, deliberate instruction.
+
 ## Overarching rules
 
 1. **Button width ≤ ¼ screen** — all interactive button widgets max 25% of available width.

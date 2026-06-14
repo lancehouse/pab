@@ -269,18 +269,12 @@ the code, Ctrl+F navigation silently fails and the KB can't be linked correctly.
 
 ## Development process rules
 
-1. **Never push without explicit instruction.** Only push to main or GitHub when the user says
-   "push to main", "push it", or equivalent. Do not push as part of bug fixes, feature
-   completion, or "cleanup" steps without a direct instruction in that same exchange.
+1. **Branch discipline — see `../CLAUDE.md` for the absolute rule.**
+   All development goes to `dev` branch. `pabd` runs `dev`. `pab`/`pabs` run `main`.
+   Never touch `main` unless the user says "merge to main" in an explicit, deliberate
+   instruction in that same message. Completing a task is NOT permission to merge.
 
-2. **Branch discipline — all dev on working branch, never main.**
-   - `pabd` runs the current working branch (may be broken).
-   - `pab` / `pabs` run `main` (must be stable and tested).
-   - All development work stays on the working branch until the user explicitly confirms it
-     works in `pabd` and asks to merge/push to main.
-   - Never commit directly to main. Never push a fix to main mid-debugging loop.
-
-3. **`asyncio.create_task` must always have an inner try/except.**
+2. **`asyncio.create_task` must always have an inner try/except.**
    Exceptions raised inside a task are silently swallowed — they do not appear in Textual's
    message log, only on stderr. Any `create_task` coroutine must wrap its body in
    `try/except Exception as e: self._show_status(...)` so failures are visible in the TUI.
