@@ -732,22 +732,26 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         ul_reflex_rows = [[lbl, neu.get(f"{p}_l") or "—", neu.get(f"{p}_r") or "—"]
                           for lbl, p in ul_reflex_def]
         _maybe_table(sl, "UL Reflexes", ["Test", "Left", "Right"], ul_reflex_rows)
+        _maybe_note(sl, "*UL Reflex Notes:*", neu.get("nr_ul_reflex_notes", "").strip())
         ul_myotome_def = [("C5 Shldr abd","nr_c5"),("C6 Wrist ext","nr_c6"),
                           ("C7 Elbow ext","nr_c7"),("C8 Finger flx","nr_c8"),
                           ("T1 Finger abd","nr_t1")]
         ul_myotome_rows = [[lbl, neu.get(f"{p}_l") or "—", neu.get(f"{p}_r") or "—"]
                            for lbl, p in ul_myotome_def]
         _maybe_table(sl, "UL Myotomes", ["Level", "Left", "Right"], ul_myotome_rows)
+        _maybe_note(sl, "*UL Myotome Notes:*", neu.get("nr_ul_myotome_notes", "").strip())
         ul_derm_def = [("C5 Lat arm/delt","sn_c5"),("C6 Thumb & index","sn_c6"),
                        ("C7 Middle finger","sn_c7"),("C8 Little/ulnar","sn_c8"),
                        ("T1 Med forearm","sn_t1")]
         ul_derm_rows = [[lbl, neu.get(f"{p}_l") or "—", neu.get(f"{p}_r") or "—"]
                         for lbl, p in ul_derm_def]
         _maybe_table(sl, "UL Dermatomes", ["Level", "Left", "Right"], ul_derm_rows)
+        _maybe_note(sl, "*UL Dermatome Notes:*", neu.get("nr_ul_derm_notes", "").strip())
         ulnt_def = [("ULNT1","nr_ulnt1"),("ULNT2a","nr_ulnt2a"),("ULNT3","nr_ulnt3")]
         ulnt_rows = [[lbl, neu.get(f"{p}_l_resp","") or "—", neu.get(f"{p}_r_resp","") or "—"]
                      for lbl, p in ulnt_def]
         _maybe_table(sl, "Upper Limb Neurodynamics", ["Test", "L Response", "R Response"], ulnt_rows)
+        _maybe_note(sl, "*UL Neurodynamics Notes:*", neu.get("nr_ul_nd_notes", "").strip())
         neuro_def = [
             ("Knee jerk L3/4","nr_knee"),("Ankle jerk S1","nr_ankle"),("Plantar","nr_plantar"),
             ("L2 Hip flex","nr_l2"),("L3 Knee ext","nr_l3"),("L4 Ankle DF","nr_l4"),
@@ -756,12 +760,15 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         neuro_rows = [[lbl, neu.get(f"{p}_l") or "—", neu.get(f"{p}_r") or "—"]
                       for lbl, p in neuro_def]
         _maybe_table(sl, "LL Reflexes & Myotomes", ["Test", "Left", "Right"], neuro_rows)
+        _maybe_note(sl, "*LL Reflex Notes:*", neu.get("nr_ll_reflex_notes", "").strip())
+        _maybe_note(sl, "*LL Myotome Notes:*", neu.get("nr_ll_myotome_notes", "").strip())
         _derm_def_nr = [("L2 Ant thigh","sn_l2"),("L3 Med knee","sn_l3"),
                         ("L4 Med leg","sn_l4"),("L5 Lat leg/GT","sn_l5"),
                         ("S1 Lat foot","sn_s1"),("S2 Post thigh","sn_s2")]
         derm_rows_nr = [[lbl, neu.get(f"{p}_l") or "—", neu.get(f"{p}_r") or "—"]
                         for lbl, p in _derm_def_nr]
         _maybe_table(sl, "LL Dermatomes", ["Level", "Left", "Right"], derm_rows_nr)
+        _maybe_note(sl, "*LL Dermatome Notes:*", neu.get("nr_ll_derm_notes", "").strip())
         nd_def = [("SLR","nr_slr"),("Slump","nr_slump"),("PKF","nr_pkf")]
         nd_rows = []
         for lbl, p in nd_def:
@@ -770,12 +777,15 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
             nd_rows.append([lbl, f"{ld}°" if ld else "—", lr,
                                   f"{rd}°" if rd else "—", rr])
         _maybe_table(sl, "LL Neurodynamics", ["Test", "L °", "L Resp", "R °", "R Resp"], nd_rows)
+        _maybe_note(sl, "*LL Neurodynamics Notes:*", neu.get("nr_ll_nd_notes", "").strip())
         umn_items = [("Hyperreflexia","nr_umn_hyper"),("Babinski +","nr_umn_bab"),
                      ("Clonus","nr_umn_clonus"),("Romberg +","nr_umn_romberg"),
-                     ("Coord impaired","nr_umn_coord")]
+                     ("Coord impaired","nr_umn_coord"),
+                     ("Hoffman's","nr_umn_hoffman"),("Tromner","nr_umn_tromner")]
         umn_rows = [[lbl, "Yes" if neu.get(uid) is True else "No" if neu.get(uid) is False else "*(not answered)*"]
                     for lbl, uid in umn_items]
         _maybe_table(sl, "UMN Signs", ["Sign", "Result"], umn_rows)
+        _maybe_note(sl, "*UMN Notes:*", neu.get("nr_umn_notes", "").strip())
         _maybe_note(sl, "*Notes:*", neu.get("nr_notes", "").strip())
         _flush_section("### 04 Neurological", sl)
 
@@ -1482,22 +1492,34 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         ul_reflex_rows = [[lbl, neu.get(f"{p}_l") or "-", neu.get(f"{p}_r") or "-"]
                           for lbl, p in ul_reflex_def]
         _maybe_table(sl, ["UL Reflexes", "Left", "Right"], ul_reflex_rows)
+        v = neu.get("nr_ul_reflex_notes", "").strip()
+        if v: sl.append(f"  UL Reflex notes: {v}")
+        elif not clean: sl.append("  UL Reflex notes: (empty)")
         ul_myotome_def = [("C5 Shldr abd","nr_c5"),("C6 Wrist ext","nr_c6"),
                           ("C7 Elbow ext","nr_c7"),("C8 Finger flx","nr_c8"),
                           ("T1 Finger abd","nr_t1")]
         ul_myotome_rows = [[lbl, neu.get(f"{p}_l") or "-", neu.get(f"{p}_r") or "-"]
                            for lbl, p in ul_myotome_def]
         _maybe_table(sl, ["UL Myotomes", "Left", "Right"], ul_myotome_rows)
+        v = neu.get("nr_ul_myotome_notes", "").strip()
+        if v: sl.append(f"  UL Myotome notes: {v}")
+        elif not clean: sl.append("  UL Myotome notes: (empty)")
         ul_derm_def = [("C5 Lat arm/delt","sn_c5"),("C6 Thumb & index","sn_c6"),
                        ("C7 Middle finger","sn_c7"),("C8 Little/ulnar","sn_c8"),
                        ("T1 Med forearm","sn_t1")]
         ul_derm_rows = [[lbl, neu.get(f"{p}_l") or "-", neu.get(f"{p}_r") or "-"]
                         for lbl, p in ul_derm_def]
         _maybe_table(sl, ["UL Dermatomes", "Left", "Right"], ul_derm_rows)
+        v = neu.get("nr_ul_derm_notes", "").strip()
+        if v: sl.append(f"  UL Dermatome notes: {v}")
+        elif not clean: sl.append("  UL Dermatome notes: (empty)")
         ulnt_def = [("ULNT1","nr_ulnt1"),("ULNT2a","nr_ulnt2a"),("ULNT3","nr_ulnt3")]
         ulnt_rows = [[lbl, neu.get(f"{p}_l_resp","") or "-", neu.get(f"{p}_r_resp","") or "-"]
                      for lbl, p in ulnt_def]
         _maybe_table(sl, ["UL Neurodynamics", "L Response", "R Response"], ulnt_rows)
+        v = neu.get("nr_ul_nd_notes", "").strip()
+        if v: sl.append(f"  UL Neurodynamics notes: {v}")
+        elif not clean: sl.append("  UL Neurodynamics notes: (empty)")
         neuro_def = [("Knee jerk L3/4","nr_knee"),("Ankle jerk S1","nr_ankle"),
                      ("Plantar","nr_plantar"),
                      ("L2 Hip flex","nr_l2"),("L3 Knee ext","nr_l3"),
@@ -1506,12 +1528,21 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         neuro_rows = [[lbl, neu.get(f"{p}_l") or "-", neu.get(f"{p}_r") or "-"]
                       for lbl, p in neuro_def]
         _maybe_table(sl, ["LL Reflexes & Myotomes", "Left", "Right"], neuro_rows)
+        v = neu.get("nr_ll_reflex_notes", "").strip()
+        if v: sl.append(f"  LL Reflex notes: {v}")
+        elif not clean: sl.append("  LL Reflex notes: (empty)")
+        v = neu.get("nr_ll_myotome_notes", "").strip()
+        if v: sl.append(f"  LL Myotome notes: {v}")
+        elif not clean: sl.append("  LL Myotome notes: (empty)")
         _derm_raw = [("L2 Ant thigh","sn_l2"),("L3 Med knee","sn_l3"),
                      ("L4 Med leg","sn_l4"),("L5 Lat leg/GT","sn_l5"),
                      ("S1 Lat foot","sn_s1"),("S2 Post thigh","sn_s2")]
         derm_raw_rows = [[lbl, neu.get(f"{p}_l") or "-", neu.get(f"{p}_r") or "-"]
                          for lbl, p in _derm_raw]
         _maybe_table(sl, ["LL Dermatomes", "Left", "Right"], derm_raw_rows)
+        v = neu.get("nr_ll_derm_notes", "").strip()
+        if v: sl.append(f"  LL Dermatome notes: {v}")
+        elif not clean: sl.append("  LL Dermatome notes: (empty)")
         nd_def = [("SLR","nr_slr"),("Slump","nr_slump"),("PKF","nr_pkf")]
         nd_rows = []
         for lbl, p in nd_def:
@@ -1520,14 +1551,21 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
             nd_rows.append([lbl, f"{ld}°" if ld else "-", lr,
                                   f"{rd}°" if rd else "-", rr])
         _maybe_table(sl, ["LL Neurodynamics","L°","L Resp","R°","R Resp"], nd_rows)
+        v = neu.get("nr_ll_nd_notes", "").strip()
+        if v: sl.append(f"  LL Neurodynamics notes: {v}")
+        elif not clean: sl.append("  LL Neurodynamics notes: (empty)")
         umn_items = [("Hyperreflexia","nr_umn_hyper"),("Babinski +","nr_umn_bab"),
                      ("Clonus","nr_umn_clonus"),("Romberg +","nr_umn_romberg"),
-                     ("Coord impaired","nr_umn_coord")]
+                     ("Coord impaired","nr_umn_coord"),
+                     ("Hoffman's","nr_umn_hoffman"),("Tromner","nr_umn_tromner")]
         for lbl, uid in umn_items:
             v = neu.get(uid)
             if clean and v is None:
                 continue
             sl.append(f"  {lbl}: {'✓ Yes' if v is True else '✗ No' if v is False else '(not answered)'}")
+        v = neu.get("nr_umn_notes", "").strip()
+        if v: sl.append(f"  UMN notes: {v}")
+        elif not clean: sl.append("  UMN notes: (empty)")
         v = neu.get("nr_notes", "").strip()
         if v:
             sl.append(f"  Notes: {v}")

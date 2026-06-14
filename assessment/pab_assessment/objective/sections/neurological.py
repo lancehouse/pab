@@ -7,7 +7,7 @@ from textual.message import Message
 from textual.widgets import Input, Label, Static, TextArea
 
 from ...sections.base import BaseSection
-from ...widgets import CheckButton, RadioGroup
+from ...widgets import CheckButton, FlagButton, RadioGroup
 
 
 # ---------------------------------------------------------------------------
@@ -91,7 +91,10 @@ _UMN_ITEMS: list[tuple[str, str]] = [
     ("Clonus",         "nr_umn_clonus"),
     ("Romberg +",      "nr_umn_romberg"),
     ("Coord impaired", "nr_umn_coord"),
+    ("Hoffman's",      "nr_umn_hoffman"),
+    ("Tromner",        "nr_umn_tromner"),
 ]
+_UMN_FLAG_IDS = {"nr_umn_hoffman", "nr_umn_tromner"}
 
 _GAP = 2   # char gap between adjacent gangs
 
@@ -153,7 +156,7 @@ class NeurologicalSection(BaseSection):
     }
     NeurologicalSection .umn_row CheckButton:last-of-type { margin: 0; }
 
-    NeurologicalSection TextArea { height: auto; min-height: 2; padding: 0 1; }
+    NeurologicalSection TextArea { height: auto; min-height: 2; max-height: 12; padding: 0 1; }
     NeurologicalSection Label    { height: auto; margin-top: 0; }
     """
 
@@ -182,6 +185,7 @@ class NeurologicalSection(BaseSection):
                 yield RadioGroup(states, id=f"{prefix}_l", classes="rg-w8")
                 yield Static("",    classes="rm_gap")
                 yield RadioGroup(states, id=f"{prefix}_r", classes="rg-w8")
+        yield TextArea(id="nr_ul_reflex_notes", language="plain")
 
         # ── Upper Limb — Myotomes ─────────────────────────────────────────────
         yield Label("Upper Limb — Myotomes", classes="subsection_header", id="nr_ul_myotomes")
@@ -196,6 +200,7 @@ class NeurologicalSection(BaseSection):
                 yield RadioGroup(states, id=f"{prefix}_l")
                 yield Static("",    classes="rm_gap")
                 yield RadioGroup(states, id=f"{prefix}_r")
+        yield TextArea(id="nr_ul_myotome_notes", language="plain")
 
         # ── Upper Limb — Dermatomes ───────────────────────────────────────────
         yield Label("Upper Limb — Dermatomes", classes="subsection_header", id="nr_ul_dermatomes")
@@ -210,6 +215,7 @@ class NeurologicalSection(BaseSection):
                 yield RadioGroup(_DERM, id=f"{prefix}_l")
                 yield Static("",       classes="rm_gap")
                 yield RadioGroup(_DERM, id=f"{prefix}_r")
+        yield TextArea(id="nr_ul_derm_notes", language="plain")
 
         # ── Upper Limb — Neurodynamics ────────────────────────────────────────
         yield Label("Upper Limb — Neurodynamics", classes="subsection_header", id="nr_ul_neurodynamics")
@@ -230,6 +236,7 @@ class NeurologicalSection(BaseSection):
                     yield Input(placeholder="°", id=f"{prefix}_r_deg", classes="nd_deg")
                     yield Static("", classes="nd_gap")
                 yield Input(placeholder="Response", id=f"{prefix}_r_resp", classes="nd_resp")
+        yield TextArea(id="nr_ul_nd_notes", language="plain")
 
         # ── Lower Limb — Reflexes ─────────────────────────────────────────────
         yield Label("Lower Limb — Reflexes", classes="subsection_header", id="nr_reflexes")
@@ -244,6 +251,7 @@ class NeurologicalSection(BaseSection):
                 yield RadioGroup(states, id=f"{prefix}_l", classes="rg-w8")
                 yield Static("",    classes="rm_gap")
                 yield RadioGroup(states, id=f"{prefix}_r", classes="rg-w8")
+        yield TextArea(id="nr_ll_reflex_notes", language="plain")
 
         # ── Lower Limb — Myotomes ─────────────────────────────────────────────
         yield Label("Lower Limb — Myotomes", classes="subsection_header", id="nr_myotomes")
@@ -258,6 +266,7 @@ class NeurologicalSection(BaseSection):
                 yield RadioGroup(states, id=f"{prefix}_l")
                 yield Static("",    classes="rm_gap")
                 yield RadioGroup(states, id=f"{prefix}_r")
+        yield TextArea(id="nr_ll_myotome_notes", language="plain")
 
         # ── Lower Limb — Dermatomes ───────────────────────────────────────────
         yield Label("Lower Limb — Dermatomes", classes="subsection_header", id="nr_dermatomes")
@@ -272,6 +281,7 @@ class NeurologicalSection(BaseSection):
                 yield RadioGroup(_DERM, id=f"{prefix}_l")
                 yield Static("",       classes="rm_gap")
                 yield RadioGroup(_DERM, id=f"{prefix}_r")
+        yield TextArea(id="nr_ll_derm_notes", language="plain")
 
         # ── Lower Limb — Neurodynamics ────────────────────────────────────────
         yield Label("Lower Limb — Neurodynamics", classes="subsection_header", id="nr_neurodynamics")
@@ -292,15 +302,20 @@ class NeurologicalSection(BaseSection):
                     yield Input(placeholder="°", id=f"{prefix}_r_deg", classes="nd_deg")
                     yield Static("", classes="nd_gap")
                 yield Input(placeholder="Response", id=f"{prefix}_r_resp", classes="nd_resp")
+        yield TextArea(id="nr_ll_nd_notes", language="plain")
 
         # ── UMN Signs ─────────────────────────────────────────────────────────
         yield Label("UMN Signs", classes="subsection_header", id="nr_umn")
         with Horizontal(classes="umn_row"):
             for label, uid in _UMN_ITEMS:
-                yield CheckButton(label, id=uid)
+                if uid in _UMN_FLAG_IDS:
+                    yield FlagButton(label, id=uid)
+                else:
+                    yield CheckButton(label, id=uid)
+        yield TextArea(id="nr_umn_notes", language="plain")
 
-        # ── Notes ─────────────────────────────────────────────────────────────
-        yield Label("Notes:")
+        # ── General Notes ─────────────────────────────────────────────────────
+        yield Label("General Notes:")
         yield TextArea(id="nr_notes", language="plain")
 
     # ------------------------------------------------------------------
@@ -393,10 +408,15 @@ class NeurologicalSection(BaseSection):
                     data[fid] = self.query_one(f"#{fid}", Input).value.strip()
                 except Exception:
                     data[fid] = ""
-        try:
-            data["nr_notes"] = self.query_one("#nr_notes", TextArea).text
-        except Exception:
-            data["nr_notes"] = ""
+        for fid in (
+            "nr_ul_reflex_notes", "nr_ul_myotome_notes", "nr_ul_derm_notes", "nr_ul_nd_notes",
+            "nr_ll_reflex_notes", "nr_ll_myotome_notes", "nr_ll_derm_notes", "nr_ll_nd_notes",
+            "nr_umn_notes", "nr_notes",
+        ):
+            try:
+                data[fid] = self.query_one(f"#{fid}", TextArea).text
+            except Exception:
+                data[fid] = ""
         return data
 
     def load(self, data: dict) -> None:
@@ -422,10 +442,15 @@ class NeurologicalSection(BaseSection):
                         self.query_one(f"#{fid}", Input).value = data.get(fid, "")
                     except Exception:
                         pass
-            try:
-                self.query_one("#nr_notes", TextArea).text = data.get("nr_notes", "")
-            except Exception:
-                pass
+            for fid in (
+                "nr_ul_reflex_notes", "nr_ul_myotome_notes", "nr_ul_derm_notes", "nr_ul_nd_notes",
+                "nr_ll_reflex_notes", "nr_ll_myotome_notes", "nr_ll_derm_notes", "nr_ll_nd_notes",
+                "nr_umn_notes", "nr_notes",
+            ):
+                try:
+                    self.query_one(f"#{fid}", TextArea).text = data.get(fid, "")
+                except Exception:
+                    pass
         finally:
             self._loading = False
 
