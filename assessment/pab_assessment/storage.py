@@ -2311,7 +2311,7 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
     note_fields = s.get("note_fields") or {}
     for sid, nf in note_fields.items():
         if any(nf.get(k, "").strip() for k in ("loc", "nat", "agg", "ease")):
-            _emit(f"**Note {sid}:**  ")
+            _emit(f"**Note {int(sid) + 1}:**  ")
             if nf.get("loc", "").strip():
                 _emit(f"  Location: {nf['loc'].strip()}  ")
             if nf.get("nat", "").strip():
@@ -3964,7 +3964,7 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     note_fields_r = s.get("note_fields") or {}
     for sid, nf in note_fields_r.items():
         if any(nf.get(k, "").strip() for k in ("loc", "nat", "agg", "ease")):
-            _emit(f"  Note {sid}:")
+            _emit(f"  Note {int(sid) + 1}:")
             for key, label in (("loc","Location"),("nat","Nature"),("agg","Aggravating"),("ease","Easing")):
                 val = nf.get(key, "").strip()
                 if val or not clean:
