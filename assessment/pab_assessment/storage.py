@@ -2460,20 +2460,30 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
     sub("Comorbidities / PMH")
     f("no_previous_injuries", m)
     txt("previous_injuries",   m)
-    if clean:
-        _cluster_md("Comorbidities", [
-            ("Cancer",                "comorbid_cancer"),
-            ("Mental health",         "comorbid_mental_health"),
-            ("Osteoporosis",          "comorbid_osteoporosis"),
-            ("Inflammatory arthritis","comorbid_inflammatory"),
-            ("Fibromyalgia",          "comorbid_fibromyalgia"),
-            ("CFS",                   "comorbid_cfs"),
-            ("IBS",                   "comorbid_ibs"),
-            ("Whiplash",              "comorbid_whiplash"),
-            ("Skin rash",             "comorbid_skin_rash"),
-            ("Drug/alcohol",          "comorbid_drug_alcohol"),
-            ("Fatigue/memory issues", "comorbid_fatigue_memory"),
-        ], m)
+    _COMORBID = [
+        ("Cancer",                "comorbid_cancer"),
+        ("Mental health",         "comorbid_mental_health"),
+        ("Osteoporosis",          "comorbid_osteoporosis"),
+        ("Inflammatory arthritis","comorbid_inflammatory"),
+        ("Fibromyalgia",          "comorbid_fibromyalgia"),
+        ("CFS",                   "comorbid_cfs"),
+        ("IBS",                   "comorbid_ibs"),
+        ("Whiplash",              "comorbid_whiplash"),
+        ("Skin rash",             "comorbid_skin_rash"),
+        ("Drug/alcohol",          "comorbid_drug_alcohol"),
+        ("Fatigue/memory issues", "comorbid_fatigue_memory"),
+    ]
+    if dev:
+        _c_rep = [lbl for lbl, key in _COMORBID if m.get(key) is True]
+        _c_den = [lbl for lbl, key in _COMORBID if m.get(key) is False]
+        if not clean or _c_rep or _c_den:
+            _emit(*_md_table(
+                ["Present", "Absent"],
+                [[" · ".join(_c_rep) if _c_rep else "—",
+                  " · ".join(_c_den) if _c_den else "—"]],
+            ))
+    elif clean:
+        _cluster_md("Comorbidities", _COMORBID, m)
     else:
         f("comorbid_cancer",         m)
         f("comorbid_mental_health",  m)
