@@ -415,6 +415,7 @@ class AssessmentView(Container):
         obj_file_data = load_objective(session_file)
         if self._obj_view is not None:
             self._obj_view.load_session(session_file, obj_file_data)
+            self._obj_view.load_goals(subjective_data)
 
         # Push active regions and test data to section 05 regional panels
         section_05 = self.sections.get("04_pain_classification")
@@ -723,6 +724,32 @@ class AssessmentView(Container):
             )
         except Exception as e:
             logger.error(f"_generate_reports failed: {e}")
+
+    @on(ObjectiveAssessmentView.GoalsEdited)
+    def _on_obj_goals_edited(self, event: ObjectiveAssessmentView.GoalsEdited) -> None:
+        """Goals edited in Functional — sync to Consent and Subjective, then save."""
+        from textual.widgets import TextArea
+        goals = event.goals
+        for section_key, widget_prefix in (
+            ("02_subjective", "goal_"),
+            ("01_consent",    "consent_goal_"),
+        ):
+            section = self.sections.get(section_key)
+            if not section:
+                continue
+            section._loading = True
+            try:
+                for i in range(1, 5):
+                    try:
+                        w = section.query_one(f"#{widget_prefix}{i}", TextArea)
+                        val = goals.get(f"goal_{i}", "")
+                        if w.text != val:
+                            w.text = val
+                    except Exception:
+                        pass
+            finally:
+                section._loading = False
+        self._schedule_save()
 
     @on(ObjectiveAssessmentView.ExitRequested)
     def _on_obj_exit_requested(self) -> None:

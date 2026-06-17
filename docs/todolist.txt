@@ -3,35 +3,12 @@ GTK:
 better words in the pain descriptors section.
         
 TUI:
-    
-increase contrast
 
-functioanl tests needs a full rework
+functioanl tests needs a full rework    
 
-Diagnosis: buttons need better text.
-
-
-Barriers tab - toggels need to flip.
-text boxes need to be in same format as other tabs ie:    
-    Heading label :   |   Text entry field                                               |
-Not:
-    Heading Label:
-    |  Text Entry Field                                                                    |
-    
-03 meidcal 
-    all sections need a comments field to remove flag urgency.
-    
-    
-neuro Ax - check locaiton of sensatio ntesting
-    ad tromner sign for UMN
-    change planter to babinski and link to same in otehr sections.
-
-diagnosis: tabs are hard to read; too many cycles. needs to be radio group single selection only.
-
-outcomes: BPI - allow incomplete data.   
+outcomes:   
  PSEQ: section for full PSEQ or PSEQ2
  include PHQ4 A + D
- 
  
  report:
      Carriage return after freetext.

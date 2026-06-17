@@ -46,7 +46,7 @@ SUBJ_GRID_DATA: list[tuple[str, str, list[tuple[str, str]]]] = [
         ("Neurological", "04_neurological"),
         ("Sensory",      "05_sensory"),
         ("Muscle",       "06_muscle"),
-        ("Functional",   "07_functional"),
+        ("Functional",   "07_functional"),  # internal ID unchanged
         ("Special",      "08_special"),
     ]),
     ("04_pain_classification", "04 Pain Class", [
@@ -101,40 +101,41 @@ OBJ_GRID_DATA: list[tuple[str, str, list[tuple[str, str]]]] = [
         ("Posture",    "go_posture"),
         ("Functional", "go_functional_movement"),
     ]),
-    ("02_active", "02 Active Mvt", [
+    ("07_functional", "02 Functional", [
+        ("Goals",          "fn_goals"),
+        ("Functional Mvt", "fn_movement"),
+        ("Balance",        "fn_balance"),
+        ("Timed",          "fn_timed"),
+    ]),
+    ("02_active", "03 Active Mvt", [
         ("Lumbar",   "am_lumbar"),
         ("Thoracic", "am_thoracic"),
     ]),
-    ("03_passive", "03 Passive/OP", [
+    ("03_passive", "04 Passive/OP", [
         ("Overpressure", "pm_overpressure"),
         ("PAIVMs",       "pm_paivms"),
     ]),
-    ("04_neurological", "04 Neurology", [
-        ("UL Reflex",      "nr_ul_reflexes"),
-        ("UL Myotomes",    "nr_ul_myotomes"),
-        ("UL Dermatomes",  "nr_ul_dermatomes"),
+    ("04_neurological", "05 Neurology", [
+        ("UL Reflex",       "nr_ul_reflexes"),
+        ("UL Myotomes",     "nr_ul_myotomes"),
+        ("UL Dermatomes",   "nr_ul_dermatomes"),
         ("UL Neurodynamics","nr_ul_neurodynamics"),
-        ("LL Reflex",      "nr_reflexes"),
-        ("LL Myotomes",    "nr_myotomes"),
-        ("LL Dermatomes",  "nr_dermatomes"),
+        ("LL Reflex",       "nr_reflexes"),
+        ("LL Myotomes",     "nr_myotomes"),
+        ("LL Dermatomes",   "nr_dermatomes"),
         ("LL Neurodynamics","nr_neurodynamics"),
-        ("UMN",            "nr_umn"),
+        ("UMN",             "nr_umn"),
     ]),
-    ("05_sensory", "05 Sensory", [
+    ("05_sensory", "06 Sensory", [
         ("Hyposensitivity",  "sn_hyposensitivity"),
         ("Hypersensitivity", "sn_hypersensitivity"),
     ]),
-    ("06_muscle", "06 Muscle", [
+    ("06_muscle", "07 Muscle", [
         ("Length",       "ml_length"),
         ("Activation",   "ml_activation"),
         ("Trunk Str",    "ml_strength_trunk"),
         ("Hip Str",      "ml_strength_hip"),
         ("SIJ",          "ml_sij"),
-    ]),
-    ("07_functional", "07 Functional", [
-        ("Functional Mvt", "fn_movement"),
-        ("Balance",        "fn_balance"),
-        ("Timed",          "fn_timed"),
     ]),
 ]
 

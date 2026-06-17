@@ -5,7 +5,6 @@ import logging
 
 from textual import events
 from textual.app import ComposeResult, on
-from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
 from textual.message import Message
 from textual.widgets import Button, Static
@@ -203,12 +202,12 @@ class ObjectiveSidebar(Static):
 
     SECTION_LABELS = {
         "01_general":      "01 General Obs",
-        "02_active":       "02 Active Mvmt",
-        "03_passive":      "03 Passive/OP",
-        "04_neurological": "04 Neurological",
-        "05_sensory":      "05 Sensory",
-        "06_muscle":       "06 Muscle Test",
-        "07_functional":   "07 Functional",
+        "07_functional":   "02 Functional",
+        "02_active":       "03 Active Mvmt",
+        "03_passive":      "04 Passive/OP",
+        "04_neurological": "05 Neurological",
+        "05_sensory":      "06 Sensory",
+        "06_muscle":       "07 Muscle Test",
         "08_special":      "08 Special Tests",
     }
 
@@ -278,6 +277,13 @@ class ObjectiveAssessmentView(Container):
 
     class ExitRequested(Message):
         """Posted when the ← back button is pressed."""
+
+    class GoalsEdited(Message):
+        """Posted when goals are edited in the Functional section."""
+        def __init__(self, goals: dict) -> None:
+            super().__init__()
+            self.goals = goals
+
 
     def __init__(self, session_file: str = "", **kwargs):
         super().__init__(**kwargs)
@@ -439,6 +445,16 @@ class ObjectiveAssessmentView(Container):
                 container = tab.get_container(region_id)
                 if container:
                     container.load(region_data.get(section_key, {}))
+
+    def load_goals(self, subjective_data: dict) -> None:
+        """Populate the Functional section's goal mirror from subjective data."""
+        functional = self.sections.get("07_functional")
+        if functional and hasattr(functional, "load_goals"):
+            functional.load_goals(subjective_data)
+
+    @on(FunctionalSection.GoalsChanged)
+    def _on_functional_goals_changed(self, event: FunctionalSection.GoalsChanged) -> None:
+        self.post_message(self.GoalsEdited(event.goals))
 
     # ── Section visibility ────────────────────────────────────────────────────
 

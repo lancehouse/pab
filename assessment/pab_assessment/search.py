@@ -166,6 +166,8 @@ _SUBSECTIONS: list[tuple[str, str, str]] = [
     ("obj:07_functional", "fn_movement",         "Functional: Movement"),
     ("obj:07_functional", "fn_balance",          "Functional: Balance"),
     ("obj:07_functional", "fn_timed",            "Functional: Timed Capability"),
+    ("obj:07_functional", "ft_fm_obs",           "Functional: Functional obs notes"),
+    ("obj:07_functional", "ft_fm_custom",        "Functional: Custom functional test"),
     ("obj:08_special",  "st_cervical",           "Special Tests: Cervical"),
     ("obj:08_special",  "st_lumbar",             "Special Tests: Lumbar"),
     ("obj:08_special",  "st_shoulder",           "Special Tests: Shoulder"),
