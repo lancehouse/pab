@@ -1,130 +1,101 @@
 #include "integration.h"
 #include "persistence.h"
 #include <gtk/gtk.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <json-c/json.h>
+#include <vte/vte.h>
 
-/* ── Terminal preference list ────────────────────────────────────────────── *
- * Tried in order; first found is used.                                       */
-typedef struct {
-    const char *bin;
-    /* Format string for the full launch command.                              *
-     * %s = session JSON path                                                  */
-    const char *cmd_fmt;
-} TerminalDef;
+/* ── Internal callbacks ───────────────────────────────────────────────────── */
 
-/* Commands use bash -l (login shell) so the spawned process inherits the
- * user's full environment — PATH, WAYLAND_DISPLAY, XDG_SESSION_TYPE, etc.
- * Without this touch/mouse reporting may break in environments missing
- * variables set by the user's shell. */
-static const TerminalDef TERMINALS[] = {
-    { "ptyxis",        "bash -l -c 'ptyxis -- assessment --session %s'"        },
-    { "gnome-terminal","bash -l -c 'gnome-terminal -- assessment --session %s'" },
-    { "xterm",         "bash -l -c 'xterm -e assessment --session %s'"          },
-    { NULL, NULL },
-};
-
-/* ── Helpers ─────────────────────────────────────────────────────────────── */
-
-static const TerminalDef *find_terminal(void)
+/* TUI process exited (Ctrl+D, `exit`, or crash) — treat as session end. */
+static void on_tui_child_exited(VteTerminal *term, int status, gpointer user_data)
 {
-    const char *override = g_getenv("PHYSIO_TERMINAL");
-    if (override) {
-        for (int i = 0; TERMINALS[i].bin != NULL; i++) {
-            if (strcmp(TERMINALS[i].bin, override) == 0
-                && g_find_program_in_path(TERMINALS[i].bin))
-                return &TERMINALS[i];
-        }
-        fprintf(stderr, "integration_spawn_tui: PHYSIO_TERMINAL=%s not found\n", override);
-    }
-    for (int i = 0; TERMINALS[i].bin != NULL; i++) {
-        if (g_find_program_in_path(TERMINALS[i].bin))
-            return &TERMINALS[i];
-    }
-    return NULL;
+    (void)term; (void)status;
+    AppState *app = user_data;
+    if (app->window)
+        gtk_window_destroy(GTK_WINDOW(app->window));
 }
 
-/* ── Focus monitor callback ───────────────────────────────────────────────── */
-
-static void on_dir_changed(GFileMonitor *monitor, GFile *file, GFile *other,
-                            GFileMonitorEvent ev, gpointer user_data)
+/* F11 captured at the TUI window level before VTE sees it. */
+static gboolean on_tui_key_pressed(GtkEventControllerKey *ctrl,
+                                    guint keyval, guint keycode,
+                                    GdkModifierType mods, gpointer user_data)
 {
-    (void)monitor; (void)other;
-    AppState *app = (AppState *)user_data;
-
-    if (ev != G_FILE_MONITOR_EVENT_CREATED && ev != G_FILE_MONITOR_EVENT_CHANGED)
-        return;
-
-    char *basename = g_file_get_basename(file);
-    if (strcmp(basename, ".focus_gtk") == 0) {
-        /* Consume the signal file */
-        g_file_delete(file, NULL, NULL);
-        /* Raise our own window — safe on Wayland because we raise ourselves */
-        if (app->window)
-            gtk_window_present(GTK_WINDOW(app->window));
+    (void)ctrl; (void)keycode; (void)mods;
+    GtkWindow *win = GTK_WINDOW(user_data);
+    if (keyval == GDK_KEY_F11) {
+        if (gtk_window_is_fullscreen(win))
+            gtk_window_unfullscreen(win);
+        else
+            gtk_window_fullscreen(win);
+        return TRUE;
     }
-    g_free(basename);
+    return FALSE;
 }
 
-/* ── Public API ──────────────────────────────────────────────────────────── */
+/* TUI window destroyed (window manager close button or integration_destroy_tui). */
+static void on_tui_window_destroyed(GtkWidget *w, gpointer user_data)
+{
+    (void)w;
+    AppState *app = user_data;
+    app->tui_window   = NULL;
+    app->tui_terminal = NULL;
+    if (app->window)
+        gtk_window_destroy(GTK_WINDOW(app->window));
+}
 
-void integration_spawn_tui(AppState *app)
+/* ── Public API ───────────────────────────────────────────────────────────── */
+
+void integration_create_tui_window(AppState *app, GtkApplication *gapp)
 {
     if (!app->session_file[0]) return;
 
-    const TerminalDef *term = find_terminal();
-    if (!term) {
-        fprintf(stderr, "integration_spawn_tui: no suitable terminal emulator found\n");
-        return;
-    }
+    GtkWidget *term = vte_terminal_new();
+    app->tui_terminal = term;
 
-    char cmd[1024];
-    snprintf(cmd, sizeof(cmd), term->cmd_fmt, app->session_file);
+    GtkWidget *win = gtk_application_window_new(gapp);
+    gtk_window_set_title(GTK_WINDOW(win), "PAB Assessment");
+    gtk_window_set_default_size(GTK_WINDOW(win), 900, 700);
+    gtk_window_set_child(GTK_WINDOW(win), term);
+    app->tui_window = win;
 
-    GError *err = NULL;
-    if (!g_spawn_command_line_async(cmd, &err)) {
-        fprintf(stderr, "integration_spawn_tui: failed to spawn '%s': %s\n",
-                cmd, err ? err->message : "unknown");
-        if (err) g_error_free(err);
-    } else {
-        fprintf(stderr, "integration_spawn_tui: launched with: %s\n", cmd);
-    }
-}
+    /* Capture F11 at window level before VTE consumes it */
+    GtkEventController *key_ctrl = gtk_event_controller_key_new();
+    gtk_event_controller_set_propagation_phase(key_ctrl, GTK_PHASE_CAPTURE);
+    gtk_widget_add_controller(win, key_ctrl);
+    g_signal_connect(key_ctrl, "key-pressed",
+                     G_CALLBACK(on_tui_key_pressed), win);
 
-void integration_focus_monitor_start(AppState *app)
-{
-    if (!app->session_dir[0]) return;
-    if (app->focus_monitor)   return;   /* already running */
+    g_signal_connect(term, "child-exited",
+                     G_CALLBACK(on_tui_child_exited), app);
+    g_signal_connect(win, "destroy",
+                     G_CALLBACK(on_tui_window_destroyed), app);
 
-    GFile *dir = g_file_new_for_path(app->session_dir);
-    GError *err = NULL;
-    app->focus_monitor = g_file_monitor_directory(
-        dir, G_FILE_MONITOR_NONE, NULL, &err);
-    g_object_unref(dir);
+    gtk_widget_set_visible(win, TRUE);
+    gtk_window_fullscreen(GTK_WINDOW(win));
 
-    if (!app->focus_monitor) {
-        fprintf(stderr, "integration_focus_monitor_start: %s\n",
-                err ? err->message : "unknown error");
-        if (err) g_error_free(err);
-        return;
-    }
-    g_signal_connect(app->focus_monitor, "changed",
-                     G_CALLBACK(on_dir_changed), app);
-}
-
-void integration_focus_monitor_stop(AppState *app)
-{
-    if (!app->focus_monitor) return;
-    g_file_monitor_cancel(app->focus_monitor);
-    g_object_unref(app->focus_monitor);
-    app->focus_monitor = NULL;
+    char *argv[] = { "assessment", "--session", app->session_file, NULL };
+    vte_terminal_spawn_async(
+        VTE_TERMINAL(term),
+        VTE_PTY_DEFAULT,
+        NULL,               /* working dir — inherit */
+        argv,
+        NULL,               /* env — inherit */
+        G_SPAWN_SEARCH_PATH,
+        NULL, NULL,         /* child setup */
+        NULL,               /* pid out */
+        -1,                 /* timeout */
+        NULL,               /* cancellable */
+        NULL, NULL);        /* callback */
 }
 
 void integration_focus_tui(AppState *app)
 {
-    /* No-op: ptyxis does not support remote window focus.
-     * Use the system window switcher (e.g. Alt+Tab) to return to the TUI. */
-    (void)app;
+    if (app->tui_window)
+        gtk_window_present(GTK_WINDOW(app->tui_window));
+}
+
+void integration_destroy_tui(AppState *app)
+{
+    if (app->tui_window)
+        gtk_window_destroy(GTK_WINDOW(app->tui_window));
+    /* on_tui_window_destroyed NULLs the pointers; no further action needed. */
 }

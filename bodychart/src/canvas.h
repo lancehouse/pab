@@ -181,8 +181,8 @@ struct _AppState {
     char     session_file[512];   /* full path to _session.json */
     time_t   session_created;
     GFileMonitor *session_file_monitor;  /* file watcher for session JSON */
-    GFileMonitor *focus_monitor;         /* dir watcher for .focus_gtk signal file */
-    char     tui_socket[256];            /* kitty remote-control socket path */
+    GtkWidget   *tui_window;             /* second GtkWindow housing the VteTerminal */
+    GtkWidget   *tui_terminal;           /* VteTerminal widget inside tui_window */
     gint64   last_own_save_us;           /* timestamp of last persistence_save() call */
     int      next_stroke_id;             /* monotonic counter — never decremented on undo */
     int      next_note_id;              /* monotonic counter — never decremented on undo */

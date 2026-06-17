@@ -34,6 +34,15 @@ static gboolean on_key_pressed(GtkEventControllerKey *ctrl,
         return TRUE;
     }
 
+    /* F11 — toggle fullscreen */
+    if (keyval == GDK_KEY_F11) {
+        if (gtk_window_is_fullscreen(GTK_WINDOW(app->window)))
+            gtk_window_unfullscreen(GTK_WINDOW(app->window));
+        else
+            gtk_window_fullscreen(GTK_WINDOW(app->window));
+        return TRUE;
+    }
+
     return input_key_pressed(app, keyval, mods);
 }
 
@@ -1854,10 +1863,8 @@ static void launch_commit_new(GtkButton *btn, gpointer data)
     GtkWidget *launch_win = ld->window;
     window_create(ld->app, ld->gapp);
     gtk_window_destroy(GTK_WINDOW(launch_win));
-    /* Write gtk_pid, then spawn TUI and start watching for focus signals */
     persistence_write_session_current(ld->app);
-    integration_focus_monitor_start(ld->app);
-    integration_spawn_tui(ld->app);
+    integration_create_tui_window(ld->app, ld->gapp);
     g_free(ld);
 }
 
@@ -1871,10 +1878,8 @@ static void launch_commit_open(GtkButton *btn, gpointer data)
     GtkWidget *launch_win = ld->window;
     window_create(ld->app, ld->gapp);
     gtk_window_destroy(GTK_WINDOW(launch_win));
-    /* Write gtk_pid, then spawn TUI and start watching for focus signals */
     persistence_write_session_current(ld->app);
-    integration_focus_monitor_start(ld->app);
-    integration_spawn_tui(ld->app);
+    integration_create_tui_window(ld->app, ld->gapp);
     g_free(ld);
 }
 
@@ -2074,6 +2079,7 @@ static void on_main_window_close(GtkWidget *w, gpointer data)
 {
     (void)w;
     AppState *app = data;
+    integration_destroy_tui(app);
     persistence_monitor_stop(app);
     window_autosave(app);
     /* Re-render combined_focus.png unconditionally — window_autosave's if(ok)
@@ -2098,7 +2104,7 @@ void window_create(AppState *app, GtkApplication *gtk_app)
     gtk_window_set_title(GTK_WINDOW(app->window), "PhysioChart");
     gtk_window_set_default_size(GTK_WINDOW(app->window), 900, 700);
     gtk_window_set_decorated(GTK_WINDOW(app->window), FALSE);
-    gtk_window_maximize(GTK_WINDOW(app->window));
+    gtk_window_fullscreen(GTK_WINDOW(app->window));
 
     g_signal_connect(app->window, "destroy",
                      G_CALLBACK(on_main_window_close), app);
