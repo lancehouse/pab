@@ -796,7 +796,7 @@ class AssessmentView(Container):
             panel.update(region, wid)
 
     def _sync_goals_consent_to_subj(self) -> None:
-        from textual.widgets import Input
+        from textual.widgets import TextArea
         consent = self.sections.get("01_consent")
         subj    = self.sections.get("02_subjective")
         if not consent or not subj:
@@ -805,17 +805,17 @@ class AssessmentView(Container):
         try:
             for i in range(1, 5):
                 try:
-                    val = consent.query_one(f"#consent_goal_{i}", Input).value
-                    w   = subj.query_one(f"#goal_{i}", Input)
-                    if w.value != val:
-                        w.value = val
+                    val = consent.query_one(f"#consent_goal_{i}", TextArea).text
+                    w   = subj.query_one(f"#goal_{i}", TextArea)
+                    if w.text != val:
+                        w.text = val
                 except Exception:
                     pass
         finally:
             subj._loading = False
 
     def _sync_goals_subj_to_consent(self) -> None:
-        from textual.widgets import Input
+        from textual.widgets import TextArea
         subj    = self.sections.get("02_subjective")
         consent = self.sections.get("01_consent")
         if not subj or not consent:
@@ -824,10 +824,10 @@ class AssessmentView(Container):
         try:
             for i in range(1, 5):
                 try:
-                    val = subj.query_one(f"#goal_{i}", Input).value
-                    w   = consent.query_one(f"#consent_goal_{i}", Input)
-                    if w.value != val:
-                        w.value = val
+                    val = subj.query_one(f"#goal_{i}", TextArea).text
+                    w   = consent.query_one(f"#consent_goal_{i}", TextArea)
+                    if w.text != val:
+                        w.text = val
                 except Exception:
                     pass
         finally:
