@@ -505,7 +505,7 @@ class AssessmentView(Container):
 
         # Subsection nav bar: only for certain assessment sections
         has_subnav = section_id in (
-            "02_subjective", "03_medical", "04_pain_classification",
+            "01_consent", "02_subjective", "03_medical", "04_pain_classification",
             "05_outcome_measures", "06_diagnosis", "07_barriers", "08_rx_plan",
         )
         try:

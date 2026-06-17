@@ -2300,6 +2300,15 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
     txt("treatment_preference",      c)
     _emit_yaml_subs_md("consent", c, clean, _emit, sub)
 
+    sub("Beliefs")
+    f("belief_hurt_harm",      c)
+    f("belief_unsafe",         c)
+    f("belief_passive",        c)
+    f("belief_rehab",          c)
+    f("belief_high_se",        c)
+    f("belief_internal_locus", c)
+    txt("belief_notes",        c)
+
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 2: SUBJECTIVE EXAMINATION
     # ════════════════════════════════════════════════════════════════════════
@@ -3407,6 +3416,13 @@ LABELS: dict[str, str] = {
     "cause_understanding_detail":       "Understanding of cause (detail)",
     "prognosis_expectations":           "Prognosis expectations",
     "treatment_preference":             "Treatment preference",
+    "belief_hurt_harm":                 "Belief: Hurt=Harm",
+    "belief_unsafe":                    "Belief: Unsafe to move",
+    "belief_passive":                   "Belief: Passive coping",
+    "belief_rehab":                     "Belief: Rehab-oriented",
+    "belief_high_se":                   "Belief: High self-efficacy",
+    "belief_internal_locus":            "Belief: Internal locus of control",
+    "belief_notes":                     "Beliefs (notes)",
     # ── 02 Subjective ───────────────────────────────────────────────────────
     "body_chart_completed":             "Body chart completed",
     "course_improving":                 "Course: Improving",
@@ -3952,6 +3968,15 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     txt("prognosis_expectations",   c)
     txt("treatment_preference",     c)
     _emit_yaml_subs_raw("consent", c, clean, _emit, sub)
+
+    sub("Beliefs")
+    f("belief_hurt_harm",      c)
+    f("belief_unsafe",         c)
+    f("belief_passive",        c)
+    f("belief_rehab",          c)
+    f("belief_high_se",        c)
+    f("belief_internal_locus", c)
+    txt("belief_notes",        c)
 
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 2: SUBJECTIVE EXAMINATION

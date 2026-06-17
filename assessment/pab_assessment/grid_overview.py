@@ -17,6 +17,7 @@ SUBJ_GRID_DATA: list[tuple[str, str, list[tuple[str, str]]]] = [
         ("Framing",  "cs_framing"),
         ("ICE+",     "cs_ice"),
         ("Goals",    "consent_goals"),
+        ("Beliefs",  "cs_beliefs"),
     ]),
     ("02_subjective", "02 Subjective", [
         ("Symptoms",     "subj_symptoms"),

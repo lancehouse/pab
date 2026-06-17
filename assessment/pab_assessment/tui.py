@@ -287,6 +287,14 @@ class SubsectionNavBar(Static):
     Underlined character in Subjective chips shows the Alt+key shortcut.
     """
 
+    CONSENT_SUBS = [
+        ("Consent",  "cs_consent"),
+        ("Framing",  "cs_framing"),
+        ("ICE+",     "cs_ice"),
+        ("Goals",    "consent_goals"),
+        ("Beliefs",  "cs_beliefs"),
+    ]
+
     # (before, underlined_key, after, anchor_id)  — Subjective has Alt+key shortcuts
     SUBJECTIVE_SUBS = [
         ("",      "S", "ymptoms",     "subj_symptoms"),
@@ -387,7 +395,14 @@ class SubsectionNavBar(Static):
     def set_context(self, section_id: str) -> None:
         """Swap chips to match the newly active section."""
         self.remove_children()
-        if section_id == "02_subjective":
+        if section_id == "01_consent":
+            for label, anchor_id in self.CONSENT_SUBS:
+                self.mount(_NavChip(
+                    label,
+                    anchor_id=anchor_id,
+                    section_widget_id="#section_01_consent",
+                ))
+        elif section_id == "02_subjective":
             for before, key, after, anchor_id in self.SUBJECTIVE_SUBS:
                 self.mount(_NavChip(
                     self._make_label(before, key, after),

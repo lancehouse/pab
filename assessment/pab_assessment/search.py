@@ -214,6 +214,7 @@ _FIELD_LABELS: dict[str, tuple[str, str | None, str]] = {
     "cause_understanding_detail": ("01_consent", None, "Cause understanding"),
     "prognosis_expectations":     ("01_consent", None, "Prognosis expectations"),
     "treatment_preference":       ("01_consent", None, "Treatment preference"),
+    "belief_notes":               ("01_consent", "cs_beliefs", "Beliefs notes"),
     # 02 Subjective — History
     "onset":              ("02_subjective", "subj_history",    "Onset"),
     "duration":           ("02_subjective", "subj_history",    "Duration"),
