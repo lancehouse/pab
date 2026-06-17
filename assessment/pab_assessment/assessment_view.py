@@ -415,6 +415,7 @@ class AssessmentView(Container):
         obj_file_data = load_objective(session_file)
         if self._obj_view is not None:
             self._obj_view.load_session(session_file, obj_file_data)
+            self._obj_view.load_goals(subjective_data)
 
         # Push active regions and test data to section 05 regional panels
         section_05 = self.sections.get("04_pain_classification")
@@ -505,7 +506,7 @@ class AssessmentView(Container):
 
         # Subsection nav bar: only for certain assessment sections
         has_subnav = section_id in (
-            "02_subjective", "03_medical", "04_pain_classification",
+            "01_consent", "02_subjective", "03_medical", "04_pain_classification",
             "05_outcome_measures", "06_diagnosis", "07_barriers", "08_rx_plan",
         )
         try:
@@ -724,6 +725,32 @@ class AssessmentView(Container):
         except Exception as e:
             logger.error(f"_generate_reports failed: {e}")
 
+    @on(ObjectiveAssessmentView.GoalsEdited)
+    def _on_obj_goals_edited(self, event: ObjectiveAssessmentView.GoalsEdited) -> None:
+        """Goals edited in Functional — sync to Consent and Subjective, then save."""
+        from textual.widgets import TextArea
+        goals = event.goals
+        for section_key, widget_prefix in (
+            ("02_subjective", "goal_"),
+            ("01_consent",    "consent_goal_"),
+        ):
+            section = self.sections.get(section_key)
+            if not section:
+                continue
+            section._loading = True
+            try:
+                for i in range(1, 5):
+                    try:
+                        w = section.query_one(f"#{widget_prefix}{i}", TextArea)
+                        val = goals.get(f"goal_{i}", "")
+                        if w.text != val:
+                            w.text = val
+                    except Exception:
+                        pass
+            finally:
+                section._loading = False
+        self._schedule_save()
+
     @on(ObjectiveAssessmentView.ExitRequested)
     def _on_obj_exit_requested(self) -> None:
         self._exit_objective_mode()
@@ -796,7 +823,7 @@ class AssessmentView(Container):
             panel.update(region, wid)
 
     def _sync_goals_consent_to_subj(self) -> None:
-        from textual.widgets import Input
+        from textual.widgets import TextArea
         consent = self.sections.get("01_consent")
         subj    = self.sections.get("02_subjective")
         if not consent or not subj:
@@ -805,17 +832,17 @@ class AssessmentView(Container):
         try:
             for i in range(1, 5):
                 try:
-                    val = consent.query_one(f"#consent_goal_{i}", Input).value
-                    w   = subj.query_one(f"#goal_{i}", Input)
-                    if w.value != val:
-                        w.value = val
+                    val = consent.query_one(f"#consent_goal_{i}", TextArea).text
+                    w   = subj.query_one(f"#goal_{i}", TextArea)
+                    if w.text != val:
+                        w.text = val
                 except Exception:
                     pass
         finally:
             subj._loading = False
 
     def _sync_goals_subj_to_consent(self) -> None:
-        from textual.widgets import Input
+        from textual.widgets import TextArea
         subj    = self.sections.get("02_subjective")
         consent = self.sections.get("01_consent")
         if not subj or not consent:
@@ -824,10 +851,10 @@ class AssessmentView(Container):
         try:
             for i in range(1, 5):
                 try:
-                    val = subj.query_one(f"#goal_{i}", Input).value
-                    w   = consent.query_one(f"#consent_goal_{i}", Input)
-                    if w.value != val:
-                        w.value = val
+                    val = subj.query_one(f"#goal_{i}", TextArea).text
+                    w   = consent.query_one(f"#consent_goal_{i}", TextArea)
+                    if w.text != val:
+                        w.text = val
                 except Exception:
                     pass
         finally:

@@ -166,6 +166,8 @@ _SUBSECTIONS: list[tuple[str, str, str]] = [
     ("obj:07_functional", "fn_movement",         "Functional: Movement"),
     ("obj:07_functional", "fn_balance",          "Functional: Balance"),
     ("obj:07_functional", "fn_timed",            "Functional: Timed Capability"),
+    ("obj:07_functional", "ft_fm_obs",           "Functional: Functional obs notes"),
+    ("obj:07_functional", "ft_fm_custom",        "Functional: Custom functional test"),
     ("obj:08_special",  "st_cervical",           "Special Tests: Cervical"),
     ("obj:08_special",  "st_lumbar",             "Special Tests: Lumbar"),
     ("obj:08_special",  "st_shoulder",           "Special Tests: Shoulder"),
@@ -214,6 +216,7 @@ _FIELD_LABELS: dict[str, tuple[str, str | None, str]] = {
     "cause_understanding_detail": ("01_consent", None, "Cause understanding"),
     "prognosis_expectations":     ("01_consent", None, "Prognosis expectations"),
     "treatment_preference":       ("01_consent", None, "Treatment preference"),
+    "belief_notes":               ("01_consent", "cs_beliefs", "Beliefs notes"),
     # 02 Subjective — History
     "onset":              ("02_subjective", "subj_history",    "Onset"),
     "duration":           ("02_subjective", "subj_history",    "Duration"),

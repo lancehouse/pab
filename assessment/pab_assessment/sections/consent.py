@@ -1,12 +1,12 @@
 """Consent & Session Setup section (core/01)."""
 
 from textual.app import ComposeResult, on
-from textual.containers import Horizontal
+from textual.containers import Horizontal, ScrollableContainer
 from textual.message import Message
 from textual.widgets import Label, Input, TextArea
 
 from .base import BaseSection
-from ..widgets import CheckButton
+from ..widgets import CheckButton, FlagButton
 
 
 class ConsentSection(BaseSection):
@@ -131,6 +131,16 @@ class ConsentSection(BaseSection):
         yield Label("4.")
         yield TextArea(id="consent_goal_4", language="plain")
 
+        yield Label("— Beliefs —", classes="subsection_header", id="cs_beliefs")
+        with Horizontal(classes="btn_row"):
+            yield FlagButton("Hurt=Harm",       id="belief_hurt_harm")
+            yield FlagButton("Unsafe",          id="belief_unsafe")
+            yield FlagButton("Passive",         id="belief_passive")
+            yield CheckButton("Rehab",          id="belief_rehab")
+            yield CheckButton("High SE",        id="belief_high_se")
+            yield CheckButton("Internal locus", id="belief_internal_locus")
+        yield TextArea(id="belief_notes", language="plain")
+
         yield Label("", id="consent_status")
 
     def load(self, data: dict) -> None:
@@ -150,6 +160,13 @@ class ConsentSection(BaseSection):
             self.query_one("#cause_understanding_detail", TextArea).text = consent.get("cause_understanding_detail", "")
             self.query_one("#prognosis_expectations", TextArea).text = consent.get("prognosis_expectations", "")
             self.query_one("#treatment_preference", TextArea).text = consent.get("treatment_preference", "")
+            self.query_one("#belief_hurt_harm", FlagButton).set_value(consent.get("belief_hurt_harm"))
+            self.query_one("#belief_unsafe", FlagButton).set_value(consent.get("belief_unsafe"))
+            self.query_one("#belief_passive", FlagButton).set_value(consent.get("belief_passive"))
+            self.query_one("#belief_rehab", CheckButton).set_value(consent.get("belief_rehab"))
+            self.query_one("#belief_high_se", CheckButton).set_value(consent.get("belief_high_se"))
+            self.query_one("#belief_internal_locus", CheckButton).set_value(consent.get("belief_internal_locus"))
+            self.query_one("#belief_notes", TextArea).text = consent.get("belief_notes", "")
         finally:
             self._loading = False
             self._update_status()
@@ -169,6 +186,13 @@ class ConsentSection(BaseSection):
                 "cause_understanding_detail": self.query_one("#cause_understanding_detail", TextArea).text,
                 "prognosis_expectations": self.query_one("#prognosis_expectations", TextArea).text,
                 "treatment_preference": self.query_one("#treatment_preference", TextArea).text,
+                "belief_hurt_harm":      self.query_one("#belief_hurt_harm", FlagButton).value,
+                "belief_unsafe":         self.query_one("#belief_unsafe", FlagButton).value,
+                "belief_passive":        self.query_one("#belief_passive", FlagButton).value,
+                "belief_rehab":          self.query_one("#belief_rehab", CheckButton).value,
+                "belief_high_se":        self.query_one("#belief_high_se", CheckButton).value,
+                "belief_internal_locus": self.query_one("#belief_internal_locus", CheckButton).value,
+                "belief_notes":          self.query_one("#belief_notes", TextArea).text,
             }
         except Exception:
             return {}
@@ -184,6 +208,15 @@ class ConsentSection(BaseSection):
                     pass
         finally:
             self._loading = False
+
+    def _jump_to(self, anchor_id: str) -> None:
+        try:
+            target = self.query_one(f"#{anchor_id}")
+            self.app.query_one("#section_content", ScrollableContainer).scroll_to_widget(
+                target, top=True, animate=False
+            )
+        except Exception:
+            pass
 
     def is_complete(self) -> bool:
         data = self.collect()

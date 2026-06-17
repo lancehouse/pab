@@ -923,13 +923,22 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
             _maybe_note(sl, "*Ankle muscle notes*", mus.get("mu_ak_notes", "").strip())
         _flush_section("### 06 Muscle Testing", sl)
 
-    # ── 07 Functional ─────────────────────────────────────────────────────────
+    # ── 02 Functional ─────────────────────────────────────────────────────────
     if func:
         sl = []
-        obs_def = [("Gait","ft_gait"),("Prone hip rot","ft_phr"),
-                   ("Sit-to-stand","ft_sts_q"),("SLS Left","ft_sls_l"),
-                   ("SLS Right","ft_sls_r")]
-        obs_rows = [[lbl, func.get(fid) or "—"] for lbl, fid in obs_def]
+        obs_def = [
+            ("Gait",         "ft_gait",  "ft_gait_obs"),
+            ("Sit-to-stand", "ft_sts_q", "ft_sts_obs"),
+            ("Squat",        "ft_squat", "ft_squat_obs"),
+            ("Lunge",        "ft_lunge", "ft_lunge_obs"),
+            ("Lifting",      "ft_lift",  "ft_lift_obs"),
+            ("Carrying",     "ft_carry", "ft_carry_obs"),
+            ("Reaching",     "ft_reach", "ft_reach_obs"),
+        ]
+        obs_rows = []
+        for lbl, rid, iid in obs_def:
+            parts = [p for p in [func.get(rid) or "", func.get(iid, "").strip()] if p]
+            obs_rows.append([lbl, " — ".join(parts) if parts else "—"])
         _maybe_table(sl, "Movement Observation", ["Test", "Finding"], obs_rows)
         bal_def = [("Both legs",["ft_bal_both"]),("Feet together",["ft_bal_feet"]),
                    ("Tandem",["ft_bal_tandem"]),
@@ -949,8 +958,10 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         cap_rows = [[lbl, f"{func.get(fid,'') or '—'} {unit}".strip() if func.get(fid,"") else "—"]
                     for lbl, fid, unit in cap_def]
         _maybe_table(sl, "Timed Capability", ["Test", "Result"], cap_rows)
-        _maybe_note(sl, "*Notes:*", func.get("ft_notes", "").strip())
-        _flush_section("### 07 Functional", sl)
+        _maybe_note(sl, "*Functional obs:*",    func.get("ft_fm_obs", "").strip())
+        _maybe_note(sl, "*Custom Func test:*",  func.get("ft_fm_custom", "").strip())
+        _maybe_note(sl, "*Notes:*",             func.get("ft_notes", "").strip())
+        _flush_section("### 02 Functional", sl)
 
     # ── 08 Special Tests ──────────────────────────────────────────────────────
     if spl:
@@ -1730,13 +1741,22 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
                 sl.append("  Ankle muscle notes: (empty)")
         _flush_section("06 Muscle Testing", sl)
 
-    # ── 07 Functional ─────────────────────────────────────────────────────────
+    # ── 02 Functional ─────────────────────────────────────────────────────────
     if func:
         sl = []
-        obs_def = [("Gait","ft_gait"),("Prone hip rot","ft_phr"),
-                   ("Sit-to-stand","ft_sts_q"),("SLS Left","ft_sls_l"),
-                   ("SLS Right","ft_sls_r")]
-        obs_rows = [[lbl, func.get(fid) or "-"] for lbl, fid in obs_def]
+        obs_def = [
+            ("Gait",         "ft_gait",  "ft_gait_obs"),
+            ("Sit-to-stand", "ft_sts_q", "ft_sts_obs"),
+            ("Squat",        "ft_squat", "ft_squat_obs"),
+            ("Lunge",        "ft_lunge", "ft_lunge_obs"),
+            ("Lifting",      "ft_lift",  "ft_lift_obs"),
+            ("Carrying",     "ft_carry", "ft_carry_obs"),
+            ("Reaching",     "ft_reach", "ft_reach_obs"),
+        ]
+        obs_rows = []
+        for lbl, rid, iid in obs_def:
+            parts = [p for p in [func.get(rid) or "", func.get(iid, "").strip()] if p]
+            obs_rows.append([lbl, " - ".join(parts) if parts else "-"])
         _maybe_table(sl, ["Movement Obs", "Finding"], obs_rows)
         bal_def = [("Both legs",["ft_bal_both"],"s"),("Feet together",["ft_bal_feet"],"s"),
                    ("Tandem",["ft_bal_tandem"],"s"),
@@ -1756,12 +1776,22 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         cap_rows = [[lbl, f"{func.get(fid,'') or '-'} {unit}".strip()]
                     for lbl, fid, unit in cap_def]
         _maybe_table(sl, ["Timed Capability", "Result"], cap_rows)
+        v = func.get("ft_fm_obs", "").strip()
+        if v:
+            sl.append(f"  Functional obs: {v}")
+        elif not clean:
+            sl.append("  Functional obs: (empty)")
+        v = func.get("ft_fm_custom", "").strip()
+        if v:
+            sl.append(f"  Custom Func test: {v}")
+        elif not clean:
+            sl.append("  Custom Func test: (empty)")
         v = func.get("ft_notes", "").strip()
         if v:
             sl.append(f"  Notes: {v}")
         elif not clean:
             sl.append("  Notes: (empty)")
-        _flush_section("07 Functional", sl)
+        _flush_section("02 Functional", sl)
 
     # ── 08 Special Tests ──────────────────────────────────────────────────────
     if spl:
@@ -2299,6 +2329,15 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
     txt("prognosis_expectations",    c)
     txt("treatment_preference",      c)
     _emit_yaml_subs_md("consent", c, clean, _emit, sub)
+
+    sub("Beliefs")
+    f("belief_hurt_harm",      c)
+    f("belief_unsafe",         c)
+    f("belief_passive",        c)
+    f("belief_rehab",          c)
+    f("belief_high_se",        c)
+    f("belief_internal_locus", c)
+    txt("belief_notes",        c)
 
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 2: SUBJECTIVE EXAMINATION
@@ -3407,6 +3446,13 @@ LABELS: dict[str, str] = {
     "cause_understanding_detail":       "Understanding of cause (detail)",
     "prognosis_expectations":           "Prognosis expectations",
     "treatment_preference":             "Treatment preference",
+    "belief_hurt_harm":                 "Belief: Hurt=Harm",
+    "belief_unsafe":                    "Belief: Unsafe to move",
+    "belief_passive":                   "Belief: Passive coping",
+    "belief_rehab":                     "Belief: Rehab-oriented",
+    "belief_high_se":                   "Belief: High self-efficacy",
+    "belief_internal_locus":            "Belief: Internal locus of control",
+    "belief_notes":                     "Beliefs (notes)",
     # ── 02 Subjective ───────────────────────────────────────────────────────
     "body_chart_completed":             "Body chart completed",
     "course_improving":                 "Course: Improving",
@@ -3952,6 +3998,15 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     txt("prognosis_expectations",   c)
     txt("treatment_preference",     c)
     _emit_yaml_subs_raw("consent", c, clean, _emit, sub)
+
+    sub("Beliefs")
+    f("belief_hurt_harm",      c)
+    f("belief_unsafe",         c)
+    f("belief_passive",        c)
+    f("belief_rehab",          c)
+    f("belief_high_se",        c)
+    f("belief_internal_locus", c)
+    txt("belief_notes",        c)
 
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 2: SUBJECTIVE EXAMINATION

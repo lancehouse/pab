@@ -3,7 +3,7 @@
 from textual.app import ComposeResult, on
 from textual.containers import Horizontal
 from textual.message import Message
-from textual.widgets import Label, Static, TextArea
+from textual.widgets import Input, Label, Static, TextArea
 
 from ...nav import escape_to_neighbor
 from ...sections.base import BaseSection
@@ -14,26 +14,30 @@ from ...widgets import GridInput, RadioGroup
 # Gang option sets
 # ---------------------------------------------------------------------------
 
-_GAIT3 = [("Norm", "success"), ("Antlgc", "warning"), ("Anlgsc", "default")]
-# 3 × 6 = 18 cols
-
-_FUNC3 = [("Norm", "success"), ("Reduc", "warning"), ("Unabl", "error")]
-# 3 × 6 = 18 cols
-
-_BIN2  = [("Norm", "success"), ("Abnml", "error")]
-# 2 × 6 = 12 cols
+_GAIT2  = [("Norm", "success"), ("Antlgc", "warning")]
+_STS3   = [("Norm", "success"), ("Hands",  "warning"), ("Asymm", "default")]
+_SQ3    = [("Norm", "success"), ("Antlgc", "warning"), ("Asymm", "default")]
+_LFT3   = [("Norm", "success"), ("Antlgc", "warning"), ("Asymm", "default")]
+_CARRY2 = [("Norm", "success"), ("Antlgc", "warning")]
+_REACH2 = [("Norm", "success"), ("Antlgc", "warning")]
 
 
 # ---------------------------------------------------------------------------
 # Row definitions
 # ---------------------------------------------------------------------------
 
-# Single-gang functional movement obs: (label, id, gang options)
-_FM_SINGLE: list[tuple[str, str, list]] = [
-    ("Gait",          "ft_gait",  _GAIT3),
-    ("Prone hip rot", "ft_phr",   _BIN2),
-    ("Sit-to-stand",  "ft_sts_q", _FUNC3),
+# Functional movement rows: (display label, radio id, radio options, input id)
+_FM_ROWS: list[tuple[str, str, list, str]] = [
+    ("Gait",         "ft_gait",  _GAIT2,  "ft_gait_obs"),
+    ("Sit-to-stand", "ft_sts_q", _STS3,   "ft_sts_obs"),
+    ("Squat",        "ft_squat", _SQ3,    "ft_squat_obs"),
+    ("Lunge",        "ft_lunge", _SQ3,    "ft_lunge_obs"),
+    ("Lifting",      "ft_lift",  _LFT3,   "ft_lift_obs"),
+    ("Carrying",     "ft_carry", _CARRY2, "ft_carry_obs"),
+    ("Reaching",     "ft_reach", _REACH2, "ft_reach_obs"),
 ]
+
+_FM_INPUT_IDS = [r[3] for r in _FM_ROWS]
 
 # Balance rows: (label, [input ids])
 _BAL_ROWS: list[tuple[str, list]] = [
@@ -60,12 +64,17 @@ _CAP_ROWS: list[tuple[str, str, str]] = [
 # ---------------------------------------------------------------------------
 
 class FunctionalSection(BaseSection):
-    """07 Functional — movement obs, balance (Steffen 2002), timed capability measures."""
+    """02 Functional — SMART Goals mirror + movement obs, balance, timed capability."""
 
     _nav_include_inputs = True  # include GridInput (balance/timed rows) in arrow-key nav
 
     class FieldChanged(Message):
         pass
+
+    class GoalsChanged(Message):
+        def __init__(self, goals: dict) -> None:
+            super().__init__()
+            self.goals = goals
 
     DEFAULT_CSS = """
     FunctionalSection {
@@ -73,21 +82,17 @@ class FunctionalSection(BaseSection):
         height: auto;
         padding: 0 1 2 1;
     }
-    FunctionalSection .section_title     { text-style: bold; margin-bottom: 0; }
+    FunctionalSection .section_title { text-style: bold; margin-bottom: 0; }
 
-
-    /* Single-gang obs rows — label + gang */
+    /* Functional movement rows — label + gang + input */
     FunctionalSection .obs_row { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
-    FunctionalSection .obs_lbl { width: 18; height: 3; content-align: left middle; }
+    FunctionalSection .obs_lbl { width: 16; height: 3; content-align: left middle; }
+    FunctionalSection .obs_inp { width: 1fr; height: 3; padding: 0 1; }
 
-    /* Bilateral SLS row — label + L-gang + gap + R-gang */
-    FunctionalSection .sls_hdr     { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
-    FunctionalSection .sls_hdr_lbl { width: 18; }
-    FunctionalSection .sls_hdr_col { width: 18; text-align: center; }
-    FunctionalSection .sls_hdr_gap { width: 2; }
-    FunctionalSection .sls_row     { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
-    FunctionalSection .sls_lbl     { width: 18; height: 3; content-align: left middle; }
-    FunctionalSection .sls_gap     { width: 2;  height: 3; }
+    /* Inline TextArea rows — label beside text area */
+    FunctionalSection .fm_ta_row { layout: horizontal; height: auto; width: 100%; margin-bottom: 1; }
+    FunctionalSection .fm_ta_lbl { width: auto; padding-right: 1; height: auto; content-align: left top; }
+    FunctionalSection .fm_ta     { width: 1fr; height: auto; min-height: 3; max-height: 12; padding: 0 1; }
 
     /* Balance / capability table */
     FunctionalSection .tbl_hdr     { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
@@ -100,6 +105,10 @@ class FunctionalSection(BaseSection):
 
     FunctionalSection TextArea { height: auto; min-height: 2; padding: 0 1; }
     FunctionalSection Label    { height: auto; margin-top: 0; }
+
+    FunctionalSection .goal_row { layout: horizontal; height: auto; width: 100%; }
+    FunctionalSection .goal_lbl { width: 4; height: auto; content-align: left top; padding-top: 0; }
+    FunctionalSection .goal_ta  { width: 1fr; height: auto; min-height: 2; padding: 0 1; }
     """
 
     def __init__(self, **kwargs) -> None:
@@ -112,26 +121,34 @@ class FunctionalSection(BaseSection):
     # ------------------------------------------------------------------
 
     def compose(self) -> ComposeResult:
-        yield Label("07 Functional", classes="section_title")
+        yield Label("02 Functional", classes="section_title")
+
+        # ── SMART Goals (mirror of Consent / Subjective) ──────────────────────
+        yield Label("— SMART Goals —", classes="subsection_header", id="fn_goals")
+        yield Label("Shared with 01 Consent and 02 Subjective — edit in any section:",
+                    classes="reference_note")
+        for i in range(1, 5):
+            with Horizontal(classes="goal_row"):
+                yield Static(f"{i}.", classes="goal_lbl")
+                yield TextArea(id=f"ft_goal_{i}", language="plain", classes="goal_ta")
 
         # ── Functional Movement Observation ───────────────────────────────────
         yield Label("Functional Movement", classes="subsection_header", id="fn_movement")
-        for label, fid, opts in _FM_SINGLE:
+        for label, rid, opts, iid in _FM_ROWS:
             with Horizontal(classes="obs_row"):
                 yield Static(label, classes="obs_lbl")
-                yield RadioGroup(opts, id=fid)
+                yield RadioGroup(opts, id=rid)
+                yield Input(placeholder="…", id=iid, classes="obs_inp")
 
-        # SLS — bilateral L/R
-        with Horizontal(classes="sls_hdr"):
-            yield Static("",      classes="sls_hdr_lbl")
-            yield Static("Left",  classes="sls_hdr_col")
-            yield Static("",      classes="sls_hdr_gap")
-            yield Static("Right", classes="sls_hdr_col")
-        with Horizontal(classes="sls_row"):
-            yield Static("SLS",                  classes="sls_lbl")
-            yield RadioGroup(_FUNC3, id="ft_sls_l")
-            yield Static("",                     classes="sls_gap")
-            yield RadioGroup(_FUNC3, id="ft_sls_r")
+        # Functional obs — inline TextArea
+        with Horizontal(classes="fm_ta_row"):
+            yield Static("Functional obs", classes="fm_ta_lbl")
+            yield TextArea(id="ft_fm_obs", language="plain", classes="fm_ta")
+
+        # Custom Functional test — inline TextArea
+        with Horizontal(classes="fm_ta_row"):
+            yield Static("Custom Functional test", classes="fm_ta_lbl")
+            yield TextArea(id="ft_fm_custom", language="plain", classes="fm_ta")
 
         # ── Balance (Steffen 2002) ────────────────────────────────────────────
         yield Label("Balance  (Steffen 2002)", classes="subsection_header", id="fn_balance")
@@ -211,9 +228,25 @@ class FunctionalSection(BaseSection):
 
     @on(RadioGroup.Changed)
     @on(GridInput.Changed)
-    @on(TextArea.Changed, selector="TextArea")
+    @on(Input.Changed)
     def _on_field_changed(self) -> None:
         if not self._loading:
+            self.post_message(self.FieldChanged())
+
+    @on(TextArea.Changed, selector="TextArea")
+    def _on_textarea_changed(self, event: TextArea.Changed) -> None:
+        if self._loading:
+            return
+        wid = getattr(event.text_area, "id", "") or ""
+        if wid.startswith("ft_goal_"):
+            goals = {}
+            for i in range(1, 5):
+                try:
+                    goals[f"goal_{i}"] = self.query_one(f"#ft_goal_{i}", TextArea).text
+                except Exception:
+                    goals[f"goal_{i}"] = ""
+            self.post_message(self.GoalsChanged(goals))
+        else:
             self.post_message(self.FieldChanged())
 
     # ------------------------------------------------------------------
@@ -224,6 +257,11 @@ class FunctionalSection(BaseSection):
         data: dict = {}
         for rg in self.query(RadioGroup):
             data[rg.id] = rg.value
+        for iid in _FM_INPUT_IDS:
+            try:
+                data[iid] = self.query_one(f"#{iid}", Input).value.strip()
+            except Exception:
+                data[iid] = ""
         for _, ids in _BAL_ROWS:
             for fid in ids:
                 try:
@@ -235,10 +273,11 @@ class FunctionalSection(BaseSection):
                 data[fid] = self.query_one(f"#{fid}", GridInput).value.strip()
             except Exception:
                 data[fid] = ""
-        try:
-            data["ft_notes"] = self.query_one("#ft_notes", TextArea).text
-        except Exception:
-            data["ft_notes"] = ""
+        for tid in ("ft_fm_obs", "ft_fm_custom", "ft_notes"):
+            try:
+                data[tid] = self.query_one(f"#{tid}", TextArea).text
+            except Exception:
+                data[tid] = ""
         return data
 
     def load(self, data: dict) -> None:
@@ -246,6 +285,11 @@ class FunctionalSection(BaseSection):
         try:
             for rg in self.query(RadioGroup):
                 rg.set_value(data.get(rg.id))
+            for iid in _FM_INPUT_IDS:
+                try:
+                    self.query_one(f"#{iid}", Input).value = data.get(iid, "")
+                except Exception:
+                    pass
             for _, ids in _BAL_ROWS:
                 for fid in ids:
                     try:
@@ -257,10 +301,23 @@ class FunctionalSection(BaseSection):
                     self.query_one(f"#{fid}", GridInput).value = data.get(fid, "")
                 except Exception:
                     pass
-            try:
-                self.query_one("#ft_notes", TextArea).text = data.get("ft_notes", "")
-            except Exception:
-                pass
+            for tid in ("ft_fm_obs", "ft_fm_custom", "ft_notes"):
+                try:
+                    self.query_one(f"#{tid}", TextArea).text = data.get(tid, "")
+                except Exception:
+                    pass
+        finally:
+            self._loading = False
+
+    def load_goals(self, data: dict) -> None:
+        """Populate the SMART Goals mirror from subjective data (goal_1..4)."""
+        self._loading = True
+        try:
+            for i in range(1, 5):
+                try:
+                    self.query_one(f"#ft_goal_{i}", TextArea).text = data.get(f"goal_{i}", "")
+                except Exception:
+                    pass
         finally:
             self._loading = False
 
