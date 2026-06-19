@@ -2253,7 +2253,8 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
         val = d.get(fid)
         if clean and _empty(val):
             return
-        _emit(f"**{_label(fid)}:** {_v(val)}")
+        line = f"**{_label(fid)}:** {_v(val)}"
+        _emit(line + "  " if clean else line)
 
     def txt(fid, d):
         val = (d.get(fid) or "").strip()
@@ -2266,7 +2267,8 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
                 _emit((row + "  ") if (clean and row.strip()) else row)
             _emit("")
         elif val:
-            _emit(f"**{label}:** {val}")
+            line = f"**{label}:** {val}"
+            _emit(line + "  " if clean else line)
         else:
             _emit(f"**{label}:** *(empty)*")
 
