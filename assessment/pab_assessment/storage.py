@@ -425,13 +425,19 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         rows = _filter_rows(rows, data_from)
         if not rows:
             return
+        if clean and sl and sl[-1] != "":
+            sl.append("")
         if title:
             sl.append(f"#### {title}")
         sl.extend(_md_table(headers, rows))
+        if clean:
+            sl.append("")
 
     def _maybe_note(sl: list, lbl: str, v: str) -> None:
         if v:
             sl.append(f"{lbl}: {v}")
+            if clean:
+                sl.append("")
         elif not clean:
             sl.append(f"{lbl}: *(empty)*")
 
@@ -807,8 +813,14 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
                 detail = sen.get(f"{sid}_detail", "").strip() if has_detail and v is True else ""
                 rows.append([lbl, f"{state} — {detail}" if detail else state])
             if rows:
+                if clean and sl and sl[-1] != "":
+                    sl.append("")
                 sl.append(f"**{sec_lbl}:**")
+                if clean:
+                    sl.append("")
                 sl.extend(_md_table(["Test", "Result"], rows))
+                if clean:
+                    sl.append("")
         _maybe_note(sl, "*Notes:*", sen.get("sn_notes", "").strip())
         _flush_section("### 05 Sensory", sl)
 
@@ -3051,11 +3063,12 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
 
     # ── clean-mode barrier helper (md) ───────────────────────────────────
     def _barrier_md(prefix: str, items: list, d: dict) -> None:
-        """Cluster parent barriers into PRESENT/ABSENT; append active sub-items inline."""
-        present_parts = []
-        absent_parts  = []
+        """Render assessed barriers as a markdown table (Present / Absent rows)."""
+        rows = []
         for label, key, sub_items in items:
             val = d.get(key)
+            if val is None:
+                continue
             if val is True:
                 sub_parts = []
                 for sub_label, sub_key in sub_items:
@@ -3064,14 +3077,13 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
                         sub_parts.append(sub_label)
                     elif isinstance(sv, str) and sv.strip():
                         sub_parts.append(sv.strip())
-                present_parts.append(
-                    f"{label} ({', '.join(sub_parts)})" if sub_parts else label)
-            elif val is False:
-                absent_parts.append(label)
-        if present_parts:
-            _emit("**" + prefix + " PRESENT:** " + "; ".join(present_parts))
-        if absent_parts:
-            _emit("**" + prefix + " ABSENT:** " + "; ".join(absent_parts))
+                status = "Present" + (f" ({', '.join(sub_parts)})" if sub_parts else "")
+            else:
+                status = "Absent"
+            rows.append([label, status])
+        if rows:
+            _emit(*_md_table(["Barrier", "Status"], rows))
+            _emit("")
 
     _NOCI_B = [
         ("Disease/pathology",      "b_noci_disease",        []),
