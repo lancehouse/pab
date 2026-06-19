@@ -31,8 +31,6 @@ from .storage import (
     export_session_report,
     save_clean_reports,
     save_docx_report,
-    save_clean_reports_dev,
-    save_docx_report_dev,
     assessment_path,
     load_objective,
 )
@@ -46,8 +44,6 @@ def _exit_generate_all_reports(session_file: str) -> None:
     export_session_report(session_file)
     save_clean_reports(session_file)
     save_docx_report(session_file)
-    save_clean_reports_dev(session_file)
-    save_docx_report_dev(session_file)
 
 
 logger = logging.getLogger(__name__)
@@ -720,7 +716,6 @@ class AssessmentView(Container):
                 asyncio.to_thread(save_raw_report, sf),
                 asyncio.to_thread(export_session_report, sf),
                 asyncio.to_thread(save_clean_reports, sf),
-                asyncio.to_thread(save_clean_reports_dev, sf),
             )
         except Exception as e:
             logger.error(f"_generate_reports failed: {e}")
