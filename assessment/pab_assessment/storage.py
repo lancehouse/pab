@@ -355,9 +355,13 @@ def _md_table(headers: list, rows: list) -> list:
     for r in rows:
         for i, v in enumerate(r):
             col_w[i] = max(col_w[i], len(v))
+    # Separator widths control pandoc's proportional column allocation in DOCX.
+    # Cap at 40 so very long cells don't steal all the width from label columns;
+    # floor at 15 so short-label columns (Aspect, Denies, etc.) get a fair share.
+    sep_w = [max(min(w, 40), 20) for w in col_w]
     def _fmt(cells):
         return "| " + " | ".join(str(v).ljust(col_w[i]) for i, v in enumerate(cells)) + " |"
-    sep = "| " + " | ".join("-" * w for w in col_w) + " |"
+    sep = "| " + " | ".join("-" * w for w in sep_w) + " |"
     return [_fmt(headers), sep] + [_fmt(r) for r in rows]
 
 
@@ -425,13 +429,19 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         rows = _filter_rows(rows, data_from)
         if not rows:
             return
+        if clean and sl and sl[-1] != "":
+            sl.append("")
         if title:
             sl.append(f"#### {title}")
         sl.extend(_md_table(headers, rows))
+        if clean:
+            sl.append("")
 
     def _maybe_note(sl: list, lbl: str, v: str) -> None:
         if v:
             sl.append(f"{lbl}: {v}")
+            if clean:
+                sl.append("")
         elif not clean:
             sl.append(f"{lbl}: *(empty)*")
 
@@ -593,6 +603,13 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
             return "Normal"
         return t or "—"
 
+    def _bi_pas(p: str, d: dict) -> str | None:
+        l = _fmt_pas(d.get(f"{p}_l_norm"), d.get(f"{p}_l_txt"))
+        r = _fmt_pas(d.get(f"{p}_r_norm"), d.get(f"{p}_r_txt"))
+        if l == "—" and r == "—":
+            return None
+        return f"L: {l} / R: {r}"
+
     if pas:
         sl = []
         # (label, prefix, bilateral)
@@ -600,10 +617,7 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
                   ("Tx Rotation","op_tx_rot",True),
                   ("Lx Flexion","op_lx_flex",False),("Lx Extension","op_lx_ext",False),
                   ("Lx Lat Flex","op_lx_lf",True)]
-        op_rows = [[lbl,
-                    (f"L: {_fmt_pas(pas.get(f'{p}_l_norm'),pas.get(f'{p}_l_txt'))} / "
-                     f"R: {_fmt_pas(pas.get(f'{p}_r_norm'),pas.get(f'{p}_r_txt'))}")
-                    if bi else _fmt_pas(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
+        op_rows = [[lbl, _bi_pas(p, pas) if bi else _fmt_pas(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
                    for lbl, p, bi in _lx_op]
         _maybe_table(sl, "Overpressure", ["Movement", "Findings"], op_rows)
         paivm_levels = ["T8","T9","T10","T11","T12","L1","L2","L3","L4","L5"]
@@ -620,10 +634,7 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
             _cx_op = [("Flexion","cx_op_flex",False),("Extension","cx_op_ext",False),
                       ("Lat Flex","cx_op_lf",True),("Rotation","cx_op_rot",True),
                       ("Quadrant","cx_op_quad",True)]
-            cx_op_rows = [[lbl,
-                           (f"L: {_fmt_pas(pas.get(f'{p}_l_norm'),pas.get(f'{p}_l_txt'))} / "
-                            f"R: {_fmt_pas(pas.get(f'{p}_r_norm'),pas.get(f'{p}_r_txt'))}")
-                           if bi else _fmt_pas(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
+            cx_op_rows = [[lbl, _bi_pas(p, pas) if bi else _fmt_pas(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
                           for lbl, p, bi in _cx_op]
             _maybe_table(sl, "Cervical OP", ["Movement","Findings"], cx_op_rows)
             cx_paivm_levels = [("C0/1","C0_1"),("C1/2","C1_2"),("C2","C2"),("C3","C3"),
@@ -807,8 +818,14 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
                 detail = sen.get(f"{sid}_detail", "").strip() if has_detail and v is True else ""
                 rows.append([lbl, f"{state} — {detail}" if detail else state])
             if rows:
+                if clean and sl and sl[-1] != "":
+                    sl.append("")
                 sl.append(f"**{sec_lbl}:**")
+                if clean:
+                    sl.append("")
                 sl.extend(_md_table(["Test", "Result"], rows))
+                if clean:
+                    sl.append("")
         _maybe_note(sl, "*Notes:*", sen.get("sn_notes", "").strip())
         _flush_section("### 05 Sensory", sl)
 
@@ -2106,6 +2123,34 @@ def _emit_pain_class_dev(pc: dict, clean: bool, emit_fn, sub_fn) -> None:
             rows.append(["Symptoms", sy_r, sy_d])
         if rows:
             emit_fn(*_md_table(["Aspect", "Reports / Score", "Denies"], rows))
+        # ── FM interpretation ─────────────────────────────────────────────
+        def _fm_int(s: str | None) -> int | None:
+            v = (s or "").strip()
+            return int(v) if v.isdigit() else None
+        wpi  = _fm_int(pc.get("fm_wpi"))
+        fat  = _fm_int(pc.get("fm_fatigue"))
+        wak  = _fm_int(pc.get("fm_waking"))
+        cog  = _fm_int(pc.get("fm_cognitive"))
+        if wpi is not None and all(v is not None for v in (fat, wak, cog)):
+            add = sum(1 for k in ("fm_headaches","fm_ibs","fm_depression") if pc.get(k) is True)
+            ss  = fat + wak + cog + add  # type: ignore[operator]
+            crit_a = wpi > 7 and ss > 5
+            crit_b = 3 <= wpi <= 6 and ss > 9
+            dur = pc.get("fm_duration")  is True
+            exc = pc.get("fm_exclusion") is True
+            if crit_a or crit_b:
+                crit_lbl = "A" if crit_a else "B"
+                if dur and exc:
+                    interp = f"⚠ Fibromyalgia criteria **{crit_lbl}** met — WPI {wpi} · SS {ss}/12"
+                else:
+                    missing = []
+                    if not dur: missing.append("duration ≥ 3 months")
+                    if not exc: missing.append("no alternative explanation")
+                    interp = (f"Scoring criteria {crit_lbl} met (WPI {wpi} · SS {ss}/12)"
+                              f" — unconfirmed: {'; '.join(missing)}")
+            else:
+                interp = f"FM criteria not met — WPI {wpi} · SS {ss}/12 (need A: WPI >7 & SS >5 or B: WPI 3–6 & SS >9)"
+            emit_fn(f"*{interp}*  " if clean else f"*{interp}*")
 
     # ── BACPAP ────────────────────────────────────────────────────────────────
     _BP_CH = [("LBP ≥ 3 months","bacpap_chronic"),
@@ -2253,7 +2298,8 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
         val = d.get(fid)
         if clean and _empty(val):
             return
-        _emit(f"**{_label(fid)}:** {_v(val)}")
+        line = f"**{_label(fid)}:** {_v(val)}"
+        _emit(line + "  " if clean else line)
 
     def txt(fid, d):
         val = (d.get(fid) or "").strip()
@@ -2266,7 +2312,8 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
                 _emit((row + "  ") if (clean and row.strip()) else row)
             _emit("")
         elif val:
-            _emit(f"**{label}:** {val}")
+            line = f"**{label}:** {val}"
+            _emit(line + "  " if clean else line)
         else:
             _emit(f"**{label}:** *(empty)*")
 
@@ -2449,12 +2496,15 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
 
     # ── clean-mode clustered helpers (md) — only used when clean=True ─────
     def _cluster_md(prefix: str, items: list, d: dict) -> None:
-        present = [l for l, k in items if d.get(k) is True]
-        absent  = [l for l, k in items if d.get(k) is False]
-        if present:
-            _emit("**" + prefix + " PRESENT:** " + "; ".join(f"**{l}:** Yes" for l in present))
-        if absent:
-            _emit("**" + prefix + " ABSENT:** " + "; ".join(absent))
+        rows = []
+        for lbl, key in items:
+            val = d.get(key)
+            if val is None:
+                continue
+            rows.append([lbl, "Present" if val is True else "Absent"])
+        if rows:
+            _emit(*_md_table(["Factor", "Status"], rows))
+            _emit("")
 
     def _rf_md(name: str, flags: list, d: dict, action_key: str = None) -> None:
         raised     = [l for l, k in flags if d.get(k) is True]
@@ -2462,11 +2512,14 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
         action = (d.get(action_key) or "").strip() if action_key else ""
         if raised:
             _emit(f"\n### Red Flags — {name}\n")
-            _emit("**⚠️ RED FLAGS RAISED:** " + "; ".join(f"**{l}**" for l in raised))
+            line = "**⚠️ RED FLAGS RAISED:** " + "; ".join(f"**{l}**" for l in raised)
+            _emit(line + "  " if clean else line)
             if not_raised:
-                _emit("**Not reported:** " + "; ".join(not_raised))
+                line = "**Not reported:** " + "; ".join(not_raised)
+                _emit(line + "  " if clean else line)
             if action:
-                _emit(f"**Action:** {action}")
+                line = f"**Action:** {action}"
+                _emit(line + "  " if clean else line)
         else:
             suffix = f" — {action}" if action else ""
             _emit(f"\n### Red Flags — {name} NIL REPORTED{suffix}\n")
@@ -3049,11 +3102,12 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
 
     # ── clean-mode barrier helper (md) ───────────────────────────────────
     def _barrier_md(prefix: str, items: list, d: dict) -> None:
-        """Cluster parent barriers into PRESENT/ABSENT; append active sub-items inline."""
-        present_parts = []
-        absent_parts  = []
+        """Render assessed barriers as a markdown table (Present / Absent rows)."""
+        rows = []
         for label, key, sub_items in items:
             val = d.get(key)
+            if val is None:
+                continue
             if val is True:
                 sub_parts = []
                 for sub_label, sub_key in sub_items:
@@ -3062,14 +3116,13 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
                         sub_parts.append(sub_label)
                     elif isinstance(sv, str) and sv.strip():
                         sub_parts.append(sv.strip())
-                present_parts.append(
-                    f"{label} ({', '.join(sub_parts)})" if sub_parts else label)
-            elif val is False:
-                absent_parts.append(label)
-        if present_parts:
-            _emit("**" + prefix + " PRESENT:** " + "; ".join(present_parts))
-        if absent_parts:
-            _emit("**" + prefix + " ABSENT:** " + "; ".join(absent_parts))
+                status = "Present" + (f" ({', '.join(sub_parts)})" if sub_parts else "")
+            else:
+                status = "Absent"
+            rows.append([label, status])
+        if rows:
+            _emit(*_md_table(["Barrier", "Status"], rows))
+            _emit("")
 
     _NOCI_B = [
         ("Disease/pathology",      "b_noci_disease",        []),
