@@ -36,7 +36,6 @@ from .storage import (
     load_assessment, save_assessment, list_sessions, create_new_session,
     read_gtk_pid, write_focus_signal, export_session_report,
     save_raw_report, save_clean_reports, save_docx_report,
-    save_clean_reports_dev, save_docx_report_dev,
 )
 from .assessment_view import AssessmentView, NotesOverlay
 
@@ -754,9 +753,8 @@ class PhysioAssessmentTUI(Container):
                 # Generate raw + md + clean in threads (no pandoc yet)
                 results = await asyncio.gather(
                     asyncio.to_thread(save_raw_report, sf),
-                    asyncio.to_thread(export_session_report, sf, True),  # clean=True → _clean.md
+                    asyncio.to_thread(export_session_report, sf, True, True),  # clean=True, dev=True → _clean.md
                     asyncio.to_thread(save_clean_reports, sf),
-                    asyncio.to_thread(save_clean_reports_dev, sf),
                     return_exceptions=True,
                 )
                 clean_path = results[1]
@@ -766,9 +764,7 @@ class PhysioAssessmentTUI(Container):
                 md_text = Path(clean_path).read_text(encoding="utf-8")
                 await self.app.push_screen(ReportModal(md_text))
                 # Pandoc runs after the modal is visible — daemon=True is fine here
-                # (user has seen the report; docx is a bonus, not blocking)
                 threading.Thread(target=save_docx_report, args=(sf,), daemon=True).start()
-                threading.Thread(target=save_docx_report_dev, args=(sf,), daemon=True).start()
             except Exception as e:
                 self._show_status(f"Report error: {e}")
 

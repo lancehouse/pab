@@ -2164,7 +2164,7 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
 
     clean=False (default): writes *_report.md with all fields shown.
     clean=True: writes *_clean.md with only fields that have data.
-    dev=True: writes *_report_dev.md / *_clean_dev.md with tabulated pain classification.
+    dev=True: writes *_report_dev.md (full) or *_clean.md (clean) with tabulated sections.
     Returns the output path, or empty string on failure.
     """
     import time as _time
@@ -2192,7 +2192,7 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
     session_dir  = Path(session_file).parent
     session_name = data.get("session_name", "session")
     if dev:
-        out_name = f"{session_name}_clean_dev.md" if clean else f"{session_name}_report_dev.md"
+        out_name = f"{session_name}_clean.md" if clean else f"{session_name}_report_dev.md"
     else:
         out_name = f"{session_name}_clean.md" if clean else f"{session_name}_report.md"
     out_path     = session_dir / out_name
@@ -5123,7 +5123,7 @@ def save_clean_reports(session_file: str) -> None:
     except Exception as e:
         logger.error(f"save_clean_reports: txt write failed: {e}")
 
-    export_session_report(session_file, clean=True)
+    export_session_report(session_file, clean=True, dev=True)
 
 
 def save_docx_report(session_file: str) -> str:
@@ -5157,43 +5157,6 @@ def save_docx_report(session_file: str) -> str:
         return ""
     except Exception as e:
         logger.error(f"save_docx_report: {e}")
-        return ""
-
-
-def save_clean_reports_dev(session_file: str) -> None:
-    """Generate *_clean_dev.md (tabulated dev format). Errors are non-fatal."""
-    try:
-        export_session_report(session_file, clean=True, dev=True)
-    except Exception as e:
-        logger.error(f"save_clean_reports_dev: {e}")
-
-
-def save_docx_report_dev(session_file: str) -> str:
-    """Convert *_clean_dev.md → *_clean_dev.docx via pandoc. Returns output path or ''."""
-    p = Path(session_file)
-    session_name = p.stem.replace("_session", "")
-    md_path   = p.parent / f"{session_name}_clean_dev.md"
-    docx_path = p.parent / f"{session_name}_clean_dev.docx"
-
-    if not md_path.exists():
-        logger.warning(f"save_docx_report_dev: {md_path} not found")
-        return ""
-
-    try:
-        result = subprocess.run(
-            ["pandoc", str(md_path), "-o", str(docx_path)],
-            capture_output=True, timeout=30,
-        )
-        if result.returncode == 0:
-            logger.debug(f"Dev docx written to {docx_path}")
-            return str(docx_path)
-        logger.error(f"pandoc (dev) failed: {result.stderr.decode().strip()}")
-        return ""
-    except FileNotFoundError:
-        logger.warning("pandoc not found — skipping dev docx generation")
-        return ""
-    except Exception as e:
-        logger.error(f"save_docx_report_dev: {e}")
         return ""
 
 
