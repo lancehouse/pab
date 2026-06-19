@@ -2463,12 +2463,15 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
 
     # ── clean-mode clustered helpers (md) — only used when clean=True ─────
     def _cluster_md(prefix: str, items: list, d: dict) -> None:
-        present = [l for l, k in items if d.get(k) is True]
-        absent  = [l for l, k in items if d.get(k) is False]
-        if present:
-            _emit("**" + prefix + " PRESENT:** " + "; ".join(f"**{l}:** Yes" for l in present))
-        if absent:
-            _emit("**" + prefix + " ABSENT:** " + "; ".join(absent))
+        rows = []
+        for lbl, key in items:
+            val = d.get(key)
+            if val is None:
+                continue
+            rows.append([lbl, "Present" if val is True else "Absent"])
+        if rows:
+            _emit(*_md_table(["Factor", "Status"], rows))
+            _emit("")
 
     def _rf_md(name: str, flags: list, d: dict, action_key: str = None) -> None:
         raised     = [l for l, k in flags if d.get(k) is True]
@@ -2476,11 +2479,14 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
         action = (d.get(action_key) or "").strip() if action_key else ""
         if raised:
             _emit(f"\n### Red Flags — {name}\n")
-            _emit("**⚠️ RED FLAGS RAISED:** " + "; ".join(f"**{l}**" for l in raised))
+            line = "**⚠️ RED FLAGS RAISED:** " + "; ".join(f"**{l}**" for l in raised)
+            _emit(line + "  " if clean else line)
             if not_raised:
-                _emit("**Not reported:** " + "; ".join(not_raised))
+                line = "**Not reported:** " + "; ".join(not_raised)
+                _emit(line + "  " if clean else line)
             if action:
-                _emit(f"**Action:** {action}")
+                line = f"**Action:** {action}"
+                _emit(line + "  " if clean else line)
         else:
             suffix = f" — {action}" if action else ""
             _emit(f"\n### Red Flags — {name} NIL REPORTED{suffix}\n")
