@@ -355,10 +355,10 @@ def _md_table(headers: list, rows: list) -> list:
     for r in rows:
         for i, v in enumerate(r):
             col_w[i] = max(col_w[i], len(v))
-    # Enforce a minimum separator width so pandoc allocates reasonable column
-    # proportions in the DOCX — without this, short-label columns (e.g. "Aspect",
-    # "Denies") become illegibly narrow when adjacent to long-content columns.
-    sep_w = [max(w, 15) for w in col_w]
+    # Separator widths control pandoc's proportional column allocation in DOCX.
+    # Cap at 40 so very long cells don't steal all the width from label columns;
+    # floor at 15 so short-label columns (Aspect, Denies, etc.) get a fair share.
+    sep_w = [max(min(w, 40), 15) for w in col_w]
     def _fmt(cells):
         return "| " + " | ".join(str(v).ljust(col_w[i]) for i, v in enumerate(cells)) + " |"
     sep = "| " + " | ".join("-" * w for w in sep_w) + " |"
