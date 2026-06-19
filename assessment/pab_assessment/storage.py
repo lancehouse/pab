@@ -2123,6 +2123,34 @@ def _emit_pain_class_dev(pc: dict, clean: bool, emit_fn, sub_fn) -> None:
             rows.append(["Symptoms", sy_r, sy_d])
         if rows:
             emit_fn(*_md_table(["Aspect", "Reports / Score", "Denies"], rows))
+        # ── FM interpretation ─────────────────────────────────────────────
+        def _fm_int(s: str | None) -> int | None:
+            v = (s or "").strip()
+            return int(v) if v.isdigit() else None
+        wpi  = _fm_int(pc.get("fm_wpi"))
+        fat  = _fm_int(pc.get("fm_fatigue"))
+        wak  = _fm_int(pc.get("fm_waking"))
+        cog  = _fm_int(pc.get("fm_cognitive"))
+        if wpi is not None and all(v is not None for v in (fat, wak, cog)):
+            add = sum(1 for k in ("fm_headaches","fm_ibs","fm_depression") if pc.get(k) is True)
+            ss  = fat + wak + cog + add  # type: ignore[operator]
+            crit_a = wpi > 7 and ss > 5
+            crit_b = 3 <= wpi <= 6 and ss > 9
+            dur = pc.get("fm_duration")  is True
+            exc = pc.get("fm_exclusion") is True
+            if crit_a or crit_b:
+                crit_lbl = "A" if crit_a else "B"
+                if dur and exc:
+                    interp = f"⚠ Fibromyalgia criteria **{crit_lbl}** met — WPI {wpi} · SS {ss}/12"
+                else:
+                    missing = []
+                    if not dur: missing.append("duration ≥ 3 months")
+                    if not exc: missing.append("no alternative explanation")
+                    interp = (f"Scoring criteria {crit_lbl} met (WPI {wpi} · SS {ss}/12)"
+                              f" — unconfirmed: {'; '.join(missing)}")
+            else:
+                interp = f"FM criteria not met — WPI {wpi} · SS {ss}/12 (need A: WPI >7 & SS >5 or B: WPI 3–6 & SS >9)"
+            emit_fn(f"*{interp}*  " if clean else f"*{interp}*")
 
     # ── BACPAP ────────────────────────────────────────────────────────────────
     _BP_CH = [("LBP ≥ 3 months","bacpap_chronic"),
