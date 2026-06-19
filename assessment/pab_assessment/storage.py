@@ -355,9 +355,13 @@ def _md_table(headers: list, rows: list) -> list:
     for r in rows:
         for i, v in enumerate(r):
             col_w[i] = max(col_w[i], len(v))
+    # Enforce a minimum separator width so pandoc allocates reasonable column
+    # proportions in the DOCX — without this, short-label columns (e.g. "Aspect",
+    # "Denies") become illegibly narrow when adjacent to long-content columns.
+    sep_w = [max(w, 15) for w in col_w]
     def _fmt(cells):
         return "| " + " | ".join(str(v).ljust(col_w[i]) for i, v in enumerate(cells)) + " |"
-    sep = "| " + " | ".join("-" * w for w in col_w) + " |"
+    sep = "| " + " | ".join("-" * w for w in sep_w) + " |"
     return [_fmt(headers), sep] + [_fmt(r) for r in rows]
 
 
@@ -599,6 +603,13 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
             return "Normal"
         return t or "—"
 
+    def _bi_pas(p: str, d: dict) -> str | None:
+        l = _fmt_pas(d.get(f"{p}_l_norm"), d.get(f"{p}_l_txt"))
+        r = _fmt_pas(d.get(f"{p}_r_norm"), d.get(f"{p}_r_txt"))
+        if l == "—" and r == "—":
+            return None
+        return f"L: {l} / R: {r}"
+
     if pas:
         sl = []
         # (label, prefix, bilateral)
@@ -606,10 +617,7 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
                   ("Tx Rotation","op_tx_rot",True),
                   ("Lx Flexion","op_lx_flex",False),("Lx Extension","op_lx_ext",False),
                   ("Lx Lat Flex","op_lx_lf",True)]
-        op_rows = [[lbl,
-                    (f"L: {_fmt_pas(pas.get(f'{p}_l_norm'),pas.get(f'{p}_l_txt'))} / "
-                     f"R: {_fmt_pas(pas.get(f'{p}_r_norm'),pas.get(f'{p}_r_txt'))}")
-                    if bi else _fmt_pas(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
+        op_rows = [[lbl, _bi_pas(p, pas) if bi else _fmt_pas(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
                    for lbl, p, bi in _lx_op]
         _maybe_table(sl, "Overpressure", ["Movement", "Findings"], op_rows)
         paivm_levels = ["T8","T9","T10","T11","T12","L1","L2","L3","L4","L5"]
@@ -626,10 +634,7 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
             _cx_op = [("Flexion","cx_op_flex",False),("Extension","cx_op_ext",False),
                       ("Lat Flex","cx_op_lf",True),("Rotation","cx_op_rot",True),
                       ("Quadrant","cx_op_quad",True)]
-            cx_op_rows = [[lbl,
-                           (f"L: {_fmt_pas(pas.get(f'{p}_l_norm'),pas.get(f'{p}_l_txt'))} / "
-                            f"R: {_fmt_pas(pas.get(f'{p}_r_norm'),pas.get(f'{p}_r_txt'))}")
-                           if bi else _fmt_pas(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
+            cx_op_rows = [[lbl, _bi_pas(p, pas) if bi else _fmt_pas(pas.get(f"{p}_norm"), pas.get(f"{p}_txt"))]
                           for lbl, p, bi in _cx_op]
             _maybe_table(sl, "Cervical OP", ["Movement","Findings"], cx_op_rows)
             cx_paivm_levels = [("C0/1","C0_1"),("C1/2","C1_2"),("C2","C2"),("C3","C3"),
