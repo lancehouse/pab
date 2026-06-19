@@ -229,12 +229,18 @@ dynamically by the search index. They have IDs beginning with `rf_`, `cvd_`,
 | `dass_dep_score` | DASS: Depression subscale score |
 | `dass_anx_score` | DASS: Anxiety subscale score |
 | `dass_str_score` | DASS: Stress subscale score |
+| `phq4_nervous` | PHQ-4: Nervous/anxious item (0–3) |
+| `phq4_worry` | PHQ-4: Uncontrollable worry item (0–3) |
+| `phq4_noint` | PHQ-4: No interest item (0–3) |
+| `phq4_depressed` | PHQ-4: Depressed/hopeless item (0–3) |
 | `pcs_rum_score` | PCS: Rumination |
 | `pcs_mag_score` | PCS: Magnification |
 | `pcs_help_score` | PCS: Helplessness |
 | `pcs_total_score` | PCS: Total score |
-| `pseq_score` | PSEQ score |
-| `pseq_interp` | PSEQ interpretation (Low/Moderate/High) |
+| `pseq_score` | PSEQ score (/60) |
+| `pseq_interp` | PSEQ interpretation |
+| `pseq2_score` | PSEQ-2 score (/12, 2-item screen) |
+| `pseq2_interp` | PSEQ-2 interpretation (Severe ≤5 / Moderate 6–9 / Adequate ≥10) |
 | `pcl5_score` | PCL-5 score |
 | `pcl5_action` | PCL-5 — action taken |
 | `isi_score` | ISI (Insomnia Severity Index) score |
@@ -246,6 +252,7 @@ dynamically by the search index. They have IDs beginning with `rf_`, `cvd_`,
 | `plan_psfs` | Intent to use PSFS (bool) |
 | `plan_bpi` | Intent to use BPI (bool) |
 | `plan_dass` | Intent to use DASS-21 (bool) |
+| `plan_phq4` | Intent to use PHQ-4 (bool) |
 | `plan_pcs` | Intent to use PCS (bool) |
 | `plan_pseq` | Intent to use PSEQ (bool) |
 | `plan_pcl5` | Intent to use PCL-5 (bool) |
@@ -347,16 +354,6 @@ These fields are in `objective/sections/general.py`.
 | `go_scap_r` | Right scapular position |
 | `go_wasting` | Muscle wasting visible (None / Mild / Mod / Marked) |
 | `go_posture_notes` | Posture free-text notes |
-
-### Functional movement (RadioGroup: Normal / Limited / Unable)
-
-| Key | Description |
-|---|---|
-| `go_gait` | Gait quality (Normal / Antalgic) |
-| `go_sls_l` | Single-leg stance left (Normal / Limited / Unable) |
-| `go_sls_r` | Single-leg stance right |
-| `go_sts` | Sit-to-stand (Normal / Limited / Unable) |
-| `go_functional_notes` | Functional movement free-text notes |
 
 
 ---

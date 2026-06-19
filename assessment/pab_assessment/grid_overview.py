@@ -99,7 +99,6 @@ OBJ_GRID_DATA: list[tuple[str, str, list[tuple[str, str]]]] = [
     ("01_general", "01 General", [
         ("Physical",   "go_physical"),
         ("Posture",    "go_posture"),
-        ("Functional", "go_functional_movement"),
     ]),
     ("07_functional", "02 Functional", [
         ("Goals",          "fn_goals"),

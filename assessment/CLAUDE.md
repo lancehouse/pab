@@ -232,7 +232,7 @@ and Textual resolves their height from the outer `ScrollableContainer` context i
 
 | Section | Key IDs (examples) |
 |---|---|
-| 01 General | `go_height`, `go_weight`, `go_bmi`, `go_lx_lord`, `go_gait` |
+| 01 General | `go_height`, `go_weight`, `go_bmi`, `go_lx_lord`, `go_breath` |
 | 02 Active Movement | `lx_flex_ax_l_range`, `lx_flex_ax_l_ps`, `lx_lf_ax_r_range` … |
 | 03 Passive/OP | `op_lx_flex_ef`, `op_lx_flex_resp`, `pm_L5_c`, `pm_L5_ul_l/r` |
 | 04 Neurological | `nr_knee_l/r`, `nr_l2_l/r` … `nr_slr_l_deg`, `nr_umn_hyper` |
