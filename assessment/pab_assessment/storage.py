@@ -462,17 +462,7 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
             cmt = gen.get(f"{key}_cmt", "").strip()
             posture_rows.append([lbl, f"{v} — {cmt}" if cmt else v])
         _maybe_table(sl, "Posture", ["", "Finding"], posture_rows)
-        _func_def = [("Gait","go_gait"),("SLS Left","go_sls_l"),
-                     ("SLS Right","go_sls_r"),("Sit-to-stand","go_sts")]
-        func_rows = []
-        for lbl, key in _func_def:
-            v = gen.get(key) or "—"
-            cmt = gen.get(f"{key}_cmt", "").strip()
-            func_rows.append([lbl, f"{v} — {cmt}" if cmt else v])
-        _maybe_table(sl, "Functional Movement", ["", "Finding"], func_rows)
-        for key, lbl in [("go_posture_notes","*Posture notes*"),
-                          ("go_functional_notes","*Functional notes*")]:
-            _maybe_note(sl, lbl, gen.get(key, "").strip())
+        _maybe_note(sl, "*Posture notes*", gen.get("go_posture_notes", "").strip())
         _flush_section("### 01 General Observation", sl)
 
     # ── 02 Active Movement ────────────────────────────────────────────────────
@@ -1143,18 +1133,11 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
                 v = raw or "(not recorded)"
             p_rows.append([lbl, v, gen.get(f"{key}_cmt", "")])
         _maybe_table(sl, ["Posture", "Finding", "Comment"], p_rows)
-        _func_raw = [("Gait","go_gait"),("SLS Left","go_sls_l"),
-                     ("SLS Right","go_sls_r"),("Sit-to-stand","go_sts")]
-        f_rows = [[lbl, gen.get(key) or "(not recorded)", gen.get(f"{key}_cmt", "")]
-                  for lbl, key in _func_raw]
-        _maybe_table(sl, ["Function", "Finding", "Comment"], f_rows)
-        for key, lbl in [("go_posture_notes","Posture notes"),
-                          ("go_functional_notes","Functional notes")]:
-            v = gen.get(key, "").strip()
-            if v:
-                sl.append(f"  {lbl}: {v}")
-            elif not clean:
-                sl.append(f"  {lbl}: (empty)")
+        v = gen.get("go_posture_notes", "").strip()
+        if v:
+            sl.append(f"  Posture notes: {v}")
+        elif not clean:
+            sl.append(f"  Posture notes: (empty)")
         _flush_section("01 General Observation", sl)
 
     # ── 02 Active Movement ────────────────────────────────────────────────────
@@ -2923,7 +2906,7 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
     sec("Section 5: Outcome Measures")
 
     sub("Patient Specific Functional Scale (PSFS)")
-    f("psfs_act_1",  om)
+    f("psfs_act_1", om)
     f("psfs_act_2",  om)
     f("psfs_act_3",  om)
 
@@ -2944,6 +2927,12 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
     f("dass_str_score",  om)
     f("dass_str_interp", om)
 
+    sub("PHQ-4")
+    f("phq4_nervous",   om)
+    f("phq4_worry",     om)
+    f("phq4_noint",     om)
+    f("phq4_depressed", om)
+
     sub("Pain Catastrophising Scale (PCS)")
     f("pcs_rum_score",   om)
     f("pcs_rum_risk",    om)
@@ -2954,9 +2943,11 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
     f("pcs_total_score", om)
     f("pcs_total_risk",  om)
 
-    sub("Pain Self-Efficacy Questionnaire (PSEQ)")
-    f("pseq_score",  om)
-    f("pseq_interp", om)
+    sub("Pain Self-Efficacy Questionnaire (PSEQ / PSEQ-2)")
+    f("pseq_score",   om)
+    f("pseq_interp",  om)
+    f("pseq2_score",  om)
+    f("pseq2_interp", om)
 
     sub("PCL-5 (PTSD)")
     f("pcl5_score",    om)
@@ -2979,6 +2970,7 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
     f("plan_psfs",       om)
     f("plan_bpi",        om)
     f("plan_dass",       om)
+    f("plan_phq4",       om)
     f("plan_pcs",        om)
     f("plan_pseq",       om)
     f("plan_pcl5",       om)
@@ -3699,6 +3691,13 @@ LABELS: dict[str, str] = {
     "pcs_total_risk":                   "PCS: Total risk",
     "pseq_score":                       "PSEQ score",
     "pseq_interp":                      "PSEQ interpretation",
+    "pseq2_score":                      "PSEQ-2 score",
+    "pseq2_interp":                     "PSEQ-2 interpretation",
+    "phq4_nervous":                     "PHQ-4: Nervous",
+    "phq4_worry":                       "PHQ-4: Worry",
+    "phq4_noint":                       "PHQ-4: No interest",
+    "phq4_depressed":                   "PHQ-4: Depressed",
+    "plan_phq4":                        "Plan: PHQ-4",
     "pcl5_score":                       "PCL-5 score",
     "pcl5_interp":                      "PCL-5 interpretation",
     "pcl5_action":                      "PCL-5 action taken",
@@ -4593,6 +4592,12 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     f("dass_str_score",  om)
     f("dass_str_interp", om)
 
+    sub("PHQ-4")
+    f("phq4_nervous",   om)
+    f("phq4_worry",     om)
+    f("phq4_noint",     om)
+    f("phq4_depressed", om)
+
     sub("Pain Catastrophising Scale (PCS)")
     f("pcs_rum_score",   om)
     f("pcs_rum_risk",    om)
@@ -4603,9 +4608,11 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     f("pcs_total_score", om)
     f("pcs_total_risk",  om)
 
-    sub("Pain Self-Efficacy Questionnaire (PSEQ)")
-    f("pseq_score",  om)
-    f("pseq_interp", om)
+    sub("Pain Self-Efficacy Questionnaire (PSEQ / PSEQ-2)")
+    f("pseq_score",   om)
+    f("pseq_interp",  om)
+    f("pseq2_score",  om)
+    f("pseq2_interp", om)
 
     sub("PCL-5 (PTSD)")
     f("pcl5_score",      om)
@@ -4628,6 +4635,7 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     f("plan_psfs",       om)
     f("plan_bpi",        om)
     f("plan_dass",       om)
+    f("plan_phq4",       om)
     f("plan_pcs",        om)
     f("plan_pseq",       om)
     f("plan_pcl5",       om)

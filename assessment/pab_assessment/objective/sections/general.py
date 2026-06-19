@@ -19,9 +19,6 @@ _KYPH3 = [("Norm",  "success"), ("↑Inc",   "warning"), ("↓Dec",   "warning")
 _LEAN4 = [("None",  "success"), ("Left",   "warning"), ("Right",  "warning"), ("Fwd",   "default")]
 _BRTH4 = [("Norm",  "success"), ("Apical", "warning"), ("Abdo",   "warning"), ("Paradx","error")]
 _SCAP5 = [("Norm",  "success"), ("Prot",   "warning"), ("Retr",   "warning"), ("Elev",  "warning"), ("Depr", "warning")]
-_GAIT2 = [("Norm",  "success"), ("Antlg",  "warning")]
-_SLS4  = [("<1s",   "error"),   ("<5s",    "warning"), ("<10s",   "warning"), ("Norm",  "success")]
-_STS4  = [("Norm",  "success"), ("Hand",   "warning"), ("Reduc",  "warning"), ("Unabl", "error")]
 
 
 # ---------------------------------------------------------------------------
@@ -47,15 +44,8 @@ class GeneralSection(BaseSection):
         ("Scapular R",        "go_scap_r",  _SCAP5),
         ("Muscle wasting",    "go_wasting", _SEV4),
     ]
-    _FUNCTIONAL_ROWS: list[tuple[str, str, list]] = [
-        ("Gait",         "go_gait",  _GAIT2),
-        ("SLS Left",     "go_sls_l", _SLS4),
-        ("SLS Right",    "go_sls_r", _SLS4),
-        ("Sit-to-stand", "go_sts",   _STS4),
-    ]
-
     _INPUT_IDS = ()
-    _TA_IDS    = ("go_general_notes", "go_transfer_cmt", "go_posture_notes", "go_functional_notes")
+    _TA_IDS    = ("go_general_notes", "go_transfer_cmt", "go_posture_notes")
 
     DEFAULT_CSS = """
     GeneralSection {
@@ -108,16 +98,6 @@ class GeneralSection(BaseSection):
                 yield Input(id=f"{key}_cmt", classes="obs_cmt")
         yield Label("Posture notes:")
         yield TextArea(id="go_posture_notes", language="plain")
-
-        # ── Functional Movement ───────────────────────────────────────────────
-        yield Label("Functional Movement", classes="subsection_header", id="go_functional_movement")
-        for label, key, opts in self._FUNCTIONAL_ROWS:
-            with Horizontal(classes="obs_row"):
-                yield Static(label, classes="obs_label")
-                yield RadioGroup(opts, id=key)
-                yield Input(id=f"{key}_cmt", classes="obs_cmt")
-        yield Label("Functional notes:")
-        yield TextArea(id="go_functional_notes", language="plain")
 
     # ------------------------------------------------------------------
     # Field change → autosave

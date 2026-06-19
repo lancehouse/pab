@@ -58,6 +58,12 @@ _PSEQ_OPTIONS = [
     ("Minimal (>40)",  "success"),
 ]
 
+_PSEQ2_OPTIONS = [
+    ("Severe (≤5)",    "error"),
+    ("Moderate (6–9)", "warning"),
+    ("Adequate (≥10)", "success"),
+]
+
 # ---------------------------------------------------------------------------
 # Auto-interpretation functions
 # ---------------------------------------------------------------------------
@@ -117,6 +123,12 @@ def _interp_pseq(score: int) -> str:
     if score <= 30: return "Moderate (20–30)"
     if score <= 40: return "Mild (31–40)"
     return "Minimal (>40)"
+
+
+def _interp_pseq2(score: int) -> str:
+    if score <= 5:  return "Severe (≤5)"
+    if score <= 9:  return "Moderate (6–9)"
+    return "Adequate (≥10)"
 
 
 # ---------------------------------------------------------------------------
@@ -202,8 +214,9 @@ _BLOCK_PREFIXES: dict[str, list[str]] = {
     "psfs":       ["psfs_"],
     "bpi":        ["bpi_"],
     "dass":       ["dass_"],
+    "phq4":       ["phq4_"],
     "pcs":        ["pcs_"],
-    "pseq":       ["pseq_"],
+    "pseq":       ["pseq_", "pseq2_"],
     "pcl5":       ["pcl5_"],
     "sleep":      ["isi_", "pbas_"],
     "additional": ["add_"],
@@ -475,13 +488,44 @@ def _mount_pcs(body: Vertical) -> None:
 
 def _mount_pseq(body: Vertical) -> None:
     body.mount(
-        Label("Score /60 — higher = stronger self-efficacy", classes="reference_note"),
+        Label("PSEQ — Score /60 — higher = stronger self-efficacy", classes="reference_note"),
         Horizontal(
             Input(id="pseq_score", placeholder="/60", classes="om_score"),
             CycleField("pseq_interp", _PSEQ_OPTIONS),
             classes="om_row",
         ),
+        Label("PSEQ-2 — 2-item screen  /12  (cutoff ≤5 = at risk)", classes="reference_note"),
+        Horizontal(
+            Input(id="pseq2_score", placeholder="/12", classes="om_score"),
+            CycleField("pseq2_interp", _PSEQ2_OPTIONS),
+            classes="om_row",
+        ),
         Static("", id="xref_om_pseq", classes="xref_badge"),
+    )
+
+
+def _mount_phq4(body: Vertical) -> None:
+    body.mount(
+        Label("Items 0 (never) – 3 (nearly every day)  |  Subscale ≥ 3 = positive screen",
+              classes="reference_note"),
+        Horizontal(
+            Label("Nervous:",    classes="inline_lbl"),
+            Input(id="phq4_nervous",   placeholder="0–3", classes="phq4_inp"),
+            Label("+  Worry:",   classes="inline_lbl"),
+            Input(id="phq4_worry",     placeholder="0–3", classes="phq4_inp"),
+            Label("= Anxiety",  classes="inline_lbl"),
+            Static("—", id="phq4_anx_sum", classes="bpi_total_disp"),
+            classes="inline_row",
+        ),
+        Horizontal(
+            Label("No Interest:", classes="inline_lbl"),
+            Input(id="phq4_noint",     placeholder="0–3", classes="phq4_inp"),
+            Label("+  Depressed:", classes="inline_lbl"),
+            Input(id="phq4_depressed", placeholder="0–3", classes="phq4_inp"),
+            Label("= Depression", classes="inline_lbl"),
+            Static("—", id="phq4_dep_sum", classes="bpi_total_disp"),
+            classes="inline_row",
+        ),
     )
 
 
@@ -580,6 +624,9 @@ class OutcomeMeasuresSection(BaseSection):
     .om_row   { height: auto; margin-bottom: 0; }
     .om_score { width: 10; margin-bottom: 0; }
 
+    /* PHQ-4 item inputs */
+    .phq4_inp { width: 10; margin-bottom: 0; }
+
     /* Hypothesis testing table */
     #hyp_table      { height: auto; }
     .hyp_header_row { height: auto; margin-bottom: 0; }
@@ -622,6 +669,7 @@ class OutcomeMeasuresSection(BaseSection):
         yield OutcomeBlock("psfs",       "PSFS — Patient Specific Functional Scale", _mount_psfs)
         yield OutcomeBlock("bpi",        "BPI — Brief Pain Inventory",                _mount_bpi)
         yield OutcomeBlock("dass",       "DASS-21",                                   _mount_dass)
+        yield OutcomeBlock("phq4",       "PHQ-4 — Patient Health Questionnaire 4",   _mount_phq4)
         yield OutcomeBlock("pcs",        "PCS — Pain Catastrophising Scale",          _mount_pcs)
         yield OutcomeBlock("pseq",       "PSEQ — Pain Self-Efficacy Questionnaire",   _mount_pseq)
         yield OutcomeBlock("pcl5",       "PCL-5 — PTSD Checklist",                   _mount_pcl5)
@@ -674,6 +722,7 @@ class OutcomeMeasuresSection(BaseSection):
             ("pcl5_score",      "pcl5_interp",     _interp_pcl5),
             ("isi_score",       "isi_interp",      _interp_isi),
             ("pseq_score",      "pseq_interp",     _interp_pseq),
+            ("pseq2_score",     "pseq2_interp",    _interp_pseq2),
         ]
         for score_id, interp_id, fn in _auto:
             try:
@@ -683,6 +732,28 @@ class OutcomeMeasuresSection(BaseSection):
             except Exception:
                 pass
         self._update_bpi_total()
+        self._update_phq4_sums()
+
+    def _update_phq4_sums(self) -> None:
+        for item_ids, sum_id in [
+            (["phq4_nervous",  "phq4_worry"],      "phq4_anx_sum"),
+            (["phq4_noint",    "phq4_depressed"],  "phq4_dep_sum"),
+        ]:
+            try:
+                vals = [
+                    int(self.query_one(f"#{fid}", Input).value.strip())
+                    for fid in item_ids
+                    if self.query_one(f"#{fid}", Input).value.strip().isdigit()
+                ]
+                disp = self.query_one(f"#{sum_id}", Static)
+                if len(vals) == 2:
+                    disp.update(f"{sum(vals)}/6")
+                elif vals:
+                    disp.update(f"{sum(vals)}+?")
+                else:
+                    disp.update("—")
+            except Exception:
+                pass
 
     def _update_bpi_total(self) -> None:
         _fields = ["bpi_activity", "bpi_mood", "bpi_walking", "bpi_work",
