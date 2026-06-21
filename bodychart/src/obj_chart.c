@@ -21,6 +21,7 @@ const ObjPointDef OBJ_POINT_DEFS[OBJ_POINT_COUNT] = {
     { 0.15f, 0.40f, 0.80f, "PPT"           },   /* OBJ_POINT_PPT            */
     { 0.55f, 0.15f, 0.65f, "Temporal Sum"  },   /* OBJ_POINT_TEMPORAL_SUM   */
     { 0.20f, 0.65f, 0.45f, "Monofilament"  },   /* OBJ_POINT_MONOFILAMENT   */
+    { 0.85f, 0.55f, 0.10f, "2-PD"          },   /* OBJ_POINT_TWO_PD         */
 };
 
 /* ── ObjZone lifecycle ───────────────────────────────────────────────────── */
@@ -205,6 +206,10 @@ void obj_chart_render_screen(AppState *app, cairo_t *cr, int view,
             dr = 0.20; dg = 0.65; db = 0.45;
             tr = 0.55; tg = 1.00; tb = 0.80;
             prefix = "MF: ";  unit = " g";
+        } else if (p->type == OBJ_POINT_TWO_PD) {
+            dr = 0.85; dg = 0.55; db = 0.10;
+            tr = 1.00; tg = 0.88; tb = 0.50;
+            prefix = "2PD: "; unit = " mm";
         } else {
             dr = 0.55; dg = 0.15; db = 0.65;
             tr = 0.90; tg = 0.75; tb = 1.00;

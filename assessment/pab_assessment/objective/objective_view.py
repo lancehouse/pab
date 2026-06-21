@@ -13,6 +13,7 @@ from .sections.general import GeneralSection
 from .sections.neurological import NeurologicalSection
 from .sections.sensory import SensorySection
 from .sections.functional import FunctionalSection
+from .sections.crps import CRPSSection
 from .sections.region_section import RegionTabContent
 from ..storage import objective_path, save_objective
 from ..grid_overview import GridOverview, OBJ_GRID_DATA, _section_has_data, section_to_cursor
@@ -79,6 +80,7 @@ _GENERIC_TABS: list[tuple[str, str]] = [
     ("04_neurological", "neurological"),
     ("05_sensory",      "sensory"),
     ("07_functional",   "functional"),
+    ("09_crps",         "crps"),
 ]
 
 
@@ -209,6 +211,7 @@ class ObjectiveSidebar(Static):
         "05_sensory":      "06 Sensory",
         "06_muscle":       "07 Muscle Test",
         "08_special":      "08 Special Tests",
+        "09_crps":         "09 CRPS",
     }
 
     def __init__(self, on_section_selected: callable, on_back: callable, **kwargs):
@@ -320,6 +323,7 @@ class ObjectiveAssessmentView(Container):
             "04_neurological": NeurologicalSection(id="obj_section_04_neurological"),
             "05_sensory":      SensorySection(id="obj_section_05_sensory"),
             "07_functional":   FunctionalSection(id="obj_section_07_functional"),
+            "09_crps":         CRPSSection(id="obj_section_09_crps"),
         }
         # Build variable (region-based) tab containers
         variable_instances = {
@@ -549,6 +553,7 @@ class ObjectiveAssessmentView(Container):
     @on(NeurologicalSection.FieldChanged)
     @on(SensorySection.FieldChanged)
     @on(FunctionalSection.FieldChanged)
+    @on(CRPSSection.FieldChanged)
     @on(RegionTabContent.FieldChanged)
     def _on_section_field_changed(self) -> None:
         self._schedule_save()
