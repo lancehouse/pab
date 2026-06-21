@@ -393,6 +393,7 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
     neu  = obj.get("neurological", {}) or {}
     sen  = obj.get("sensory",      {}) or {}
     func = obj.get("functional",   {}) or {}
+    crps = obj.get("crps",         {}) or {}
 
     # Support both old flat schema and new region-based schema
     active_regions = obj.get("active_regions")
@@ -410,7 +411,7 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         mus  = obj.get("muscle",  {}) or {}
         spl  = {}
 
-    if not any([gen, act, pas, neu, sen, mus, func, spl]):
+    if not any([gen, act, pas, neu, sen, mus, func, spl, crps]):
         return []
 
     # ── clean-mode helpers ────────────────────────────────────────────────────
@@ -1069,6 +1070,101 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
             _maybe_note(sl, "*Ankle test notes*", spl.get("st_ak_notes", "").strip())
         _flush_section("### 08 Special Tests", sl)
 
+    # ── 09 CRPS ───────────────────────────────────────────────────────────────
+    if crps:
+        sl = []
+        def _crps_flag(v) -> str:
+            return "Yes" if v is True else "No" if v is False else "—"
+        _crps_sx_domains = [
+            ("Sensory",          [("crps_sx_hyperesth","Hyperesthesia"),("crps_sx_hyperalg","Hyperalgesia"),("crps_sx_allodynia","Allodynia")]),
+            ("Vasomotor",        [("crps_sx_temp_asymm","Temp asymm"),("crps_sx_skin_colour","Skin colour"),("crps_sx_colour_asymm","Colour asymm")]),
+            ("Sudomotor/Oedema", [("crps_sx_oedema","Oedema"),("crps_sx_sweat_chng","Sweat chng"),("crps_sx_sweat_asymm","Sweat asymm")]),
+            ("Motor/Trophic",    [("crps_sx_rom_dec","Decr ROM"),("crps_sx_weakness","Weakness"),("crps_sx_tremor","Tremor"),("crps_sx_dystonia","Dystonia"),("crps_sx_trophic","Trophic")]),
+        ]
+        _crps_sg_domains = [
+            ("Sensory",          [("crps_sg_hyperalg_pp","Hyperalg PP"),("crps_sg_allod_lt","Allod LT"),("crps_sg_allod_press","Allod Pres"),("crps_sg_allod_jt","Allod Joint")]),
+            ("Vasomotor",        [("crps_sg_temp_asymm","Temp asymm"),("crps_sg_skin_colour","Skin colour"),("crps_sg_colour_asymm","Colour asymm")]),
+            ("Sudomotor/Oedema", [("crps_sg_oedema","Oedema"),("crps_sg_sweat_chng","Sweat chng"),("crps_sg_sweat_asymm","Sweat asymm")]),
+            ("Motor/Trophic",    [("crps_sg_rom_dec","Decr ROM"),("crps_sg_weakness","Weakness"),("crps_sg_tremor","Tremor"),("crps_sg_dystonia","Dystonia"),("crps_sg_trophic","Trophic")]),
+        ]
+        _crps_subtype_full = {
+            "T-I":   "Type I — no discrete nerve injury",
+            "T-II":  "Type II — confirmed discrete nerve injury; signs extend beyond nerve territory",
+            "Remit": "CRPS with Remission of Some Features",
+            "NOS":   "CRPS Not Otherwise Specified",
+        }
+        sl.append(f"**Rule 1 — Disproportionate pain:** {_crps_flag(crps.get('crps_disp_pain'))}")
+        _maybe_note(sl, "*Disp. pain notes*", crps.get("crps_disp_pain_notes", "").strip())
+
+        sx_t = crps.get("crps_sx_domains_triggered", 0)
+        sx_rows = []
+        for dom_lbl, dom_items in _crps_sx_domains:
+            triggered = any(crps.get(fid) is True for fid, _ in dom_items)
+            present   = ", ".join(lbl for fid, lbl in dom_items if crps.get(fid) is True) or "—"
+            sx_rows.append([dom_lbl, "Yes" if triggered else "No", present])
+        _maybe_table(sl, f"Rule 2 — Symptoms ({sx_t}/4 domains; need ≥ 3)",
+                     ["Domain", "Triggered", "Items present"], sx_rows, data_from=0)
+        _maybe_note(sl, "*Symptom notes*", crps.get("crps_sx_notes", "").strip())
+
+        sg_t = crps.get("crps_sg_domains_triggered", 0)
+        sg_rows = []
+        for dom_lbl, dom_items in _crps_sg_domains:
+            triggered = any(crps.get(fid) is True for fid, _ in dom_items)
+            present   = ", ".join(lbl for fid, lbl in dom_items if crps.get(fid) is True) or "—"
+            sg_rows.append([dom_lbl, "Yes" if triggered else "No", present])
+        _maybe_table(sl, f"Rule 3 — Signs ({sg_t}/4 domains; need ≥ 2)",
+                     ["Domain", "Triggered", "Items present"], sg_rows, data_from=0)
+        _maybe_note(sl, "*Sign notes*", crps.get("crps_sg_notes", "").strip())
+
+        sl.append(f"**Rule 4 — No other diagnosis:** {_crps_flag(crps.get('crps_no_alt_dx'))}")
+        _maybe_note(sl, "*No-alt-dx notes*", crps.get("crps_no_alt_dx_notes", "").strip())
+
+        verdict = "**CRITERIA MET**" if crps.get("crps_criteria_met") else "*Criteria not met*"
+        sl.append(f"\n**Budapest/Valencia Clinical Criteria:** {verdict}")
+
+        subtype_val = crps.get("crps_subtype")
+        if subtype_val:
+            sl.append(f"**Subtype:** {_crps_subtype_full.get(subtype_val, subtype_val)}")
+        _maybe_note(sl, "*Subtype notes*", crps.get("crps_subtype_notes", "").strip())
+        _maybe_note(sl, "*General notes*", crps.get("crps_notes", "").strip())
+
+        tpd = crps.get("crps_tpd_notes", "").strip()
+        if tpd:
+            sl.append(f"**Two-Point Discrimination:** {tpd}")
+        elif not clean:
+            sl.append("**Two-Point Discrimination:** *(empty)*")
+
+        vis = crps.get("crps_vis_notes", "").strip()
+        if vis:
+            sl.append(f"**Visualisation:** {vis}")
+        elif not clean:
+            sl.append("**Visualisation:** *(empty)*")
+
+        def _lat_fmt(v: str, unit: str) -> str:
+            v = (v or "").strip()
+            if not v:
+                return "—"
+            if unit == "%" and not v.endswith("%"):
+                return f"{v}%"
+            if unit == "s" and not v.endswith("s"):
+                return f"{v}s"
+            return v
+        _lat_row_labels = {"quick":"Quick","vanilla":"Vanilla","context":"Context","abstract":"Abstract"}
+        _lat_rows_md = [
+            [
+                _lat_row_labels[row],
+                _lat_fmt(crps.get(f"crps_lat_{row}_l_acc",  ""), "%"),
+                _lat_fmt(crps.get(f"crps_lat_{row}_l_speed",""), "s"),
+                _lat_fmt(crps.get(f"crps_lat_{row}_r_acc",  ""), "%"),
+                _lat_fmt(crps.get(f"crps_lat_{row}_r_speed",""), "s"),
+            ]
+            for row in ("quick","vanilla","context","abstract")
+        ]
+        _maybe_table(sl, "Laterality", ["Task","L acc","L speed","R acc","R speed"],
+                     _lat_rows_md, data_from=0)
+        _maybe_note(sl, "*Laterality notes*", crps.get("crps_lat_notes", "").strip())
+        _flush_section("### 09 CRPS (Budapest / Valencia Criteria)", sl)
+
     if not lines:
         return []
 
@@ -1085,6 +1181,7 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
     neu  = obj.get("neurological", {}) or {}
     sen  = obj.get("sensory",      {}) or {}
     func = obj.get("functional",   {}) or {}
+    crps = obj.get("crps",         {}) or {}
 
     # Support both old flat schema and new region-based schema
     active_regions = obj.get("active_regions")
@@ -1102,7 +1199,7 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         mus  = obj.get("muscle",  {}) or {}
         spl  = {}
 
-    if not any([gen, act, pas, neu, sen, mus, func, spl]):
+    if not any([gen, act, pas, neu, sen, mus, func, spl, crps]):
         return
 
     # ── clean-mode helpers ────────────────────────────────────────────────────
@@ -1911,6 +2008,122 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
             elif not clean:
                 sl.append("  Ankle test notes: (empty)")
         _flush_section("08 Special Tests", sl)
+
+    # ── 09 CRPS ───────────────────────────────────────────────────────────────
+    if crps:
+        sl = []
+        def _rcrps_flag(v) -> str:
+            return "Yes" if v is True else "No" if v is False else "-"
+        _rcrps_sx_domains = [
+            ("Sensory",          [("crps_sx_hyperesth","Hyperesthesia"),("crps_sx_hyperalg","Hyperalgesia"),("crps_sx_allodynia","Allodynia")]),
+            ("Vasomotor",        [("crps_sx_temp_asymm","Temp asymm"),("crps_sx_skin_colour","Skin colour"),("crps_sx_colour_asymm","Colour asymm")]),
+            ("Sudomotor/Oedema", [("crps_sx_oedema","Oedema"),("crps_sx_sweat_chng","Sweat chng"),("crps_sx_sweat_asymm","Sweat asymm")]),
+            ("Motor/Trophic",    [("crps_sx_rom_dec","Decr ROM"),("crps_sx_weakness","Weakness"),("crps_sx_tremor","Tremor"),("crps_sx_dystonia","Dystonia"),("crps_sx_trophic","Trophic")]),
+        ]
+        _rcrps_sg_domains = [
+            ("Sensory",          [("crps_sg_hyperalg_pp","Hyperalg PP"),("crps_sg_allod_lt","Allod LT"),("crps_sg_allod_press","Allod Pres"),("crps_sg_allod_jt","Allod Joint")]),
+            ("Vasomotor",        [("crps_sg_temp_asymm","Temp asymm"),("crps_sg_skin_colour","Skin colour"),("crps_sg_colour_asymm","Colour asymm")]),
+            ("Sudomotor/Oedema", [("crps_sg_oedema","Oedema"),("crps_sg_sweat_chng","Sweat chng"),("crps_sg_sweat_asymm","Sweat asymm")]),
+            ("Motor/Trophic",    [("crps_sg_rom_dec","Decr ROM"),("crps_sg_weakness","Weakness"),("crps_sg_tremor","Tremor"),("crps_sg_dystonia","Dystonia"),("crps_sg_trophic","Trophic")]),
+        ]
+        _rcrps_subtype_full = {
+            "T-I":   "Type I — no discrete nerve injury",
+            "T-II":  "Type II — confirmed discrete nerve injury; signs extend beyond nerve territory",
+            "Remit": "CRPS with Remission of Some Features",
+            "NOS":   "CRPS Not Otherwise Specified",
+        }
+        sl.append(f"  Rule 1 — Disproportionate pain: {_rcrps_flag(crps.get('crps_disp_pain'))}")
+        v = crps.get("crps_disp_pain_notes", "").strip()
+        if v:
+            sl.append(f"  Disp. pain notes: {v}")
+        elif not clean:
+            sl.append("  Disp. pain notes: (empty)")
+
+        sx_t = crps.get("crps_sx_domains_triggered", 0)
+        sl.append(f"  Rule 2 — Symptoms: {sx_t}/4 domains triggered (need >= 3)")
+        for dom_lbl, dom_items in _rcrps_sx_domains:
+            triggered = any(crps.get(fid) is True for fid, _ in dom_items)
+            present   = ", ".join(lbl for fid, lbl in dom_items if crps.get(fid) is True) or "-"
+            sl.append(f"    {dom_lbl}: {'triggered' if triggered else '-'}  ({present})")
+        v = crps.get("crps_sx_notes", "").strip()
+        if v:
+            sl.append(f"  Symptom notes: {v}")
+        elif not clean:
+            sl.append("  Symptom notes: (empty)")
+
+        sg_t = crps.get("crps_sg_domains_triggered", 0)
+        sl.append(f"  Rule 3 — Signs: {sg_t}/4 domains triggered (need >= 2)")
+        for dom_lbl, dom_items in _rcrps_sg_domains:
+            triggered = any(crps.get(fid) is True for fid, _ in dom_items)
+            present   = ", ".join(lbl for fid, lbl in dom_items if crps.get(fid) is True) or "-"
+            sl.append(f"    {dom_lbl}: {'triggered' if triggered else '-'}  ({present})")
+        v = crps.get("crps_sg_notes", "").strip()
+        if v:
+            sl.append(f"  Sign notes: {v}")
+        elif not clean:
+            sl.append("  Sign notes: (empty)")
+
+        sl.append(f"  Rule 4 — No other diagnosis: {_rcrps_flag(crps.get('crps_no_alt_dx'))}")
+        v = crps.get("crps_no_alt_dx_notes", "").strip()
+        if v:
+            sl.append(f"  No-alt-dx notes: {v}")
+        elif not clean:
+            sl.append("  No-alt-dx notes: (empty)")
+
+        verdict = "CRITERIA MET" if crps.get("crps_criteria_met") else "CRITERIA NOT MET"
+        sl.append(f"  Budapest/Valencia Criteria: {verdict}")
+
+        subtype_val = crps.get("crps_subtype")
+        if subtype_val:
+            sl.append(f"  Subtype: {_rcrps_subtype_full.get(subtype_val, subtype_val)}")
+        elif not clean:
+            sl.append("  Subtype: (not selected)")
+        for note_key, note_lbl in [("crps_subtype_notes","Subtype notes"),("crps_notes","General notes")]:
+            v = crps.get(note_key, "").strip()
+            if v:
+                sl.append(f"  {note_lbl}: {v}")
+            elif not clean:
+                sl.append(f"  {note_lbl}: (empty)")
+
+        v = crps.get("crps_tpd_notes", "").strip()
+        if v:
+            sl.append(f"  Two-Point Discrimination: {v}")
+        elif not clean:
+            sl.append("  Two-Point Discrimination: (empty)")
+
+        v = crps.get("crps_vis_notes", "").strip()
+        if v:
+            sl.append(f"  Visualisation: {v}")
+        elif not clean:
+            sl.append("  Visualisation: (empty)")
+
+        def _rcrps_lat_fmt(val: str, unit: str) -> str:
+            val = (val or "").strip()
+            if not val:
+                return "-"
+            if unit == "%" and not val.endswith("%"):
+                return f"{val}%"
+            if unit == "s" and not val.endswith("s"):
+                return f"{val}s"
+            return val
+        _rcrps_row_labels = {"quick":"Quick","vanilla":"Vanilla","context":"Context","abstract":"Abstract"}
+        lat_any = any(crps.get(f"crps_lat_{r}_{c}", "") for r in ("quick","vanilla","context","abstract") for c in ("l_acc","l_speed","r_acc","r_speed"))
+        if lat_any or not clean:
+            sl.append("  Laterality:")
+            sl.append("    Task       L acc    L speed  R acc    R speed")
+            for row_key in ("quick","vanilla","context","abstract"):
+                la = _rcrps_lat_fmt(crps.get(f"crps_lat_{row_key}_l_acc",  ""), "%")
+                ls = _rcrps_lat_fmt(crps.get(f"crps_lat_{row_key}_l_speed",""), "s")
+                ra = _rcrps_lat_fmt(crps.get(f"crps_lat_{row_key}_r_acc",  ""), "%")
+                rs = _rcrps_lat_fmt(crps.get(f"crps_lat_{row_key}_r_speed",""), "s")
+                lbl = _rcrps_row_labels[row_key]
+                sl.append(f"    {lbl:<10} {la:<8} {ls:<8} {ra:<8} {rs}")
+        v = crps.get("crps_lat_notes", "").strip()
+        if v:
+            sl.append(f"  Laterality notes: {v}")
+        elif not clean:
+            sl.append("  Laterality notes: (empty)")
+        _flush_section("09 CRPS (Budapest / Valencia Criteria)", sl)
 
 
 # ---------------------------------------------------------------------------

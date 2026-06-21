@@ -410,6 +410,7 @@ static GtkWidget *g_obj_zone_btns[OBJ_ZONE_COUNT];
 static GtkWidget *g_obj_ppt_btn;
 static GtkWidget *g_obj_mono_btn;
 static GtkWidget *g_obj_ts_btn;
+static GtkWidget *g_obj_tpd_btn;
 static GtkWidget *g_obj_erase_btn;
 static GtkWidget *g_sidebar_content_stack;
 
@@ -531,6 +532,12 @@ static void update_toolbar_state(AppState *app)
             (app->current_mode == APP_MODE_OBJECTIVE &&
              app->obj_point_mode &&
              app->obj_point_type == OBJ_POINT_MONOFILAMENT)
+            ? "tool-btn-active" : "tool-btn");
+    if (g_obj_tpd_btn)
+        gtk_widget_set_name(g_obj_tpd_btn,
+            (app->current_mode == APP_MODE_OBJECTIVE &&
+             app->obj_point_mode &&
+             app->obj_point_type == OBJ_POINT_TWO_PD)
             ? "tool-btn-active" : "tool-btn");
     if (g_obj_erase_btn)
         gtk_widget_set_name(g_obj_erase_btn,
@@ -1453,6 +1460,8 @@ static void on_ppt_confirm(GtkButton *btn, gpointer data)
             snprintf(p->label, sizeof(p->label), "%.1f", val);
         else if (pd->type == OBJ_POINT_MONOFILAMENT)
             snprintf(p->label, sizeof(p->label), "%.2f", val);
+        else if (pd->type == OBJ_POINT_TWO_PD)
+            snprintf(p->label, sizeof(p->label), "%.0f", val);
         else  /* OBJ_POINT_TEMPORAL_SUM */
             snprintf(p->label, sizeof(p->label), "%d", (int)CLAMP(val, 0.0, 10.0));
         app->obj_point_count++;
@@ -1488,6 +1497,7 @@ static void show_ppt_entry(AppState *app, int view, double bx, double by)
     gtk_widget_set_name(pd->window, "wiz-window");
     const char *title = pd->type == OBJ_POINT_PPT         ? "PPT (kg/cm²)"        :
                         pd->type == OBJ_POINT_MONOFILAMENT ? "Monofilament (g)"    :
+                        pd->type == OBJ_POINT_TWO_PD       ? "2-PD (mm)"           :
                                                              "Temporal Sum (0–10)";
     gtk_window_set_title(GTK_WINDOW(pd->window), title);
     gtk_window_set_transient_for(GTK_WINDOW(pd->window),
@@ -1511,7 +1521,8 @@ static void show_ppt_entry(AppState *app, int view, double bx, double by)
     pd->entry = gtk_entry_new();
     gtk_entry_set_placeholder_text(GTK_ENTRY(pd->entry),
         pd->type == OBJ_POINT_PPT         ? "e.g. 4.2"  :
-        pd->type == OBJ_POINT_MONOFILAMENT ? "e.g. 0.07" : "0–10");
+        pd->type == OBJ_POINT_MONOFILAMENT ? "e.g. 0.07" :
+        pd->type == OBJ_POINT_TWO_PD       ? "e.g. 6"    : "0–10");
     gtk_widget_set_size_request(pd->entry, -1, 48);
     gtk_box_append(GTK_BOX(box), pd->entry);
 
@@ -1607,6 +1618,16 @@ static void on_obj_mono_clicked(GtkButton *btn, gpointer data)
     if (app->toolbar_update_cb) app->toolbar_update_cb(app);
 }
 
+static void on_obj_tpd_clicked(GtkButton *btn, gpointer data)
+{
+    (void)btn;
+    AppState *app = data;
+    app->obj_point_mode = TRUE;
+    app->obj_point_type = OBJ_POINT_TWO_PD;
+    app->tool = TOOL_DRAW;
+    if (app->toolbar_update_cb) app->toolbar_update_cb(app);
+}
+
 static void on_obj_erase_clicked(GtkButton *btn, gpointer data)
 {
     (void)btn;
@@ -1669,6 +1690,11 @@ static GtkWidget *build_obj_tab(AppState *app)
     gtk_widget_set_hexpand(g_obj_mono_btn, TRUE);
     g_signal_connect(g_obj_mono_btn, "clicked", G_CALLBACK(on_obj_mono_clicked), app);
     gtk_box_append(GTK_BOX(box), g_obj_mono_btn);
+
+    g_obj_tpd_btn = make_btn("2-PD mm", -1, 36);
+    gtk_widget_set_hexpand(g_obj_tpd_btn, TRUE);
+    g_signal_connect(g_obj_tpd_btn, "clicked", G_CALLBACK(on_obj_tpd_clicked), app);
+    gtk_box_append(GTK_BOX(box), g_obj_tpd_btn);
 
     gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
 

@@ -136,6 +136,17 @@ OBJ_GRID_DATA: list[tuple[str, str, list[tuple[str, str]]]] = [
         ("Hip Str",      "ml_strength_hip"),
         ("SIJ",          "ml_sij"),
     ]),
+    ("09_crps", "09 CRPS", [
+        ("Disp Pain",  "crps_disp"),
+        ("Symptoms",   "crps_sx"),
+        ("Signs",      "crps_sg"),
+        ("No Alt Dx",  "crps_no_dx"),
+        ("Summary",    "crps_summary_hdr"),
+        ("Subtype",    "crps_subtype_hdr"),
+        ("2Pt Discrim","crps_tpd"),
+        ("Visualis",   "crps_vis"),
+        ("Laterality", "crps_lat"),
+    ]),
 ]
 
 

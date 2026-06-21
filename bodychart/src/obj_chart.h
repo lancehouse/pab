@@ -24,6 +24,7 @@ typedef enum {
     OBJ_POINT_PPT = 0,           /* Pressure Pain Threshold, kg/cm² */
     OBJ_POINT_TEMPORAL_SUM,      /* Temporal summation score, 0–10 */
     OBJ_POINT_MONOFILAMENT,      /* Semmes-Weinstein monofilament, g */
+    OBJ_POINT_TWO_PD,            /* Two-point discrimination, mm */
     OBJ_POINT_COUNT
 } ObjPointType;
 

@@ -1006,6 +1006,93 @@ Field IDs: `sh_acc_{direction}_{side}_{type}` — direction: `inf`, `post`, `ant
 
 ---
 
+## 09 CRPS (`crps.py`)
+
+Budapest / Valencia clinical diagnostic criteria (IASP 2004 / 2021). All criteria
+buttons are FlagButtons (Yes = red flag present, No = safe, blank = not assessed).
+
+### Rule 1 — Disproportionate Pain
+
+| Field | Notes |
+|---|---|
+| `crps_disp_pain` | FlagButton — pain disproportionate to inciting event |
+| `crps_disp_pain_notes` | TextArea — notes |
+
+### Rule 2 — Symptoms (Patient Reported)
+
+| Field | Domain | Notes |
+|---|---|---|
+| `crps_sx_hyperesth` | Sensory | Hyperesthesia |
+| `crps_sx_hyperalg` | Sensory | Hyperalgesia |
+| `crps_sx_allodynia` | Sensory | Allodynia |
+| `crps_sx_temp_asymm` | Vasomotor | Temperature asymmetry |
+| `crps_sx_skin_colour` | Vasomotor | Skin colour changes |
+| `crps_sx_colour_asymm` | Vasomotor | Colour asymmetry |
+| `crps_sx_oedema` | Sudomotor/Oedema | Oedema |
+| `crps_sx_sweat_chng` | Sudomotor/Oedema | Sweating change |
+| `crps_sx_sweat_asymm` | Sudomotor/Oedema | Sweating asymmetry |
+| `crps_sx_rom_dec` | Motor/Trophic | Decreased ROM |
+| `crps_sx_weakness` | Motor/Trophic | Weakness |
+| `crps_sx_tremor` | Motor/Trophic | Tremor |
+| `crps_sx_dystonia` | Motor/Trophic | Dystonia |
+| `crps_sx_trophic` | Motor/Trophic | Trophic changes |
+| `crps_sx_notes` | — | TextArea — symptom notes |
+
+### Rule 3 — Signs (Clinician Observed)
+
+| Field | Domain | Notes |
+|---|---|---|
+| `crps_sg_hyperalg_pp` | Sensory | Hyperalgesia to pinprick |
+| `crps_sg_allod_lt` | Sensory | Allodynia to light touch |
+| `crps_sg_allod_press` | Sensory | Allodynia to pressure |
+| `crps_sg_allod_jt` | Sensory | Allodynia to joint movement |
+| `crps_sg_temp_asymm` | Vasomotor | Temperature asymmetry |
+| `crps_sg_skin_colour` | Vasomotor | Skin colour changes |
+| `crps_sg_colour_asymm` | Vasomotor | Colour asymmetry |
+| `crps_sg_oedema` | Sudomotor/Oedema | Oedema |
+| `crps_sg_sweat_chng` | Sudomotor/Oedema | Sweating change |
+| `crps_sg_sweat_asymm` | Sudomotor/Oedema | Sweating asymmetry |
+| `crps_sg_rom_dec` | Motor/Trophic | Decreased ROM |
+| `crps_sg_weakness` | Motor/Trophic | Weakness |
+| `crps_sg_tremor` | Motor/Trophic | Tremor |
+| `crps_sg_dystonia` | Motor/Trophic | Dystonia |
+| `crps_sg_trophic` | Motor/Trophic | Trophic changes |
+| `crps_sg_notes` | — | TextArea — sign notes |
+
+### Rule 4 — No Other Diagnosis
+
+| Field | Notes |
+|---|---|
+| `crps_no_alt_dx` | FlagButton — no better diagnosis |
+| `crps_no_alt_dx_notes` | TextArea — notes |
+
+### Subtype & Notes
+
+| Field | Notes |
+|---|---|
+| `crps_subtype` | RadioGroup — `T-I` / `T-II` / `Remit` / `NOS` (stored as label string) |
+| `crps_subtype_notes` | TextArea |
+| `crps_notes` | TextArea — general notes |
+
+### Two-Point Discrimination, Visualisation, Laterality
+
+| Field | Notes |
+|---|---|
+| `crps_tpd_notes` | TextArea — two-point discrimination findings |
+| `crps_vis_notes` | TextArea — visualisation findings |
+| `crps_lat_{row}_{col}` | GridInput — laterality table cell; row ∈ {quick, vanilla, context, abstract}; col ∈ {l_acc, l_speed, r_acc, r_speed}. Total 16 fields. Report appends % (acc) or s (speed) if absent. |
+| `crps_lat_notes` | TextArea — laterality notes |
+
+### Derived fields (stored in JSON, not editable)
+
+| Field | Notes |
+|---|---|
+| `crps_sx_domains_triggered` | int — count of triggered symptom domains (0–4) |
+| `crps_sg_domains_triggered` | int — count of triggered sign domains (0–4) |
+| `crps_criteria_met` | bool — True when all 4 rules satisfied |
+
+---
+
 ## Maintenance Notes
 
 - **This file must be updated whenever a field is added or renamed** in any

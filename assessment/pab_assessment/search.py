@@ -43,6 +43,7 @@ _SECTION_SHORT: dict[str, str] = {
     "obj:06_muscle":          "Obj:Muscle",
     "obj:07_functional":      "Obj:Functional",
     "obj:08_special":         "Obj:Special",
+    "obj:09_crps":            "Obj:CRPS",
 }
 
 _SECTION_LABELS: dict[str, str] = {
@@ -63,6 +64,7 @@ _SECTION_LABELS: dict[str, str] = {
     "obj:06_muscle":          "Obj 06 Muscle Testing",
     "obj:07_functional":      "Obj 07 Functional",
     "obj:08_special":         "Obj 08 Special Tests",
+    "obj:09_crps":            "Obj 09 CRPS",
 }
 
 # (section_id, anchor_id, display_label)
@@ -189,6 +191,16 @@ _SUBSECTIONS: list[tuple[str, str, str]] = [
     ("obj:03_passive",  "pm_ak_accessory",       "Passive: Ankle Accessory"),
     ("obj:06_muscle",   "ml_ak_strength",        "Muscle: Ankle Strength"),
     ("obj:08_special",  "st_ankle",              "Special Tests: Ankle"),
+    # 09 CRPS
+    ("obj:09_crps", "crps_disp",         "CRPS: Disproportionate Pain"),
+    ("obj:09_crps", "crps_sx",           "CRPS: Symptoms"),
+    ("obj:09_crps", "crps_sg",           "CRPS: Signs"),
+    ("obj:09_crps", "crps_no_dx",        "CRPS: No Other Diagnosis"),
+    ("obj:09_crps", "crps_summary_hdr",  "CRPS: Criteria Summary"),
+    ("obj:09_crps", "crps_subtype_hdr",  "CRPS: Subtype Classification"),
+    ("obj:09_crps", "crps_tpd",          "CRPS: Two-Point Discrimination"),
+    ("obj:09_crps", "crps_vis",          "CRPS: Visualisation"),
+    ("obj:09_crps", "crps_lat",          "CRPS: Laterality"),
 ]
 
 # Pre-built lookup: (section_id, anchor_id) -> subsection label
