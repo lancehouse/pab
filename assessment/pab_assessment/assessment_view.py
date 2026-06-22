@@ -724,7 +724,8 @@ class AssessmentView(Container):
     def _on_obj_goals_edited(self, event: ObjectiveAssessmentView.GoalsEdited) -> None:
         """Goals edited in Functional — sync to Consent and Subjective, then save."""
         from textual.widgets import TextArea
-        goals = event.goals
+        goals   = event.goals
+        focused = self.app.focused
         for section_key, widget_prefix in (
             ("02_subjective", "goal_"),
             ("01_consent",    "consent_goal_"),
@@ -737,6 +738,8 @@ class AssessmentView(Container):
                 for i in range(1, 5):
                     try:
                         w = section.query_one(f"#{widget_prefix}{i}", TextArea)
+                        if w is focused:
+                            continue
                         val = goals.get(f"goal_{i}", "")
                         if w.text != val:
                             w.text = val
@@ -823,12 +826,15 @@ class AssessmentView(Container):
         subj    = self.sections.get("02_subjective")
         if not consent or not subj:
             return
+        focused = self.app.focused
         subj._loading = True
         try:
             for i in range(1, 5):
                 try:
                     val = consent.query_one(f"#consent_goal_{i}", TextArea).text
                     w   = subj.query_one(f"#goal_{i}", TextArea)
+                    if w is focused:
+                        continue
                     if w.text != val:
                         w.text = val
                 except Exception:
@@ -842,12 +848,15 @@ class AssessmentView(Container):
         consent = self.sections.get("01_consent")
         if not subj or not consent:
             return
+        focused = self.app.focused
         consent._loading = True
         try:
             for i in range(1, 5):
                 try:
                     val = subj.query_one(f"#goal_{i}", TextArea).text
                     w   = consent.query_one(f"#consent_goal_{i}", TextArea)
+                    if w is focused:
+                        continue
                     if w.text != val:
                         w.text = val
                 except Exception:

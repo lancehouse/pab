@@ -3,14 +3,16 @@ GTK:
 better words in the pain descriptors section.
         
 TUI:
-
-functioanl tests needs a full rework    
-
-outcomes:   
- PSEQ: section for full PSEQ or PSEQ2
- include PHQ4 A + D
  
  report:
-     Carriage return after freetext.
-     note numbersa re incorrect
+     Carriage return after freetext and all heading entries
      
+     Obj General OBs section poorly tabulated.
+     Sensory poorly tabulated
+     Body Perception needs textarea
+     
+     OP Tx rotn and Lx lat flexion alwys populate even when empty
+     
+  
+     
+          
