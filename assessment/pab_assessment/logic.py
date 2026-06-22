@@ -25,6 +25,12 @@ def _parse_clock(s: str) -> int | None:
     Accepts: '22:30', '2230', '645', '6:45', '0645'.
     Rules (no colon): ≤2 digits → hours; 3 digits → h+mm; 4 digits → hhmm.
     Returns None if out of range or unparseable.
+
+    Sleep-diary PM convention (applied when h is in range 5–12):
+      No leading zero  →  PM assumed  (9:00 → 21:00, 10:00 → 22:00, 900 → 21:00)
+      Leading zero     →  AM literal  (09:00 → 09:00, 0900 → 09:00)
+    Hours 1–4 are always treated as AM (post-midnight sleep times; nobody has a
+    2 pm bedtime). Hours 0 and 13–23 are always literal 24 h.
     """
     if not s:
         return None
@@ -33,16 +39,23 @@ def _parse_clock(s: str) -> int | None:
         return None
     if ':' in token:
         parts = token.split(':', 1)
-        h = int(parts[0]) if parts[0] else 0
+        part0 = parts[0] if parts[0] else "0"
+        h = int(part0)
         mn = int(parts[1]) if parts[1] else 0
+        leading_zero = len(part0) > 1 and part0[0] == '0'
     else:
         d = token
         if len(d) <= 2:
             h, mn = int(d), 0
+            leading_zero = len(d) == 2 and d[0] == '0'
         elif len(d) == 3:
             h, mn = int(d[0]), int(d[1:])
+            leading_zero = False
         else:
             h, mn = int(d[:2]), int(d[2:])
+            leading_zero = d[0] == '0'
+    if 5 <= h <= 12 and not leading_zero:
+        h = (h + 12) % 24  # 12 wraps to 0 (midnight)
     if h > 23 or mn > 59:
         return None
     return h * 60 + mn
