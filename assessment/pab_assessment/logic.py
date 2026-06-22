@@ -92,8 +92,12 @@ def calc_sleep_efficiency(
     waso_dur  = _parse_duration(sleep_waso_duration)
     woob      = _parse_duration(sleep_awake_out_bed)
 
-    if any(v is None for v in (tib_start, sol, fwt, tob, waso_dur, woob)):
+    if any(v is None for v in (tib_start, sol, fwt, tob)):
         return ""
+    if waso_dur is None:
+        waso_dur = 0
+    if woob is None:
+        woob = 0
 
     # Midnight crossing for clock times
     if sol < tib_start:
