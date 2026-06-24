@@ -1384,337 +1384,347 @@ static gboolean obj_handle_erase(AppState *app, int view,
     return FALSE;
 }
 
-/* ── Pressure + tilt helper ──────────────────────────────────────────────── *
- * Returns raw (pre-gamma) pressure, optionally boosted by pen tilt.          *
- * pen_tilt_weight=0 ignores tilt entirely; 0.5 lets 45° tilt add ~0.35.     */
-static double stylus_effective_pressure(GtkGestureStylus *gs,
-                                        const AppState *app)
+/* ── Pressure helper (raw GdkEvent — no gesture required) ───────────────── */
+static double event_effective_pressure(GdkEvent *ev, const AppState *app)
 {
-    GdkEvent *ev = gtk_gesture_get_last_event(GTK_GESTURE(gs), NULL);
-    if (!ev) return 0.6;
-    GdkDeviceTool *t = gdk_event_get_device_tool(ev);
-    if (!t)   return 0.6;
-    GdkDeviceToolType type = gdk_device_tool_get_tool_type(t);
-    if (type != GDK_DEVICE_TOOL_TYPE_PEN &&
-        type != GDK_DEVICE_TOOL_TYPE_ERASER) return 0.6;
-
-    gdouble pressure = 0.6;
+    gdouble pressure = 0.5;
     gdk_event_get_axis(ev, GDK_AXIS_PRESSURE, &pressure);
-
+    pressure = CLAMP(pressure, 0.0, 1.0);
     if (app->pen_tilt_weight > 0.0f) {
         gdouble xt = 0.0, yt = 0.0;
         gdk_event_get_axis(ev, GDK_AXIS_XTILT, &xt);
         gdk_event_get_axis(ev, GDK_AXIS_YTILT, &yt);
-        /* GDK normalises tilt to ±1 (= ±90°). Diagonal max is √2; scale to 0–1. */
         double tilt = sqrt(xt * xt + yt * yt) * (1.0 / G_SQRT2);
         pressure = CLAMP(pressure + tilt * (double)app->pen_tilt_weight, 0.0, 1.0);
     }
-    return pressure;
+    return pow(fmax(pressure, 0.01), (double)app->pen_gamma);
 }
 
-/* ── Stylus gestures ─────────────────────────────────────────────────────── */
-static void on_stylus_down(GtkGestureStylus *gs, double x, double y,
-                            gpointer d)
+/* ── Single capture-phase stylus handler (replaces GtkGestureStylus) ────── *
+ * Using GtkGestureStylus, the gesture state machine gets stuck after focus  *
+ * switches: the compositor doesn't always deliver proximity-out on loss of  *
+ * focus, leaving the gesture in DENIED/indeterminate state. A capture-phase *
+ * GtkEventControllerLegacy receives raw GDK events before any gesture       *
+ * processing, has no sequence tracking, and resets cleanly on every event.  *
+ * Returning TRUE consumes the event so GtkGestureDrag never sees it.        */
+static gboolean on_stylus_legacy(GtkEventControllerLegacy *ctrl,
+                                  GdkEvent *event, gpointer d)
 {
+    (void)ctrl;
+
+    /* Only handle pen / eraser tool events */
+    GdkDeviceTool *tool = gdk_event_get_device_tool(event);
+    if (!tool) return FALSE;
+    GdkDeviceToolType tooltype = gdk_device_tool_get_tool_type(tool);
+    if (tooltype != GDK_DEVICE_TOOL_TYPE_PEN &&
+        tooltype != GDK_DEVICE_TOOL_TYPE_ERASER)
+        return FALSE;
+
     ColData  *cd  = d;
     AppState *app = cd->app;
-    app->current_view    = cd->view;
-    app->last_stylus_us  = g_get_monotonic_time();
 
-    GdkEvent *ev = gtk_gesture_get_last_event(GTK_GESTURE(gs), NULL);
+    double x = 0.0, y = 0.0;
+    gdk_event_get_position(event, &x, &y);
 
-    /* ── Barrel button detection ── */
-    guint btn_num = 1;
-    if (ev && GDK_IS_EVENT_TYPE(ev, GDK_BUTTON_PRESS))
-        btn_num = gdk_button_event_get_button(ev);
-
-    if (btn_num >= 2) {
-        input_cancel(app);
-        app->symptom = (SymptomType)((app->symptom + 1) % SYMPTOM_COUNT);
-        app->tool    = TOOL_DRAW;
-        if (app->toolbar_update_cb) app->toolbar_update_cb(app);
-        gtk_widget_queue_draw(cd->da);
-        return;
+    /* GtkEventControllerLegacy does no coordinate transformation — gdk_event_get_position()
+     * returns surface (window) coordinates.  Convert to widget-local coordinates so that
+     * screen_to_body() receives the same space as GtkGestureStylus signals used to. */
+    {
+        graphene_point_t src = { (float)x, (float)y };
+        graphene_point_t dst;
+        if (!gtk_widget_compute_point(
+                GTK_WIDGET(gtk_widget_get_native(cd->da)), cd->da, &src, &dst))
+            return FALSE;
+        x = (double)dst.x;
+        y = (double)dst.y;
     }
 
-    /* ── Legend drag (posterior only, mode-specific hit test) ── */
-    if (cd->view == VIEW_POSTERIOR) {
-        gboolean leg_hit = (app->current_mode == APP_MODE_SUBJECTIVE)
-                           ? legend_hit_screen(app, cd, x, y)
-                           : obj_legend_hit_screen(app, cd, x, y);
-        if (leg_hit) {
+    /* Keep mouse_x/y current so scroll-zoom focal point works with stylus */
+    cd->mouse_x = x;
+    cd->mouse_y = y;
+
+    /* ── BUTTON_PRESS ─────────────────────────────────────────────────────── */
+    if (GDK_IS_EVENT_TYPE(event, GDK_BUTTON_PRESS)) {
+        guint btn = gdk_button_event_get_button(event);
+
+        if (btn >= 2) {
+            /* Barrel button — toggle fine/wide mode */
+            input_cancel(app);
+            app->pen_wide_mode = !app->pen_wide_mode;
+            if (app->toolbar_update_cb) app->toolbar_update_cb(app);
+            gtk_widget_queue_draw(cd->da);
+            return TRUE;
+        }
+
+        /* btn == 1: pen touch */
+        app->current_view   = cd->view;
+        app->last_stylus_us = g_get_monotonic_time();
+
+        /* Physical eraser tip overrides current tool */
+        if (tooltype == GDK_DEVICE_TOOL_TYPE_ERASER)
+            app->tool = TOOL_ERASE;
+
+        /* Legend drag (posterior only) */
+        if (cd->view == VIEW_POSTERIOR) {
+            gboolean leg_hit = (app->current_mode == APP_MODE_SUBJECTIVE)
+                               ? legend_hit_screen(app, cd, x, y)
+                               : obj_legend_hit_screen(app, cd, x, y);
+            if (leg_hit) {
+                double bx, by;
+                screen_to_body(cd, x, y, &bx, &by);
+                app->legend_drag_active = TRUE;
+                app->legend_drag_bx_off = app->legend_bx - bx;
+                app->legend_drag_by_off = app->legend_by - by;
+                return TRUE;
+            }
+        }
+
+        /* Sx mode: drag existing notes / link summary */
+        if (app->current_mode == APP_MODE_SUBJECTIVE) {
             double bx, by;
             screen_to_body(cd, x, y, &bx, &by);
-            app->legend_drag_active = TRUE;
-            app->legend_drag_bx_off = app->legend_bx - bx;
-            app->legend_drag_by_off = app->legend_by - by;
-            return;
-        }
-    }
-
-    /* ── Any tool (Sx mode): drag existing notes/link-summary if hit ── */
-    if (app->current_mode == APP_MODE_SUBJECTIVE) {
-        double bx, by;
-        screen_to_body(cd, x, y, &bx, &by);
-        if (link_summary_hit_screen(app, cd, x, y)) {
-            app->link_drag_active = TRUE;
-            app->link_drag_bx_off = app->link_summary_bx - bx;
-            app->link_drag_by_off = app->link_summary_by - by;
-            return;
-        }
-        int hit = note_hit_screen(app, cd, x, y);
-        if (hit >= 0) {
-            double lbx, lby;
-            label_anchor_resolve(&app->notes[hit], &lbx, &lby);
-            app->note_drag_idx    = hit;
-            app->note_drag_bx_off = lbx - bx;
-            app->note_drag_by_off = lby - by;
-            return;
-        }
-    }
-
-    /* ── Note tool: no existing annotation hit → open wizard ── */
-    if (app->tool == TOOL_NOTE) {
-        double bx, by;
-        screen_to_body(cd, x, y, &bx, &by);
-        if (app->show_note_wizard_cb)
-            app->show_note_wizard_cb(app, (int)cd->view, bx, by);
-        return;
-    }
-
-    /* ── Arrow tool: delete head tap, or begin new arrow ── */
-    if (app->tool == TOOL_ARROW) {
-        int hit = arrow_head_hit_screen(app, cd, x, y);
-        if (hit >= 0) {
-            for (int k = hit; k < app->arrow_count - 1; k++)
-                app->arrows[k] = app->arrows[k + 1];
-            app->arrow_count--;
-            if (app->undo_type_top > 0 &&
-                app->undo_type_stack[app->undo_type_top - 1] == 1)
-                app->undo_type_top--;
-            app->stroke_version++;  /* arrow deleted — invalidate cache */
-            gtk_widget_queue_draw(cd->da);
-            return;
-        }
-        double bx, by;
-        screen_to_body(cd, x, y, &bx, &by);
-        app->current_view      = cd->view;
-        app->arrow_drawing     = TRUE;
-        app->arrow_draw_view   = (int)cd->view;
-        app->arrow_x1 = app->arrow_x2 = bx;
-        app->arrow_y1 = app->arrow_y2 = by;
-        app->arrow_track_n     = 0;
-        arrow_track_add(app, bx, by);
-        gtk_widget_queue_draw(cd->da);
-        return;
-    }
-
-    /* ── Physical eraser tip ── */
-    if (ev) {
-        GdkDeviceTool *t = gdk_event_get_device_tool(ev);
-        if (t && gdk_device_tool_get_tool_type(t) == GDK_DEVICE_TOOL_TYPE_ERASER)
-            app->tool = TOOL_ERASE;
-    }
-
-    /* ── Objective mode: intercept all drawing/erase here ── */
-    if (app->current_mode == APP_MODE_OBJECTIVE) {
-        double bx, by;
-        screen_to_body(cd, x, y, &bx, &by);
-        app->current_view = cd->view;
-        if (app->tool == TOOL_ERASE) {
-            obj_handle_erase(app, (int)cd->view, bx, by, cd->da);
-            return;
-        }
-        if (app->obj_point_mode) {
-            /* Drag existing point label if hit, otherwise place new */
-            int phit = obj_point_hit_screen(app, cd, x, y);
-            if (phit >= 0) {
-                double plbx, plby;
-                obj_label_resolve(&app->obj_points[phit], &plbx, &plby);
-                app->obj_point_drag_idx    = phit;
-                app->obj_point_drag_bx_off = plbx - bx;
-                app->obj_point_drag_by_off = plby - by;
-                return;
+            if (link_summary_hit_screen(app, cd, x, y)) {
+                app->link_drag_active = TRUE;
+                app->link_drag_bx_off = app->link_summary_bx - bx;
+                app->link_drag_by_off = app->link_summary_by - by;
+                return TRUE;
             }
-            if (app->show_ppt_entry_cb)
-                app->show_ppt_entry_cb(app, (int)cd->view, bx, by);
-            return;
+            int hit = note_hit_screen(app, cd, x, y);
+            if (hit >= 0) {
+                double lbx, lby;
+                label_anchor_resolve(&app->notes[hit], &lbx, &lby);
+                app->note_drag_idx    = hit;
+                app->note_drag_bx_off = lbx - bx;
+                app->note_drag_by_off = lby - by;
+                return TRUE;
+            }
         }
-        if (app->obj_active_zone) {
-            obj_zone_free(app->obj_active_zone);
-            app->obj_active_zone = NULL;
-        }
-        app->obj_active_zone = obj_zone_new(app->obj_zone_type, (int)cd->view);
-        obj_zone_add_pt(app->obj_active_zone, (float)bx, (float)by);
-        gtk_widget_queue_draw(cd->da);
-        return;
-    }
 
-    /* ── Erase tool: also deletes arrow heads on tap ── */
-    if (app->tool == TOOL_ERASE) {
-        int hit = arrow_head_hit_screen(app, cd, x, y);
-        if (hit >= 0) {
-            for (int k = hit; k < app->arrow_count - 1; k++)
-                app->arrows[k] = app->arrows[k + 1];
-            app->arrow_count--;
-            if (app->undo_type_top > 0 &&
-                app->undo_type_stack[app->undo_type_top - 1] == 1)
-                app->undo_type_top--;
-            app->stroke_version++;  /* arrow deleted — invalidate cache */
+        if (app->tool == TOOL_NOTE) {
+            double bx, by;
+            screen_to_body(cd, x, y, &bx, &by);
+            if (app->show_note_wizard_cb)
+                app->show_note_wizard_cb(app, (int)cd->view, bx, by);
+            return TRUE;
+        }
+
+        if (app->tool == TOOL_ARROW) {
+            int hit = arrow_head_hit_screen(app, cd, x, y);
+            if (hit >= 0) {
+                for (int k = hit; k < app->arrow_count - 1; k++)
+                    app->arrows[k] = app->arrows[k + 1];
+                app->arrow_count--;
+                if (app->undo_type_top > 0 &&
+                    app->undo_type_stack[app->undo_type_top - 1] == 1)
+                    app->undo_type_top--;
+                app->stroke_version++;
+                gtk_widget_queue_draw(cd->da);
+                return TRUE;
+            }
+            double bx, by;
+            screen_to_body(cd, x, y, &bx, &by);
+            app->arrow_drawing   = TRUE;
+            app->arrow_draw_view = (int)cd->view;
+            app->arrow_x1 = app->arrow_x2 = bx;
+            app->arrow_y1 = app->arrow_y2 = by;
+            app->arrow_track_n   = 0;
+            arrow_track_add(app, bx, by);
             gtk_widget_queue_draw(cd->da);
-            return;
+            return TRUE;
         }
-    }
 
-    double bx, by;
-    screen_to_body(cd, x, y, &bx, &by);
-    input_begin(app, bx, by, stylus_effective_pressure(gs, app));
-    gtk_widget_queue_draw(cd->da);
-}
-
-static void on_stylus_motion(GtkGestureStylus *gs, double x, double y,
-                              gpointer d)
-{
-    ColData  *cd  = d;
-    AppState *app = cd->app;
-    app->last_stylus_us = g_get_monotonic_time();
-
-    /* Legend drag (any mode) */
-    if (app->legend_drag_active) {
-        double bx, by;
-        screen_to_body(cd, x, y, &bx, &by);
-        app->legend_bx = bx + app->legend_drag_bx_off;
-        app->legend_by = by + app->legend_drag_by_off;
-        canvas_invalidate(app);
-        return;
-    }
-
-    /* Note label drag / link drag (any tool) */
-    if (app->note_drag_idx >= 0) {
-        double bx, by;
-        screen_to_body(cd, x, y, &bx, &by);
-        NoteAnnotation *na = &app->notes[app->note_drag_idx];
-        na->label.lx     = bx + app->note_drag_bx_off;
-        na->label.ly     = by + app->note_drag_by_off;
-        na->label.placed = 1;
-        gtk_widget_queue_draw(cd->da);
-        return;
-    }
-    if (app->link_drag_active) {
-        double bx, by;
-        screen_to_body(cd, x, y, &bx, &by);
-        app->link_summary_bx   = bx + app->link_drag_bx_off;
-        app->link_summary_by   = by + app->link_drag_by_off;
-        app->link_summary_view = (int)cd->view;
-        canvas_invalidate(app);
-        return;
-    }
-    if (app->tool == TOOL_NOTE) return;
-
-    /* Obj point label drag */
-    if (app->obj_point_drag_idx >= 0) {
-        double bx, by;
-        screen_to_body(cd, x, y, &bx, &by);
-        ObjPoint *op = &app->obj_points[app->obj_point_drag_idx];
-        op->anchor.lx     = bx + app->obj_point_drag_bx_off;
-        op->anchor.ly     = by + app->obj_point_drag_by_off;
-        op->anchor.placed = 1;
-        gtk_widget_queue_draw(cd->da);
-        return;
-    }
-
-    if (app->tool == TOOL_ARROW && app->arrow_drawing) {
-        double bx, by;
-        screen_to_body(cd, x, y, &bx, &by);
-        app->arrow_x2 = bx;
-        app->arrow_y2 = by;
-        arrow_track_add(app, bx, by);
-        gtk_widget_queue_draw(cd->da);
-        return;
-    }
-
-    if (app->current_mode == APP_MODE_OBJECTIVE && app->obj_active_zone) {
-        double bx, by;
-        screen_to_body(cd, x, y, &bx, &by);
-        obj_zone_add_pt(app->obj_active_zone, (float)bx, (float)by);
-        gtk_widget_queue_draw(cd->da);
-        return;
-    }
-
-    double bx, by;
-    screen_to_body(cd, x, y, &bx, &by);
-    input_motion(app, bx, by, stylus_effective_pressure(gs, app));
-    gtk_widget_queue_draw(cd->da);
-}
-
-static void on_stylus_up(GtkGestureStylus *gs, double x, double y,
-                          gpointer d)
-{
-    ColData  *cd  = d;
-    AppState *app = cd->app;
-    (void)gs; (void)x; (void)y;
-    app->last_stylus_us = g_get_monotonic_time();
-
-    /* Clear legend / note / link drag (any tool) */
-    if (app->legend_drag_active) {
-        app->legend_drag_active = FALSE;
-        gtk_widget_queue_draw(cd->da);
-        return;
-    }
-    if (app->note_drag_idx >= 0 || app->link_drag_active) {
-        app->note_drag_idx      = -1;
-        app->link_drag_active   = FALSE;
-        gtk_widget_queue_draw(cd->da);
-        return;
-    }
-    if (app->tool == TOOL_NOTE) {
-        gtk_widget_queue_draw(cd->da);
-        return;
-    }
-
-    /* Clear obj point drag */
-    if (app->obj_point_drag_idx >= 0) {
-        app->obj_point_drag_idx = -1;
-        gtk_widget_queue_draw(cd->da);
-        return;
-    }
-
-    if (app->tool == TOOL_ARROW && app->arrow_drawing) {
-        double bx, by;
-        screen_to_body(cd, x, y, &bx, &by);
-        app->arrow_x2 = bx; app->arrow_y2 = by;
-        double adx = bx - app->arrow_x1, ady = by - app->arrow_y1;
-        if (app->arrow_count < MAX_ARROWS &&
-            sqrt(adx*adx + ady*ady) >= 2.0) {
-            double cpx, cpy;
-            arrow_get_cp(app, &cpx, &cpy);
-            app->arrows[app->arrow_count] = (ArrowAnnotation){
-                .view = app->arrow_draw_view,
-                .x1 = app->arrow_x1, .y1 = app->arrow_y1,
-                .cx = cpx, .cy = cpy,
-                .x2 = bx,  .y2 = by
-            };
-            if (app->undo_type_top < 64)
-                app->undo_type_stack[app->undo_type_top++] = 1;
-            app->arrow_count++;
-            app->stroke_version++;  /* arrow committed — invalidate cache */
+        if (app->current_mode == APP_MODE_OBJECTIVE) {
+            double bx, by;
+            screen_to_body(cd, x, y, &bx, &by);
+            if (app->tool == TOOL_ERASE) {
+                obj_handle_erase(app, (int)cd->view, bx, by, cd->da);
+                return TRUE;
+            }
+            if (app->obj_point_mode) {
+                int phit = obj_point_hit_screen(app, cd, x, y);
+                if (phit >= 0) {
+                    double plbx, plby;
+                    obj_label_resolve(&app->obj_points[phit], &plbx, &plby);
+                    app->obj_point_drag_idx    = phit;
+                    app->obj_point_drag_bx_off = plbx - bx;
+                    app->obj_point_drag_by_off = plby - by;
+                    return TRUE;
+                }
+                if (app->show_ppt_entry_cb)
+                    app->show_ppt_entry_cb(app, (int)cd->view, bx, by);
+                return TRUE;
+            }
+            if (app->obj_active_zone) {
+                obj_zone_free(app->obj_active_zone);
+                app->obj_active_zone = NULL;
+            }
+            app->obj_active_zone = obj_zone_new(app->obj_zone_type, (int)cd->view);
+            obj_zone_add_pt(app->obj_active_zone, (float)bx, (float)by);
+            gtk_widget_queue_draw(cd->da);
+            return TRUE;
         }
-        app->arrow_drawing = FALSE;
-        app->arrow_track_n = 0;
+
+        if (app->tool == TOOL_ERASE) {
+            int hit = arrow_head_hit_screen(app, cd, x, y);
+            if (hit >= 0) {
+                for (int k = hit; k < app->arrow_count - 1; k++)
+                    app->arrows[k] = app->arrows[k + 1];
+                app->arrow_count--;
+                if (app->undo_type_top > 0 &&
+                    app->undo_type_stack[app->undo_type_top - 1] == 1)
+                    app->undo_type_top--;
+                app->stroke_version++;
+                gtk_widget_queue_draw(cd->da);
+                return TRUE;
+            }
+        }
+
+        {
+            double bx, by;
+            screen_to_body(cd, x, y, &bx, &by);
+            input_begin(app, bx, by, event_effective_pressure(event, app));
+        }
         gtk_widget_queue_draw(cd->da);
-        return;
+        return TRUE;
     }
 
-    if (app->current_mode == APP_MODE_OBJECTIVE) {
-        obj_commit_active_zone(app, cd->da);
-        return;
+    /* ── MOTION_NOTIFY ────────────────────────────────────────────────────── */
+    if (GDK_IS_EVENT_TYPE(event, GDK_MOTION_NOTIFY)) {
+        app->last_stylus_us = g_get_monotonic_time();
+
+        if (app->legend_drag_active) {
+            double bx, by;
+            screen_to_body(cd, x, y, &bx, &by);
+            app->legend_bx = bx + app->legend_drag_bx_off;
+            app->legend_by = by + app->legend_drag_by_off;
+            canvas_invalidate(app);
+            return TRUE;
+        }
+        if (app->note_drag_idx >= 0) {
+            double bx, by;
+            screen_to_body(cd, x, y, &bx, &by);
+            NoteAnnotation *na = &app->notes[app->note_drag_idx];
+            na->label.lx     = bx + app->note_drag_bx_off;
+            na->label.ly     = by + app->note_drag_by_off;
+            na->label.placed = 1;
+            gtk_widget_queue_draw(cd->da);
+            return TRUE;
+        }
+        if (app->link_drag_active) {
+            double bx, by;
+            screen_to_body(cd, x, y, &bx, &by);
+            app->link_summary_bx   = bx + app->link_drag_bx_off;
+            app->link_summary_by   = by + app->link_drag_by_off;
+            app->link_summary_view = (int)cd->view;
+            canvas_invalidate(app);
+            return TRUE;
+        }
+        if (app->tool == TOOL_NOTE) return TRUE;
+
+        if (app->obj_point_drag_idx >= 0) {
+            double bx, by;
+            screen_to_body(cd, x, y, &bx, &by);
+            ObjPoint *op = &app->obj_points[app->obj_point_drag_idx];
+            op->anchor.lx     = bx + app->obj_point_drag_bx_off;
+            op->anchor.ly     = by + app->obj_point_drag_by_off;
+            op->anchor.placed = 1;
+            gtk_widget_queue_draw(cd->da);
+            return TRUE;
+        }
+        if (app->tool == TOOL_ARROW && app->arrow_drawing) {
+            double bx, by;
+            screen_to_body(cd, x, y, &bx, &by);
+            app->arrow_x2 = bx;
+            app->arrow_y2 = by;
+            arrow_track_add(app, bx, by);
+            gtk_widget_queue_draw(cd->da);
+            return TRUE;
+        }
+        if (app->current_mode == APP_MODE_OBJECTIVE && app->obj_active_zone) {
+            double bx, by;
+            screen_to_body(cd, x, y, &bx, &by);
+            obj_zone_add_pt(app->obj_active_zone, (float)bx, (float)by);
+            gtk_widget_queue_draw(cd->da);
+            return TRUE;
+        }
+        {
+            double bx, by;
+            screen_to_body(cd, x, y, &bx, &by);
+            input_motion(app, bx, by, event_effective_pressure(event, app));
+        }
+        gtk_widget_queue_draw(cd->da);
+        return TRUE;
     }
 
-    input_end(app);
-    gtk_widget_queue_draw(cd->da);
+    /* ── BUTTON_RELEASE ───────────────────────────────────────────────────── */
+    if (GDK_IS_EVENT_TYPE(event, GDK_BUTTON_RELEASE)) {
+        guint btn = gdk_button_event_get_button(event);
+        if (btn != 1) return TRUE; /* consume barrel releases silently */
+        app->last_stylus_us = g_get_monotonic_time();
+
+        if (app->legend_drag_active) {
+            app->legend_drag_active = FALSE;
+            gtk_widget_queue_draw(cd->da);
+            return TRUE;
+        }
+        if (app->note_drag_idx >= 0 || app->link_drag_active) {
+            app->note_drag_idx    = -1;
+            app->link_drag_active = FALSE;
+            gtk_widget_queue_draw(cd->da);
+            return TRUE;
+        }
+        if (app->tool == TOOL_NOTE) {
+            gtk_widget_queue_draw(cd->da);
+            return TRUE;
+        }
+        if (app->obj_point_drag_idx >= 0) {
+            app->obj_point_drag_idx = -1;
+            gtk_widget_queue_draw(cd->da);
+            return TRUE;
+        }
+        if (app->tool == TOOL_ARROW && app->arrow_drawing) {
+            double bx, by;
+            screen_to_body(cd, x, y, &bx, &by);
+            app->arrow_x2 = bx; app->arrow_y2 = by;
+            double adx = bx - app->arrow_x1, ady = by - app->arrow_y1;
+            if (app->arrow_count < MAX_ARROWS &&
+                sqrt(adx*adx + ady*ady) >= 2.0) {
+                double cpx, cpy;
+                arrow_get_cp(app, &cpx, &cpy);
+                app->arrows[app->arrow_count] = (ArrowAnnotation){
+                    .view = app->arrow_draw_view,
+                    .x1 = app->arrow_x1, .y1 = app->arrow_y1,
+                    .cx = cpx, .cy = cpy,
+                    .x2 = bx,  .y2 = by
+                };
+                if (app->undo_type_top < 64)
+                    app->undo_type_stack[app->undo_type_top++] = 1;
+                app->arrow_count++;
+                app->stroke_version++;
+            }
+            app->arrow_drawing = FALSE;
+            app->arrow_track_n = 0;
+            gtk_widget_queue_draw(cd->da);
+            return TRUE;
+        }
+        if (app->current_mode == APP_MODE_OBJECTIVE) {
+            obj_commit_active_zone(app, cd->da);
+            return TRUE;
+        }
+        input_end(app);
+        gtk_widget_queue_draw(cd->da);
+        return TRUE;
+    }
+
+    /* Consume all other pen/eraser events (proximity, etc.) to keep
+     * GtkGestureDrag from seeing any stylus traffic. */
+    return TRUE;
 }
 
 /* ── Drag gestures ───────────────────────────────────────────────────────── */
+/* Drag gesture handles widget repositioning only — all drawing is stylus-only
+ * via on_stylus_legacy.  This ensures capacitive-layer touch events from the
+ * Wacom dual digitiser never trigger drawing operations. */
 static void on_drag_begin(GtkGestureDrag *gd, double x, double y, gpointer d)
 {
     ColData  *cd  = d;
@@ -1736,7 +1746,7 @@ static void on_drag_begin(GtkGestureDrag *gd, double x, double y, gpointer d)
         }
     }
 
-    /* Any tool (Sx mode): drag existing note/link-summary if hit */
+    /* Sx mode: reposition existing note / link-summary if hit */
     if (app->current_mode == APP_MODE_SUBJECTIVE) {
         double bx_hit, by_hit;
         screen_to_body(cd, x, y, &bx_hit, &by_hit);
@@ -1757,91 +1767,20 @@ static void on_drag_begin(GtkGestureDrag *gd, double x, double y, gpointer d)
         }
     }
 
-    /* Note tool (no existing hit): open wizard via palm-rejection rules */
-    if (app->tool == TOOL_NOTE) {
-        double bx, by;
-        screen_to_body(cd, x, y, &bx, &by);
-        if (app->show_note_wizard_cb) {
-            if (app->pen_palm_reject) {
-                gint64 age_us = g_get_monotonic_time() - app->last_stylus_us;
-                if (age_us >= 500000)
-                    app->show_note_wizard_cb(app, (int)cd->view, bx, by);
-            } else {
-                app->show_note_wizard_cb(app, (int)cd->view, bx, by);
-            }
-        }
-        return;
-    }
-
-    /* Arrow head deletion — allowed even during palm-rejection window */
-    if (app->tool == TOOL_ARROW || app->tool == TOOL_ERASE) {
-        int hit = arrow_head_hit_screen(app, cd, x, y);
-        if (hit >= 0) {
-            for (int k = hit; k < app->arrow_count - 1; k++)
-                app->arrows[k] = app->arrows[k + 1];
-            app->arrow_count--;
-            if (app->undo_type_top > 0 &&
-                app->undo_type_stack[app->undo_type_top - 1] == 1)
-                app->undo_type_top--;
-            app->stroke_version++;  /* arrow deleted — invalidate cache */
-            gtk_widget_queue_draw(cd->da);
+    /* Obj mode: reposition point label if hit */
+    if (app->current_mode == APP_MODE_OBJECTIVE && app->obj_point_mode) {
+        int phit = obj_point_hit_screen(app, cd, x, y);
+        if (phit >= 0) {
+            double bx, by;
+            screen_to_body(cd, x, y, &bx, &by);
+            double plbx, plby;
+            obj_label_resolve(&app->obj_points[phit], &plbx, &plby);
+            app->obj_point_drag_idx    = phit;
+            app->obj_point_drag_bx_off = plbx - bx;
+            app->obj_point_drag_by_off = plby - by;
             return;
         }
     }
-
-    /* Palm rejection for drawing tools */
-    if (app->pen_palm_reject) {
-        gint64 age_us = g_get_monotonic_time() - app->last_stylus_us;
-        if (age_us < 500000) return;
-    }
-
-    app->current_view = cd->view;
-    double bx, by;
-    screen_to_body(cd, x, y, &bx, &by);
-
-    /* Arrow tool: begin new arrow */
-    if (app->tool == TOOL_ARROW) {
-        app->arrow_drawing     = TRUE;
-        app->arrow_draw_view   = (int)cd->view;
-        app->arrow_x1 = app->arrow_x2 = bx;
-        app->arrow_y1 = app->arrow_y2 = by;
-        app->arrow_track_n     = 0;
-        arrow_track_add(app, bx, by);
-        gtk_widget_queue_draw(cd->da);
-        return;
-    }
-
-    if (app->current_mode == APP_MODE_OBJECTIVE) {
-        if (app->tool == TOOL_ERASE) {
-            obj_handle_erase(app, (int)cd->view, bx, by, cd->da);
-            return;
-        }
-        if (app->obj_point_mode) {
-            int phit = obj_point_hit_screen(app, cd, x, y);
-            if (phit >= 0) {
-                double plbx, plby;
-                obj_label_resolve(&app->obj_points[phit], &plbx, &plby);
-                app->obj_point_drag_idx    = phit;
-                app->obj_point_drag_bx_off = plbx - bx;
-                app->obj_point_drag_by_off = plby - by;
-                return;
-            }
-            if (app->show_ppt_entry_cb)
-                app->show_ppt_entry_cb(app, (int)cd->view, bx, by);
-            return;
-        }
-        if (app->obj_active_zone) {
-            obj_zone_free(app->obj_active_zone);
-            app->obj_active_zone = NULL;
-        }
-        app->obj_active_zone = obj_zone_new(app->obj_zone_type, (int)cd->view);
-        obj_zone_add_pt(app->obj_active_zone, (float)bx, (float)by);
-        gtk_widget_queue_draw(cd->da);
-        return;
-    }
-
-    input_begin(app, bx, by, 0.6);
-    gtk_widget_queue_draw(cd->da);
 }
 
 static void on_drag_update(GtkGestureDrag *gd, double dx, double dy,
@@ -1878,8 +1817,6 @@ static void on_drag_update(GtkGestureDrag *gd, double dx, double dy,
         canvas_invalidate(app);
         return;
     }
-    if (app->tool == TOOL_NOTE) return;
-
     /* Obj point label drag */
     if (app->obj_point_drag_idx >= 0) {
         ObjPoint *op = &app->obj_points[app->obj_point_drag_idx];
@@ -1889,23 +1826,6 @@ static void on_drag_update(GtkGestureDrag *gd, double dx, double dy,
         gtk_widget_queue_draw(cd->da);
         return;
     }
-
-    if (app->tool == TOOL_ARROW && app->arrow_drawing) {
-        app->arrow_x2 = bx;
-        app->arrow_y2 = by;
-        arrow_track_add(app, bx, by);
-        gtk_widget_queue_draw(cd->da);
-        return;
-    }
-
-    if (app->current_mode == APP_MODE_OBJECTIVE && app->obj_active_zone) {
-        obj_zone_add_pt(app->obj_active_zone, (float)bx, (float)by);
-        gtk_widget_queue_draw(cd->da);
-        return;
-    }
-
-    input_motion(app, bx, by, 0.6);
-    gtk_widget_queue_draw(cd->da);
 }
 
 static void on_drag_end(GtkGestureDrag *gd, double dx, double dy, gpointer d)
@@ -1925,10 +1845,6 @@ static void on_drag_end(GtkGestureDrag *gd, double dx, double dy, gpointer d)
         gtk_widget_queue_draw(cd->da);
         return;
     }
-    if (app->tool == TOOL_NOTE) {
-        gtk_widget_queue_draw(cd->da);
-        return;
-    }
 
     /* Clear obj point drag */
     if (app->obj_point_drag_idx >= 0) {
@@ -1937,41 +1853,7 @@ static void on_drag_end(GtkGestureDrag *gd, double dx, double dy, gpointer d)
         return;
     }
 
-    if (app->tool == TOOL_ARROW && app->arrow_drawing) {
-        double sx, sy;
-        gtk_gesture_drag_get_start_point(gd, &sx, &sy);
-        double bx, by;
-        screen_to_body(cd, sx + dx, sy + dy, &bx, &by);
-        app->arrow_x2 = bx; app->arrow_y2 = by;
-        double adx = bx - app->arrow_x1, ady = by - app->arrow_y1;
-        if (app->arrow_count < MAX_ARROWS &&
-            sqrt(adx*adx + ady*ady) >= 2.0) {
-            double cpx, cpy;
-            arrow_get_cp(app, &cpx, &cpy);
-            app->arrows[app->arrow_count] = (ArrowAnnotation){
-                .view = app->arrow_draw_view,
-                .x1 = app->arrow_x1, .y1 = app->arrow_y1,
-                .cx = cpx, .cy = cpy,
-                .x2 = bx,  .y2 = by
-            };
-            if (app->undo_type_top < 64)
-                app->undo_type_stack[app->undo_type_top++] = 1;
-            app->arrow_count++;
-            app->stroke_version++;  /* arrow committed — invalidate cache */
-        }
-        app->arrow_drawing = FALSE;
-        app->arrow_track_n = 0;
-        gtk_widget_queue_draw(cd->da);
-        return;
-    }
-
-    if (app->current_mode == APP_MODE_OBJECTIVE) {
-        obj_commit_active_zone(app, cd->da);
-        return;
-    }
-
-    input_end(app);
-    gtk_widget_queue_draw(cd->da);
+    (void)gd; (void)dx; (void)dy;
 }
 
 /* ── Zoom reset ──────────────────────────────────────────────────────────── */
@@ -2040,38 +1922,7 @@ static void on_zoom_changed(GtkGestureZoom *gz, gdouble scale, gpointer d)
     gtk_widget_queue_draw(cd->da);
 }
 
-/* ── Raw event fallback for stylus barrel button (Lenovo ThinkPad pen) ───── *
- * GtkGestureStylus only sees button=1. The barrel fires GDK_BUTTON_PRESS     *
- * with button≥2 which gestures ignore. Catch it here at capture phase.       */
-static gboolean on_raw_event(GtkEventControllerLegacy *ctrl,
-                              GdkEvent *event, gpointer d)
-{
-    (void)ctrl;
-    if (!GDK_IS_EVENT_TYPE(event, GDK_BUTTON_PRESS)) return FALSE;
-
-    guint btn = gdk_button_event_get_button(event);
-    if (btn < 2) return FALSE;
-
-    GdkDeviceTool *tool = gdk_event_get_device_tool(event);
-    if (!tool) return FALSE;
-    GdkDeviceToolType type = gdk_device_tool_get_tool_type(tool);
-    if (type != GDK_DEVICE_TOOL_TYPE_PEN &&
-        type != GDK_DEVICE_TOOL_TYPE_ERASER) return FALSE;
-
-    ColData  *cd  = d;
-    AppState *app = cd->app;
-    input_cancel(app);
-
-    double x, y;
-    gdk_event_get_position(event, &x, &y);
-    double bx, by;
-    screen_to_body(cd, x, y, &bx, &by);
-
-    app->pen_wide_mode = !app->pen_wide_mode;
-    if (app->toolbar_update_cb) app->toolbar_update_cb(app);
-    gtk_widget_queue_draw(cd->da);
-    return TRUE;
-}
+/* on_raw_event removed — merged into on_stylus_legacy above */
 
 /* ── Mouse motion tracker (feeds scroll-zoom focal point) ────────────────── */
 static void on_mouse_motion(GtkEventControllerMotion *ctrl,
@@ -2172,12 +2023,14 @@ static GtkWidget *make_drawing_area(AppState *app, ColData *cd,
     gtk_widget_set_hexpand(da, TRUE);
     gtk_widget_set_vexpand(da, TRUE);
 
-    /* Stylus */
-    GtkGesture *stylus = gtk_gesture_stylus_new();
-    gtk_widget_add_controller(da, GTK_EVENT_CONTROLLER(stylus));
-    g_signal_connect(stylus, "down",   G_CALLBACK(on_stylus_down),   cd);
-    g_signal_connect(stylus, "motion", G_CALLBACK(on_stylus_motion), cd);
-    g_signal_connect(stylus, "up",     G_CALLBACK(on_stylus_up),     cd);
+    /* Capture-phase legacy controller handles all pen/eraser events directly.
+     * This bypasses GTK's gesture state machine entirely — no sequence tracking,
+     * no DENIED states, no focus-transition bugs.  Returns TRUE to consume pen
+     * events so GtkGestureDrag never sees stylus traffic. */
+    GtkEventController *stylus_raw = gtk_event_controller_legacy_new();
+    gtk_event_controller_set_propagation_phase(stylus_raw, GTK_PHASE_CAPTURE);
+    gtk_widget_add_controller(da, stylus_raw);
+    g_signal_connect(stylus_raw, "event", G_CALLBACK(on_stylus_legacy), cd);
 
     /* Drag (mouse / single touch) */
     GtkGesture *drag = gtk_gesture_drag_new();
@@ -2192,9 +2045,6 @@ static GtkWidget *make_drawing_area(AppState *app, ColData *cd,
     gtk_widget_add_controller(da, GTK_EVENT_CONTROLLER(zoom));
     g_signal_connect(zoom, "begin",         G_CALLBACK(on_zoom_begin),   cd);
     g_signal_connect(zoom, "scale-changed", G_CALLBACK(on_zoom_changed), cd);
-
-    /* All input types (stylus, mouse, touch) work independently.
-     * Do NOT group or make exclusive — let all gesture recognizers work in parallel. */
 
     /* Scroll-wheel zoom */
     GtkEventController *scroll = gtk_event_controller_scroll_new(
@@ -2214,11 +2064,8 @@ static GtkWidget *make_drawing_area(AppState *app, ColData *cd,
     g_signal_connect(mid, "drag-begin",  G_CALLBACK(on_mid_drag_begin),  cd);
     g_signal_connect(mid, "drag-update", G_CALLBACK(on_mid_drag_update), cd);
 
-    /* Raw event capture for barrel button on pens that bypass GtkGestureStylus */
-    GtkEventController *raw = gtk_event_controller_legacy_new();
-    gtk_event_controller_set_propagation_phase(raw, GTK_PHASE_CAPTURE);
-    gtk_widget_add_controller(da, raw);
-    g_signal_connect(raw, "event", G_CALLBACK(on_raw_event), cd);
+    /* Stylus events are handled by stylus_raw (capture phase) above;
+     * the old separate barrel-button raw controller has been merged into it. */
 
     gtk_box_append(GTK_BOX(vbox), da);
 
@@ -2448,7 +2295,7 @@ void canvas_cycle_right_slot(AppState *app, int slot)
     app->right_slot_views[slot] = nv;
     int ci = 2 + slot;
     g_col[ci].view = nv;
-    if (g_col[ci].header_label)
+    if (GTK_IS_LABEL(g_col[ci].header_label))
         gtk_label_set_text(GTK_LABEL(g_col[ci].header_label),
                            canvas_view_name(nv));
     gtk_widget_queue_draw(g_col[ci].da);

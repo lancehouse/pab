@@ -2117,6 +2117,17 @@ static void on_main_window_close(GtkWidget *w, gpointer data)
     session_export_combined_focus_pdf(app);
 }
 
+/* Deferred fullscreen — waits 200 ms after the window appears before requesting
+ * fullscreen.  One frame-clock tick (~16 ms) is not reliably enough for Mutter
+ * to complete the windowed xdg_toplevel configure round-trip and register the
+ * surface with zwp_tablet_v2; a short timeout gives the compositor enough time
+ * regardless of display resolution or compositor load. */
+static gboolean deferred_fullscreen(gpointer w)
+{
+    gtk_window_fullscreen(GTK_WINDOW(w));
+    return G_SOURCE_REMOVE;
+}
+
 void window_create(AppState *app, GtkApplication *gtk_app)
 {
     g_app_ref = app;
@@ -2130,7 +2141,6 @@ void window_create(AppState *app, GtkApplication *gtk_app)
     gtk_window_set_title(GTK_WINDOW(app->window), "PhysioChart");
     gtk_window_set_default_size(GTK_WINDOW(app->window), 900, 700);
     gtk_window_set_decorated(GTK_WINDOW(app->window), FALSE);
-    gtk_window_fullscreen(GTK_WINDOW(app->window));
 
     g_signal_connect(app->window, "destroy",
                      G_CALLBACK(on_main_window_close), app);
@@ -2163,6 +2173,7 @@ void window_create(AppState *app, GtkApplication *gtk_app)
 
     update_toolbar_state(app);
     gtk_window_present(GTK_WINDOW(app->window));
+    g_timeout_add(200, deferred_fullscreen, app->window);
 
     /* 30-second JSON autosave — JSON only, no PNG export overhead */
     g_timeout_add_seconds(30, on_autosave_timer, NULL);
