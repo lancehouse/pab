@@ -5,6 +5,16 @@
 
 /* ── Internal callbacks ───────────────────────────────────────────────────── */
 
+/* Deferred fullscreen — same rationale as window.c: let the Wayland compositor
+ * process a windowed configure round-trip before requesting fullscreen, so
+ * zwp_tablet_v2 input routing is established correctly. */
+static gboolean deferred_fullscreen(GtkWidget *w, GdkFrameClock *clk, gpointer d)
+{
+    (void)clk; (void)d;
+    gtk_window_fullscreen(GTK_WINDOW(w));
+    return G_SOURCE_REMOVE;
+}
+
 /* TUI process exited (Ctrl+D, `exit`, or crash) — treat as session end. */
 static void on_tui_child_exited(VteTerminal *term, int status, gpointer user_data)
 {
@@ -69,8 +79,8 @@ void integration_create_tui_window(AppState *app, GtkApplication *gapp)
     g_signal_connect(win, "destroy",
                      G_CALLBACK(on_tui_window_destroyed), app);
 
-    gtk_widget_set_visible(win, TRUE);
-    gtk_window_fullscreen(GTK_WINDOW(win));
+    gtk_window_present(GTK_WINDOW(win));
+    gtk_widget_add_tick_callback(win, deferred_fullscreen, NULL, NULL);
 
     char *argv[] = { "assessment", "--session", app->session_file, NULL };
     vte_terminal_spawn_async(
