@@ -5,12 +5,11 @@
 
 /* ── Internal callbacks ───────────────────────────────────────────────────── */
 
-/* Deferred fullscreen — same rationale as window.c: let the Wayland compositor
- * process a windowed configure round-trip before requesting fullscreen, so
- * zwp_tablet_v2 input routing is established correctly. */
-static gboolean deferred_fullscreen(GtkWidget *w, GdkFrameClock *clk, gpointer d)
+/* Deferred fullscreen — same rationale as window.c: 200 ms timeout to let
+ * Mutter complete the windowed configure round-trip and establish
+ * zwp_tablet_v2 input routing before we request fullscreen. */
+static gboolean deferred_fullscreen(gpointer w)
 {
-    (void)clk; (void)d;
     gtk_window_fullscreen(GTK_WINDOW(w));
     return G_SOURCE_REMOVE;
 }
@@ -80,7 +79,7 @@ void integration_create_tui_window(AppState *app, GtkApplication *gapp)
                      G_CALLBACK(on_tui_window_destroyed), app);
 
     gtk_window_present(GTK_WINDOW(win));
-    gtk_widget_add_tick_callback(win, deferred_fullscreen, NULL, NULL);
+    g_timeout_add(200, deferred_fullscreen, win);
 
     char *argv[] = { "assessment", "--session", app->session_file, NULL };
     vte_terminal_spawn_async(
