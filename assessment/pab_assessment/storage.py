@@ -801,13 +801,13 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         elif not clean:
             sl.append("**PPT (algometer):** *(not recorded)*")
         hypo_items = [("Sharp/blunt","sn_sharp_blunt",True),("Two-point discrim","sn_tpd",True),
-                      ("Light touch","sn_lt",True),("Body perception","sn_body",False)]
+                      ("Light touch","sn_lt",True),("Body perception","sn_body",True)]
         hyper_items = [("Static allodynia","sn_static_allodynia",True),
                        ("Dynamic allodynia","sn_dynamic_allodynia",True),
                        ("2° hyperalgesia PPT","sn_secondary_hyper",True),
                        ("Pin prick hyper","sn_pin_prick",True),
-                       ("Cold hyperalgesia","sn_cold",False),
-                       ("Heat hyperalgesia","sn_heat",False),
+                       ("Cold hyperalgesia","sn_cold",True),
+                       ("Heat hyperalgesia","sn_heat",True),
                        ("Temporal summation","sn_temporal_sum",True)]
         for sec_lbl, items in [("Hyposensitivity", hypo_items), ("Hypersensitivity", hyper_items)]:
             rows = []
@@ -1733,8 +1733,8 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
                        ("Dynamic allodynia","sn_dynamic_allodynia",True),
                        ("2° hyperalgesia PPT","sn_secondary_hyper",True),
                        ("Pin prick hyper","sn_pin_prick",True),
-                       ("Cold hyperalgesia","sn_cold",False),
-                       ("Heat hyperalgesia","sn_heat",False),
+                       ("Cold hyperalgesia","sn_cold",True),
+                       ("Heat hyperalgesia","sn_heat",True),
                        ("Temporal summation","sn_temporal_sum",True)]
         for items in (hypo_items, hyper_items):
             for lbl, sid, has_detail in items:
