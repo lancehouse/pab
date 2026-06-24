@@ -44,9 +44,12 @@ sudo dnf install -y \
     cairo-devel \
     librsvg2-devel \
     json-c-devel \
-    python3 python3-devel python3-pip python3-venv \
+    vte291-gtk4-devel \
+    python3 python3-devel python3-pip \
     pandoc
 ```
+
+> **Fedora 44+:** `python3-venv` is built into `python3` — no separate package needed. `pandoc-cli` satisfies the `pandoc` requirement.
 
 **Terminal emulator** — the bodychart app launches the assessment TUI in a terminal. It tries these in order:
 
@@ -252,6 +255,29 @@ See `docs/dev-setup.md` for the full workflow.
 
 ---
 
+## Migrating from another machine
+
+If you have copied the project via rsync or similar:
+
+- **bodychart binary**: the copied binary will likely work (dynamically linked), but rebuild anyway — takes 30 seconds and ensures correct linkage against the new machine's libraries.
+- **Python venv**: **must be recreated** — venvs contain hardcoded absolute paths and C extensions compiled against the old Python build. Delete `.venv` and follow step 4 again for both `assessment/` and `pab-stable/assessment/`.
+
+```bash
+# Recreate dev venv
+cd ~/Projects/pab/assessment && rm -rf .venv
+python3 -m venv .venv && source .venv/bin/activate && pip install -e . && deactivate
+
+# Recreate stable venv (if using developer setup)
+cd ~/Projects/pab/pab-stable/assessment && rm -rf .venv
+python3 -m venv .venv && source .venv/bin/activate && pip install -e . && deactivate
+
+# Rebuild both binaries
+ninja -C ~/Projects/pab/bodychart/build
+ninja -C ~/Projects/pab/pab-stable/bodychart/build-stable
+```
+
+---
+
 ## Updating
 
 Pull the latest from GitHub and rebuild:
@@ -303,7 +329,7 @@ ssh-copy-id -i ~/.ssh/id_ed25519.pub <usb-machine-ip>
 
 ## Hardware notes
 
-### Tablet / touchscreen (Lenovo Yoga / similar)
+### Tablet / touchscreen (Lenovo Yoga / ThinkPad X13 Gen 5 2-in-1 / similar)
 
 The bodychart app is designed for pressure-sensitive stylus input in tablet mode. It works with mouse/touch but the drawing quality is best with an active digitiser stylus.
 
@@ -354,6 +380,7 @@ The active session pointer is at `~/.local/share/pab/session_current.json`. Both
 | `librsvg2-devel` | SVG body outline rendering |
 | `json-c-devel` | JSON persistence |
 | `python3` + `python3-devel` + `python3-venv` | Assessment TUI runtime |
+| `vte291-gtk4-devel` | VTE terminal widget (bodychart embeds the TUI in a terminal) |
 | `pandoc` | Report export to .docx (optional but recommended) |
 | `kitty` | Preferred terminal for TUI launch (optional) |
 | `git` | Version control |

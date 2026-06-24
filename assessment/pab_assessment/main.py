@@ -3,6 +3,7 @@
 import sys
 import asyncio
 import logging
+import subprocess
 import time as _time
 from pathlib import Path
 from textual.app import ComposeResult, App, NoScreen
@@ -99,6 +100,35 @@ class PhysioAssessment(App):
         else:
             self._last_focused_on_app_blur = self.screen.focused
             self.screen.set_focus(None)
+
+    # ------------------------------------------------------------------
+    # System clipboard bridge (wl-copy / wl-paste)
+    # ------------------------------------------------------------------
+
+    @property
+    def clipboard(self) -> str:
+        """Read from system clipboard via wl-paste, falling back to internal."""
+        try:
+            result = subprocess.run(
+                ["wl-paste", "--no-newline"],
+                capture_output=True, text=True, timeout=0.5,
+            )
+            if result.returncode == 0:
+                return result.stdout
+        except Exception:
+            pass
+        return self._clipboard
+
+    def copy_to_clipboard(self, text: str) -> None:
+        """Write to both internal clipboard and system clipboard via wl-copy."""
+        self._clipboard = text
+        try:
+            subprocess.run(
+                ["wl-copy"],
+                input=text, text=True, timeout=0.5,
+            )
+        except Exception:
+            pass
 
     def compose(self) -> ComposeResult:
         yield Header()
