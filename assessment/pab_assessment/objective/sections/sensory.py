@@ -37,8 +37,8 @@ _HYPER_ITEMS: list[tuple[str, str, bool]] = [
     ("Dynamic allodynia (brush)",       "sn_dynamic_allodynia", True),
     ("2° hyperalgesia (algometer)",     "sn_secondary_hyper",   True),
     ("Pin prick hyperalgesia",          "sn_pin_prick",         True),
-    ("Cold hyperalgesia (ice 5 s)",     "sn_cold",              False),
-    ("Heat hyperalgesia",               "sn_heat",              False),
+    ("Cold hyperalgesia (ice 5 s)",     "sn_cold",              True),
+    ("Heat hyperalgesia",               "sn_heat",              True),
     ("Temporal summation",              "sn_temporal_sum",      True),
 ]
 
@@ -99,6 +99,8 @@ class SensorySection(BaseSection):
                 if has_detail:
                     yield Input(placeholder="region / detail",
                                 id=f"{sid}_detail", classes="sn_detail")
+            if sid == "sn_body":
+                yield TextArea(id="sn_body_detail", language="plain")
 
         # ── Heightened Sensitivity ────────────────────────────────────────────
         yield Label("Heightened Sensitivity / Central Sensitisation",
@@ -162,10 +164,11 @@ class SensorySection(BaseSection):
                             f"#{sid}_detail", Input).value.strip()
                     except Exception:
                         data[f"{sid}_detail"] = ""
-        try:
-            data["sn_notes"] = self.query_one("#sn_notes", TextArea).text
-        except Exception:
-            data["sn_notes"] = ""
+        for fid in ("sn_body_detail", "sn_notes"):
+            try:
+                data[fid] = self.query_one(f"#{fid}", TextArea).text
+            except Exception:
+                data[fid] = ""
         return data
 
     def load(self, data: dict) -> None:
@@ -190,10 +193,11 @@ class SensorySection(BaseSection):
                                 f"{sid}_detail", "")
                         except Exception:
                             pass
-            try:
-                self.query_one("#sn_notes", TextArea).text = data.get("sn_notes", "")
-            except Exception:
-                pass
+            for fid in ("sn_body_detail", "sn_notes"):
+                try:
+                    self.query_one(f"#{fid}", TextArea).text = data.get(fid, "")
+                except Exception:
+                    pass
         finally:
             self._loading = False
 

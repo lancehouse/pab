@@ -93,7 +93,6 @@ _UMN_ITEMS: list[tuple[str, str]] = [
     ("Hoffman's",      "nr_umn_hoffman"),
     ("Tromner",        "nr_umn_tromner"),
 ]
-_UMN_FLAG_IDS = {"nr_umn_hoffman", "nr_umn_tromner"}
 
 _GAP = 2   # char gap between adjacent gangs
 
@@ -148,7 +147,7 @@ class NeurologicalSection(BaseSection):
     /* Width-8 buttons for reflex gangs */
     NeurologicalSection .rg-w8 _RadioButton { width: 8; min-width: 8; max-width: 8; }
 
-    /* UMN — CheckButtons fill equally across the row */
+    /* UMN — FlagButtons fill equally across the row (CheckButton selector matches subclass) */
     NeurologicalSection .umn_row { layout: horizontal; height: 3; width: 100%; }
     NeurologicalSection .umn_row CheckButton {
         width: 1fr; height: 3; min-width: 0; margin: 0 1 0 0;
@@ -307,10 +306,7 @@ class NeurologicalSection(BaseSection):
         yield Label("UMN Signs", classes="subsection_header", id="nr_umn")
         with Horizontal(classes="umn_row"):
             for label, uid in _UMN_ITEMS:
-                if uid in _UMN_FLAG_IDS:
-                    yield FlagButton(label, id=uid)
-                else:
-                    yield CheckButton(label, id=uid)
+                yield FlagButton(label, id=uid)
         yield TextArea(id="nr_umn_notes", language="plain")
 
         # ── General Notes ─────────────────────────────────────────────────────
@@ -391,7 +387,7 @@ class NeurologicalSection(BaseSection):
             data[rg.id] = rg.value
         for _, uid in _UMN_ITEMS:
             try:
-                data[uid] = self.query_one(f"#{uid}", CheckButton).value
+                data[uid] = self.query_one(f"#{uid}", FlagButton).value
             except Exception:
                 data[uid] = None
         for _, prefix, has_deg in _UL_ND_ROWS + _ND_ROWS:
@@ -425,7 +421,7 @@ class NeurologicalSection(BaseSection):
                 rg.set_value(data.get(rg.id))
             for _, uid in _UMN_ITEMS:
                 try:
-                    self.query_one(f"#{uid}", CheckButton).set_value(data.get(uid))
+                    self.query_one(f"#{uid}", FlagButton).set_value(data.get(uid))
                 except Exception:
                     pass
             for _, prefix, has_deg in _UL_ND_ROWS + _ND_ROWS:

@@ -484,6 +484,7 @@ Boolean fields (CheckButton); detail fields (Input, suffix `_detail`).
 | `sn_lt` | Light touch hypoaesthesia present |
 | `sn_lt_detail` | Light touch — detail |
 | `sn_body` | Body perception impaired |
+| `sn_body_detail` | Body perception — free-text detail (TextArea) |
 
 ### Hypersensitivity / Central sensitisation signs
 
@@ -500,7 +501,9 @@ Boolean fields (CheckButton); detail fields (Input, suffix `_detail`).
 | `sn_pin_prick` | Pin prick hyperalgesia |
 | `sn_pin_prick_detail` | Pin prick — detail |
 | `sn_cold` | Cold hyperalgesia (ice 5 s) |
+| `sn_cold_detail` | Cold hyperalgesia — detail |
 | `sn_heat` | Heat hyperalgesia |
+| `sn_heat_detail` | Heat hyperalgesia — detail |
 | `sn_temporal_sum` | Temporal summation present |
 | `sn_temporal_sum_detail` | Temporal summation — detail |
 | `sn_notes` | Sensory free-text notes |
