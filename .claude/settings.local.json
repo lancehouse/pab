@@ -126,7 +126,9 @@
       "WebFetch(domain:www.burningnightscrps.org)",
       "WebFetch(domain:pmc.ncbi.nlm.nih.gov)",
       "WebFetch(domain:now.aapmr.org)",
-      "WebFetch(domain:www.mdpi.com)"
+      "WebFetch(domain:www.mdpi.com)",
+      "Bash(/home/lance/Projects/pab/assessment/.venv/bin/python3 -c \"import textual; print\\(textual.__version__\\)\")",
+      "Bash(/home/lance/Projects/pab/assessment/.venv/bin/python3 --version)"
     ]
   }
 }
