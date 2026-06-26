@@ -24,13 +24,15 @@ _SYMPTOM_NAMES: dict[int, str] = {
     4: "paraesthesia / deep ache",
 }
 
-# Quality index (0–13) → full clinical term
-# Indices match QUALITY_SHORT[] in window.c: Pain Ache Numb Shrp Dull Hot Cold
-#                                            Itch Craw Elec Shot Buzz Othr P+N
+# Quality index (0–11) → full clinical term
+# Indices match QUALITY_SHORT[] in window.c:
+#   0=Throb 1=Press 2=Ache  3=Stab
+#   4=Tight 5=Burn  6=Freez 7=Elec
+#   8=Shot  9=P+N   10=Numb 11=Itch
 _QUALITY_TERMS: list[str] = [
-    "pain", "aching", "numbness", "sharp", "dull",
-    "hot", "cold", "itching", "crawling", "electric",
-    "shooting", "buzzing", "other", "pins & needles",
+    "throbbing", "pressure", "aching",   "stabbing",
+    "tight",     "burning",  "freezing", "electrical",
+    "shooting",  "pins & needles", "numbness", "itching",
 ]
 
 # NoteAnnotation.temporal int → descriptor
@@ -64,6 +66,20 @@ def _fmt_location(note: dict[str, Any], dist_labels: list[str]) -> str:
 
 def _fmt_nature(note: dict[str, Any], assoc_clusters: list[dict[str, Any]]) -> str:
     """Build a Nature of Symptoms string from cluster types + note temporal/depth/qualities."""
+    low  = int(note.get("low",  0))
+    high = int(note.get("high", 0))
+    severity = ""
+    if high > 0 or low > 0:
+        severity = f"{high}/10" if low == high else f"{low}–{high}/10"
+
+    # Voice transcript takes priority over index-based quality lookup
+    voice = note.get("voice_note", "").strip()
+    if voice:
+        parts = [voice]
+        if severity:
+            parts.append(severity)
+        return "; ".join(parts)
+
     # Symptom types present across associated clusters (skip TICK=5)
     seen_types: list[str] = []
     for cl in assoc_clusters:
@@ -74,7 +90,7 @@ def _fmt_nature(note: dict[str, Any], assoc_clusters: list[dict[str, Any]]) -> s
     temporal = _TEMPORAL.get(int(note.get("temporal", 0)), "constant")
     depth    = _DEPTH.get(int(note.get("depth", 0)), "superficial")
 
-    # Quality indices (0–13)
+    # Quality indices (0–11)
     quality_words: list[str] = []
     for idx in note.get("qualities", []):
         try:
@@ -84,8 +100,7 @@ def _fmt_nature(note: dict[str, Any], assoc_clusters: list[dict[str, Any]]) -> s
         if word and word not in quality_words:
             quality_words.append(word)
 
-    # Assemble
-    # Symptom types from clusters already encode temporal for pain types,
+    # Assemble: symptom types from clusters encode temporal for pain types,
     # so only prepend temporal when there are no associated clusters.
     if seen_types:
         parts = [", ".join(seen_types), depth]
@@ -95,14 +110,8 @@ def _fmt_nature(note: dict[str, Any], assoc_clusters: list[dict[str, Any]]) -> s
     if quality_words:
         parts.append(", ".join(quality_words))
 
-    # Severity range (NRS 0–10); omit if both are zero (not set)
-    low  = int(note.get("low",  0))
-    high = int(note.get("high", 0))
-    if high > 0 or low > 0:
-        if low == high:
-            parts.append(f"{high}/10")
-        else:
-            parts.append(f"{low}–{high}/10")
+    if severity:
+        parts.append(severity)
 
     return "; ".join(parts)
 

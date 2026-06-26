@@ -28,7 +28,7 @@ typedef enum {
 #define MAX_NOTES 10
 
 /* Quality indices — must match QUALITY_SHORT[] in window.c */
-#define NOTE_QUALITY_COUNT 14
+#define NOTE_QUALITY_COUNT 12
 
 /* Reusable: decouples a text-label position from its anchor spot.
  * Embed in any annotation that needs a draggable label box.
@@ -51,6 +51,7 @@ typedef struct {
     int          high_intensity;  /* 0-10, second selected */
     LabelAnchor  label;           /* draggable text-box position */
     char         text[256];       /* '\n'-delimited, 2 lines */
+    char         voice_note[256]; /* verbatim voice transcript; empty if not used */
 } NoteAnnotation;
 
 typedef struct {
