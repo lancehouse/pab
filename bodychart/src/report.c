@@ -52,9 +52,9 @@ static void attach_note_btn_rows(void);
 
 /* ── Quality labels ──────────────────────────────────────────────────────── */
 static const char *QUALITY_LONG[NOTE_QUALITY_COUNT] = {
-    "Pain", "Ache", "Numbness", "Sharp", "Dull", "Hot", "Cold",
-    "Itch", "Crawling", "Electric", "Shooting", "Buzzing", "Other",
-    "Pins & needles"
+    "Throbbing",  "Pressure",  "Aching",     "Stabbing",
+    "Tight",      "Burning",   "Freezing",   "Electrical",
+    "Shooting",   "Pins & needles", "Numbness", "Itching"
 };
 
 /* ── Anatomical region lookup ────────────────────────────────────────────── */
@@ -864,18 +864,24 @@ static void gen_buf(void)
     if (app->note_count > 0) {
         for (int ni = 0; ni < app->note_count; ni++) {
             NoteAnnotation *n = &app->notes[ni];
-            /* Build quality string e.g. "Aching + Burning" */
-            char qbuf[128] = {0};
-            for (int q = 0; q < n->quality_count; q++) {
-                if (q > 0) strncat(qbuf, " + ", sizeof(qbuf) - strlen(qbuf) - 1);
-                int qi = n->qualities[q];
-                const char *ql = (qi >= 0 && qi < NOTE_QUALITY_COUNT) ? QUALITY_LONG[qi] : "?";
-                strncat(qbuf, ql, sizeof(qbuf) - strlen(qbuf) - 1);
+            /* Build quality string — prefer voice transcript over coded terms */
+            char qbuf[256] = {0};
+            if (n->voice_note[0]) {
+                g_strlcpy(qbuf, n->voice_note, sizeof(qbuf));
+            } else {
+                for (int q = 0; q < n->quality_count; q++) {
+                    if (q > 0) strncat(qbuf, " + ", sizeof(qbuf) - strlen(qbuf) - 1);
+                    int qi = n->qualities[q];
+                    const char *ql = (qi >= 0 && qi < NOTE_QUALITY_COUNT)
+                                     ? QUALITY_LONG[qi] : "?";
+                    strncat(qbuf, ql, sizeof(qbuf) - strlen(qbuf) - 1);
+                }
+                if (n->quality_count == 0)
+                    strncat(qbuf, "?", sizeof(qbuf) - strlen(qbuf) - 1);
             }
-            if (n->quality_count == 0) strncat(qbuf, "?", sizeof(qbuf) - strlen(qbuf) - 1);
             const char *nrgn = body_region_name(n->view, (float)n->bx, (float)n->by);
 
-            char hdr[200];
+            char hdr[320];
             snprintf(hdr, sizeof(hdr),
                      "  NOTE (%d)  %s · %s · %s · %s · %s · %d-%d/10\n",
                      n->number, nrgn,
@@ -1252,14 +1258,20 @@ void report_save_md(AppState *app)
 
     for (int ni = 0; ni < app->note_count; ni++) {
         NoteAnnotation *n = &app->notes[ni];
-        char qbuf[128] = {0};
-        for (int q = 0; q < n->quality_count; q++) {
-            if (q > 0) strncat(qbuf, " + ", sizeof(qbuf) - strlen(qbuf) - 1);
-            int qi = n->qualities[q];
-            const char *ql = (qi >= 0 && qi < NOTE_QUALITY_COUNT) ? QUALITY_LONG[qi] : "?";
-            strncat(qbuf, ql, sizeof(qbuf) - strlen(qbuf) - 1);
+        char qbuf[256] = {0};
+        if (n->voice_note[0]) {
+            g_strlcpy(qbuf, n->voice_note, sizeof(qbuf));
+        } else {
+            for (int q = 0; q < n->quality_count; q++) {
+                if (q > 0) strncat(qbuf, " + ", sizeof(qbuf) - strlen(qbuf) - 1);
+                int qi = n->qualities[q];
+                const char *ql = (qi >= 0 && qi < NOTE_QUALITY_COUNT)
+                                 ? QUALITY_LONG[qi] : "?";
+                strncat(qbuf, ql, sizeof(qbuf) - strlen(qbuf) - 1);
+            }
+            if (n->quality_count == 0)
+                strncat(qbuf, "?", sizeof(qbuf) - strlen(qbuf) - 1);
         }
-        if (n->quality_count == 0) strncat(qbuf, "?", sizeof(qbuf) - strlen(qbuf) - 1);
         fprintf(f, "### Note (%d) — %s · %s · %s · %s · %s · %d-%d/10\n\n",
                 n->number,
                 body_region_name(n->view, (float)n->bx, (float)n->by),

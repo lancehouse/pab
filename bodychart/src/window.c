@@ -902,6 +902,13 @@ struct _WizardData {
     WBtnPair    c_q2[2];
     WizQualBtn  q3_btns[NOTE_QUALITY_COUNT];
     WizIntBtn   n_q4[11];
+    /* voice descriptor */
+    gboolean    whis_available;
+    gboolean    voice_busy;
+    guint       voice_poll_id;
+    char        voice_text[256];
+    GtkWidget  *mic_btn;
+    GtkWidget  *voice_label;
 };
 
 static gboolean g_wizard_open = FALSE;
@@ -954,7 +961,7 @@ static void on_wiz_qual_next(GtkButton *b, gpointer data)
 {
     (void)b;
     WizardData *wd = data;
-    if (wd->quality_count >= 1)
+    if (wd->quality_count >= 1 || wd->voice_text[0])
         gtk_stack_set_visible_child_name(GTK_STACK(wd->stack), "q4");
 }
 
@@ -984,14 +991,19 @@ static void on_wiz_int_click(GtkButton *b, gpointer data)
 static void on_wizard_destroy(GtkWidget *w, gpointer d)
 {
     (void)w;
+    WizardData *wd = d;
+    if (wd->voice_poll_id != 0) {
+        g_source_remove(wd->voice_poll_id);
+        wd->voice_poll_id = 0;
+    }
     g_wizard_open = FALSE;
     g_free(d);
 }
 
 static const char *QUALITY_SHORT[NOTE_QUALITY_COUNT] = {
-    "Pain", "Ache", "Numb", "Shrp", "Dull",
-    "Hot",  "Cold", "Itch", "Craw", "Elec",
-    "Shot", "Buzz", "Othr", "P+N"
+    "Throb", "Press", "Ache",  "Stab",
+    "Tight", "Burn",  "Freez", "Elec",
+    "Shot",  "P+N",   "Numb",  "Itch"
 };
 
 static void wizard_commit(WizardData *wd)
@@ -1013,22 +1025,34 @@ static void wizard_commit(WizardData *wd)
         na->high_intensity = wd->high_int >= 0 ? wd->high_int : 0;
         na->label.placed   = 0;   /* default offset; user can drag later */
 
-        /* Build preformatted text — '\n' splits the two display lines */
-        char qual_buf[64] = {0};
-        for (int i = 0; i < na->quality_count; i++) {
-            if (i > 0) strncat(qual_buf, "+", sizeof(qual_buf) - strlen(qual_buf) - 1);
-            strncat(qual_buf, QUALITY_SHORT[na->qualities[i]],
-                    sizeof(qual_buf) - strlen(qual_buf) - 1);
+        /* Copy voice transcript (empty string if voice was not used) */
+        g_strlcpy(na->voice_note, wd->voice_text, sizeof(na->voice_note));
+
+        /* Build display text line 2 — prefer voice transcript over short codes */
+        char line2[128] = {0};
+        if (na->voice_note[0]) {
+            snprintf(line2, sizeof(line2), "%.44s%s",
+                     na->voice_note,
+                     strlen(na->voice_note) > 44 ? "…" : "");
+        } else {
+            char qual_buf[64] = {0};
+            for (int i = 0; i < na->quality_count; i++) {
+                if (i > 0) strncat(qual_buf, "+",
+                                   sizeof(qual_buf) - strlen(qual_buf) - 1);
+                strncat(qual_buf, QUALITY_SHORT[na->qualities[i]],
+                        sizeof(qual_buf) - strlen(qual_buf) - 1);
+            }
+            if (na->quality_count == 0)
+                strncat(qual_buf, "?", sizeof(qual_buf) - strlen(qual_buf) - 1);
+            g_strlcpy(line2, qual_buf, sizeof(line2));
         }
-        if (na->quality_count == 0)
-            strncat(qual_buf, "?", sizeof(qual_buf) - strlen(qual_buf) - 1);
-        /* Line 1: number + temporal + depth + intensity; line 2: quality words */
+        /* Line 1: number + temporal + depth + intensity; line 2: descriptor */
         snprintf(na->text, sizeof(na->text), "(%d)%s %s %d-%d/10\n%s",
                  na->number,
                  na->temporal == 0 ? "Con" : "Int",
                  na->depth    == 0 ? "Sup" : "Dep",
                  na->low_intensity, na->high_intensity,
-                 qual_buf);
+                 line2);
         app->note_count++;
     }
     canvas_invalidate(app);
@@ -1052,44 +1076,141 @@ static GtkWidget *wiz_choice_row(WBtnPair pairs[2],
 
 /* Returns a vertical box containing the quality grid + Next button.
    Stores button widget pointers in wd->qual_btns[]. */
+/* ── Voice helpers ─────────────────────────────────────────────────────────── */
+
+static void whis_run_wiz(const char *subcmd)
+{
+    GError *err  = NULL;
+    gchar  *argv[] = { "whis", (gchar *)subcmd, NULL };
+    g_spawn_async(NULL, argv, NULL,
+                  G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL
+                  | G_SPAWN_STDERR_TO_DEV_NULL,
+                  NULL, NULL, NULL, &err);
+    if (err) g_error_free(err);
+}
+
+typedef struct { WizardData *wd; int attempts; } VoiceCtx;
+
+static gboolean voice_poll_cb(gpointer data)
+{
+    VoiceCtx   *ctx = data;
+    WizardData *wd  = ctx->wd;
+
+    gchar *out = NULL;
+    gchar *sargv[] = { "whis", "status", NULL };
+    g_spawn_sync(NULL, sargv, NULL,
+                 G_SPAWN_SEARCH_PATH | G_SPAWN_STDERR_TO_DEV_NULL,
+                 NULL, NULL, &out, NULL, NULL, NULL);
+
+    gboolean busy = out && (strstr(out, "Recording")   || strstr(out, "Transcribing") ||
+                            strstr(out, "recording")   || strstr(out, "transcribing"));
+    g_free(out);
+    ctx->attempts++;
+
+    if (busy && ctx->attempts < 30)
+        return G_SOURCE_CONTINUE;
+
+    gchar *clip = NULL;
+    gchar *wlargv[] = { "wl-paste", "--no-newline", NULL };
+    g_spawn_sync(NULL, wlargv, NULL,
+                 G_SPAWN_SEARCH_PATH | G_SPAWN_STDERR_TO_DEV_NULL,
+                 NULL, NULL, &clip, NULL, NULL, NULL);
+
+    if (clip && clip[0]) {
+        g_strlcpy(wd->voice_text, clip, sizeof(wd->voice_text));
+        char preview[56];
+        snprintf(preview, sizeof(preview), "%.52s%s",
+                 clip, strlen(clip) > 52 ? "…" : "");
+        gtk_label_set_text(GTK_LABEL(wd->voice_label), preview);
+        /* Jump straight to NRS intensity page */
+        gtk_stack_set_visible_child_name(GTK_STACK(wd->stack), "q4");
+    } else {
+        gtk_label_set_text(GTK_LABEL(wd->voice_label),
+                           "No result — tap descriptors below");
+    }
+    g_free(clip);
+
+    gtk_button_set_label(GTK_BUTTON(wd->mic_btn), "🎤  Speak");
+    wd->voice_busy    = FALSE;
+    wd->voice_poll_id = 0;
+    g_free(ctx);
+    return G_SOURCE_REMOVE;
+}
+
+static void on_voice_btn_clicked(GtkButton *b, gpointer data)
+{
+    (void)b;
+    WizardData *wd = data;
+
+    if (!wd->voice_busy) {
+        if (wd->voice_poll_id != 0) return;  /* poll still running */
+        whis_run_wiz("start");
+        whis_run_wiz("toggle");
+        wd->voice_busy = TRUE;
+        gtk_button_set_label(GTK_BUTTON(wd->mic_btn), "⏹  Stop");
+        gtk_label_set_text(GTK_LABEL(wd->voice_label),
+                           "Recording… tap Stop when done");
+    } else {
+        whis_run_wiz("toggle");
+        gtk_label_set_text(GTK_LABEL(wd->voice_label), "Transcribing…");
+        wd->voice_busy = FALSE;
+
+        VoiceCtx *ctx   = g_new0(VoiceCtx, 1);
+        ctx->wd         = wd;
+        ctx->attempts   = 0;
+        wd->voice_poll_id = g_timeout_add(500, voice_poll_cb, ctx);
+    }
+}
+
+/* ── Quality grid ─────────────────────────────────────────────────────────── */
+
 static GtkWidget *wiz_quality_grid(WizardData *wd)
 {
+    /* Row 0 — Nociceptive:  Throbbing | Pressure | Aching    | Stabbing  */
+    /* Row 1 — Noci+Neuro:   Tight     | Burning  | Freezing  | Electrical */
+    /* Row 2 — Neuro+Dysae:  Shooting  | P+N      | Numbness  | Itching   */
     static const char *labels[NOTE_QUALITY_COUNT] = {
-        "Pain",     "Ache",     "Numb",    "Sharp",
-        "Dull",     "Hot",      "Cold",    "Itch",
-        "Crawl",    "Electric", "Shooting","Buzzing",
-        "Other",    "P+N"
+        "Throbbing",  "Pressure",  "Aching",     "Stabbing",
+        "Tight",      "Burning",   "Freezing",   "Electrical",
+        "Shooting",   "P+N",       "Numbness",   "Itching"
     };
+
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     gtk_widget_set_halign(vbox, GTK_ALIGN_CENTER);
+
+    /* Voice row — only if whis is available */
+    if (wd->whis_available) {
+        GtkWidget *voice_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+        gtk_widget_set_halign(voice_row, GTK_ALIGN_CENTER);
+        wd->mic_btn = gtk_button_new_with_label("🎤  Speak");
+        gtk_widget_set_name(wd->mic_btn, "wiz-btn");
+        gtk_widget_set_size_request(wd->mic_btn, -1, 44);
+        g_signal_connect(wd->mic_btn, "clicked",
+                         G_CALLBACK(on_voice_btn_clicked), wd);
+        gtk_box_append(GTK_BOX(voice_row), wd->mic_btn);
+        gtk_box_append(GTK_BOX(vbox), voice_row);
+
+        wd->voice_label = gtk_label_new("— or tap descriptors below —");
+        gtk_widget_set_name(wd->voice_label, "wiz-title");
+        gtk_box_append(GTK_BOX(vbox), wd->voice_label);
+
+        gtk_box_append(GTK_BOX(vbox),
+                       gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
+    }
 
     GtkWidget *grid = gtk_grid_new();
     gtk_grid_set_row_spacing(GTK_GRID(grid), 4);
     gtk_grid_set_column_spacing(GTK_GRID(grid), 4);
     gtk_widget_set_halign(grid, GTK_ALIGN_CENTER);
 
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; i < NOTE_QUALITY_COUNT; i++) {
         GtkWidget *btn = gtk_button_new_with_label(labels[i]);
         gtk_widget_set_name(btn, "wiz-qual-btn");
         wd->qual_btns[i] = btn;
-        g_signal_connect(btn, "clicked", G_CALLBACK(on_wiz_qual_toggle), &wd->q3_btns[i]);
+        g_signal_connect(btn, "clicked", G_CALLBACK(on_wiz_qual_toggle),
+                         &wd->q3_btns[i]);
         gtk_grid_attach(GTK_GRID(grid), btn, i % 4, i / 4, 1, 1);
     }
-    /* Row 3: Other (left 2 cols) + P+N (right 2 cols) */
-    GtkWidget *other = gtk_button_new_with_label(labels[12]);
-    gtk_widget_set_name(other, "wiz-qual-btn");
-    gtk_widget_set_hexpand(other, TRUE);
-    wd->qual_btns[12] = other;
-    g_signal_connect(other, "clicked", G_CALLBACK(on_wiz_qual_toggle), &wd->q3_btns[12]);
-    gtk_grid_attach(GTK_GRID(grid), other, 0, 3, 2, 1);
-
-    GtkWidget *pn = gtk_button_new_with_label(labels[13]);
-    gtk_widget_set_name(pn, "wiz-qual-btn");
-    gtk_widget_set_hexpand(pn, TRUE);
-    wd->qual_btns[13] = pn;
-    g_signal_connect(pn, "clicked", G_CALLBACK(on_wiz_qual_toggle), &wd->q3_btns[13]);
-    gtk_grid_attach(GTK_GRID(grid), pn, 2, 3, 2, 1);
-
     gtk_box_append(GTK_BOX(vbox), grid);
 
     GtkWidget *next = gtk_button_new_with_label("Next →");
@@ -1141,11 +1262,12 @@ static void show_note_wizard(AppState *app, int view, double bx, double by)
     g_wizard_open = TRUE;
 
     WizardData *wd = g_malloc0(sizeof(WizardData));
-    wd->app     = app;
-    wd->view    = view;
-    wd->bx      = bx;
-    wd->by      = by;
-    wd->low_int = -1;  /* nothing selected yet */
+    wd->app            = app;
+    wd->view           = view;
+    wd->bx             = bx;
+    wd->by             = by;
+    wd->low_int        = -1;  /* nothing selected yet */
+    wd->whis_available = (g_find_program_in_path("whis") != NULL);
 
     for (int i = 0; i < 2; i++) {
         wd->c_q1[i] = (WBtnPair){ wd, i, 0 };

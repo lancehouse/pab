@@ -371,6 +371,9 @@ static json_object *notes_to_json(AppState *app,
             json_object_object_add(o, "lx",     json_object_new_double(n->label.lx));
             json_object_object_add(o, "ly",     json_object_new_double(n->label.ly));
         }
+        if (n->voice_note[0])
+            json_object_object_add(o, "voice_note",
+                                   json_object_new_string(n->voice_note));
 
         /* Spatial association: region the note dot sits in */
         const char *region_label = "";
@@ -641,22 +644,30 @@ static const char *js(json_object *o, const char *k)
 extern const char *QUALITY_SHORT_EXTERN[];
 static void regen_note_text(NoteAnnotation *n, const char *const *qs)
 {
-    /* Build joined quality string e.g. "Ach+Burn" */
-    char qual_buf[64] = {0};
-    for (int q = 0; q < n->quality_count; q++) {
-        if (q > 0) strncat(qual_buf, "+", sizeof(qual_buf) - strlen(qual_buf) - 1);
-        strncat(qual_buf, qs[n->qualities[q]], sizeof(qual_buf) - strlen(qual_buf) - 1);
+    char line2[128] = {0};
+    if (n->voice_note[0]) {
+        snprintf(line2, sizeof(line2), "%.44s%s",
+                 n->voice_note,
+                 strlen(n->voice_note) > 44 ? "…" : "");
+    } else {
+        char qual_buf[64] = {0};
+        for (int q = 0; q < n->quality_count; q++) {
+            if (q > 0) strncat(qual_buf, "+",
+                               sizeof(qual_buf) - strlen(qual_buf) - 1);
+            strncat(qual_buf, qs[n->qualities[q]],
+                    sizeof(qual_buf) - strlen(qual_buf) - 1);
+        }
+        if (n->quality_count == 0)
+            strncat(qual_buf, "?", sizeof(qual_buf) - strlen(qual_buf) - 1);
+        g_strlcpy(line2, qual_buf, sizeof(line2));
     }
-    if (n->quality_count == 0)
-        strncat(qual_buf, "?", sizeof(qual_buf) - strlen(qual_buf) - 1);
 
-    /* Line 1: number + temporal + depth + intensity; line 2: quality words */
     snprintf(n->text, sizeof(n->text), "(%d)%s %s %d-%d/10\n%s",
              n->number,
              n->temporal == 0 ? "Con" : "Int",
              n->depth    == 0 ? "Sup" : "Dep",
              n->low_intensity, n->high_intensity,
-             qual_buf);
+             line2);
 }
 
 /* ── Load ─────────────────────────────────────────────────────────────────── */
@@ -840,9 +851,10 @@ gboolean persistence_load(AppState *app, const char *path)
     }
 
     /* Notes — need quality strings for text regeneration */
-    static const char *qs[14] = {
-        "Pain","Ache","Numb","Shrp","Dull","Hot","Cold",
-        "Itch","Craw","Elec","Shot","Buzz","Othr","P+N"
+    static const char *qs[NOTE_QUALITY_COUNT] = {
+        "Throb","Press","Ache","Stab",
+        "Tight","Burn","Freez","Elec",
+        "Shot","P+N","Numb","Itch"
     };
     json_object *notes_arr;
     if (json_object_object_get_ex(subj, "notes", &notes_arr)) {
@@ -875,12 +887,12 @@ gboolean persistence_load(AppState *app, const char *path)
                 na->quality_count = qc;
                 for (int q = 0; q < qc; q++) {
                     int qv = (int)json_object_get_int(json_object_array_get_idx(quals_j, q));
-                    na->qualities[q] = (qv >= 0 && qv < 14) ? qv : 0;
+                    na->qualities[q] = (qv >= 0 && qv < NOTE_QUALITY_COUNT) ? qv : 0;
                 }
             } else {
                 /* legacy: single "quality" int */
                 int qv = ji(o, "quality", 0);
-                na->qualities[0]  = (qv >= 0 && qv < 14) ? qv : 0;
+                na->qualities[0]  = (qv >= 0 && qv < NOTE_QUALITY_COUNT) ? qv : 0;
                 na->quality_count = 1;
             }
             /* Load intensity — new low/high format; fall back to legacy avg/worst */
@@ -900,6 +912,8 @@ gboolean persistence_load(AppState *app, const char *path)
             } else {
                 na->label.placed = 0;
             }
+            /* Voice transcript — absent in sessions recorded before voice support */
+            g_strlcpy(na->voice_note, js(o, "voice_note"), sizeof(na->voice_note));
             regen_note_text(na, qs);
             app->note_count++;
         }
