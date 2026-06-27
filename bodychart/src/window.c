@@ -961,7 +961,7 @@ static void on_wiz_qual_next(GtkButton *b, gpointer data)
 {
     (void)b;
     WizardData *wd = data;
-    if (wd->quality_count >= 1)
+    if (wd->quality_count >= 1 || wd->voice_text[0])
         gtk_stack_set_visible_child_name(GTK_STACK(wd->stack), "q4");
 }
 
@@ -1122,6 +1122,8 @@ static gboolean voice_poll_cb(gpointer data)
         snprintf(preview, sizeof(preview), "%.52s%s",
                  clip, strlen(clip) > 52 ? "…" : "");
         gtk_label_set_text(GTK_LABEL(wd->voice_label), preview);
+        /* Jump straight to NRS intensity page */
+        gtk_stack_set_visible_child_name(GTK_STACK(wd->stack), "q4");
     } else {
         gtk_label_set_text(GTK_LABEL(wd->voice_label),
                            "No result — tap descriptors below");
