@@ -66,10 +66,12 @@ static json_object *strokes_to_json(StrokeList *sl)
     for (int i = 0; i < sl->n; i++) {
         Stroke *sk = sl->strokes[i];
         json_object *s = json_object_new_object();
-        json_object_object_add(s, "id",   json_object_new_int(sk->id));
-        json_object_object_add(s, "type", json_object_new_int(sk->type));
-        json_object_object_add(s, "view", json_object_new_int(sk->view));
-        json_object_object_add(s, "wide", json_object_new_boolean(sk->wide_mode));
+        json_object_object_add(s, "id",    json_object_new_int(sk->id));
+        json_object_object_add(s, "type",  json_object_new_int(sk->type));
+        json_object_object_add(s, "view",  json_object_new_int(sk->view));
+        json_object_object_add(s, "wide",  json_object_new_boolean(sk->wide_mode));
+        if (sk->draw_zoom > 0.0)
+            json_object_object_add(s, "draw_zoom", json_object_new_double(sk->draw_zoom));
         json_object *pts = json_object_new_array();
         for (size_t j = 0; j < sk->n_pts; j++) {
             json_object *pt = json_object_new_array();
@@ -818,13 +820,15 @@ gboolean persistence_load(AppState *app, const char *path)
         int n = (int)json_object_array_length(strokes_arr);
         for (int i = 0; i < n; i++) {
             json_object *s = json_object_array_get_idx(strokes_arr, i);
-            int type = ji(s, "type", 0);
-            int view = ji(s, "view", 0);
-            int wide = jb(s, "wide", FALSE);
-            int sid  = ji(s, "id",   -1);
+            int type  = ji(s, "type",  0);
+            int view  = ji(s, "view",  0);
+            int wide  = jb(s, "wide",  FALSE);
+            double draw_zoom_val = jd(s, "draw_zoom", 0.0);
+            int sid   = ji(s, "id",    -1);
             if (type < 0 || type >= SYMPTOM_COUNT) continue;
             Stroke *sk = stroke_new((SymptomType)type, view);
-            sk->wide_mode = wide;
+            sk->wide_mode    = wide;
+            sk->draw_zoom = draw_zoom_val;
             if (sid >= 0) {
                 sk->id = sid;
                 if (sid >= app->next_stroke_id) app->next_stroke_id = sid + 1;

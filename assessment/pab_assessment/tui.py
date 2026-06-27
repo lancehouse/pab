@@ -217,9 +217,10 @@ class BodyChartPanel(Static):
     DEFAULT_CSS = """
     BodyChartPanel {
         width: auto;
-        height: 1;
+        height: 2;
         color: $text-muted;
         padding: 0 1;
+        content-align: left middle;
     }
     BodyChartPanel:hover { color: $text; }
     """
@@ -256,10 +257,11 @@ class _NavChip(Static):
     DEFAULT_CSS = """
     _NavChip {
         width: auto;
-        height: 1;
+        height: 2;
         padding: 0 1;
         background: #2a4060;
         color: white;
+        content-align: left middle;
     }
     _NavChip:hover {
         background: #4a7090;
@@ -368,7 +370,7 @@ class SubsectionNavBar(Static):
 
     DEFAULT_CSS = """
     SubsectionNavBar {
-        height: 1;
+        height: 2;
         width: 1fr;
         layout: horizontal;
         background: #1a2a3a;
@@ -472,19 +474,21 @@ class PhysioAssessmentTUI(Container):
     }
 
     #top_bar {
-        height: 1;
+        height: 2;
         width: 100%;
         background: $boost;
         padding: 0 1;
     }
     #session_header {
         width: 19;
-        height: 1;
+        height: 2;
         color: $text;
         padding: 0 1 0 0;
+        content-align: left middle;
     }
     #subsection_nav_bar {
         display: none;
+        height: 2;
     }
 
     #tui_status {

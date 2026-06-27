@@ -76,6 +76,7 @@ typedef struct {
     SymptomType   type;
     int           view;       /* which body view this belongs to */
     int           wide_mode;  /* 1 = wide band (2–7 bu), 0 = thin (0.8–4.5 bu) */
+    double        draw_zoom;  /* zoom level when drawn by touch; 0.0 = stylus (no compensation) */
     int           id;         /* monotonic, never reused after undo */
 } Stroke;
 
