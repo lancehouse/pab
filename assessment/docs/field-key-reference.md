@@ -179,6 +179,21 @@ Toggle buttons (CheckButton / FlagButton) in the Medical section are harvested
 dynamically by the search index. They have IDs beginning with `rf_`, `cvd_`,
 `comorbid_`, `diff_` prefixes — see `sections/medical.py` for the full list.
 
+| Key | Description |
+|---|---|
+| `img_xray` | Imaging — X-ray (CheckButton) |
+| `img_xray_detail` | Imaging — X-ray detail (text) |
+| `img_us` | Imaging — Ultrasound (CheckButton) |
+| `img_us_detail` | Imaging — Ultrasound detail (text) |
+| `img_ct` | Imaging — CT (CheckButton) |
+| `img_ct_detail` | Imaging — CT detail (text) |
+| `img_mri` | Imaging — MRI (CheckButton) |
+| `img_mri_detail` | Imaging — MRI detail (text) |
+| `img_ncs` | Imaging — NCS (CheckButton) |
+| `img_ncs_detail` | Imaging — NCS detail (text) |
+| `img_other` | Imaging — Other (CheckButton) |
+| `img_other_detail` | Imaging — Other detail (text) |
+
 ---
 
 ## 04 Pain Classification

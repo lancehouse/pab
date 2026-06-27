@@ -74,9 +74,9 @@ _MYOTOME_ROWS: list[tuple[str, str, list]] = [
 _DERM_ROWS: list[tuple[str, str]] = [
     ("L2  Ant thigh",    "sn_l2"),
     ("L3  Med knee",     "sn_l3"),
-    ("L4  Med ankle",    "sn_l4"),
-    ("L5  Lat leg/GT",   "sn_l5"),
-    ("S1  Lat foot/heel","sn_s1"),
+    ("L4  Med foot",     "sn_l4"),
+    ("L5  Dorsum foot",  "sn_l5"),
+    ("S1  Lat foot",     "sn_s1"),
     ("S2  Post thigh",   "sn_s2"),
 ]
 _ND_ROWS: list[tuple[str, str, bool]] = [

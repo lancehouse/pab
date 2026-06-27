@@ -95,6 +95,7 @@ _SUBSECTIONS: list[tuple[str, str, str]] = [
     ("03_medical", "diff_aaa",             "Differential: Aortic Aneurysm"),
     ("03_medical", "diff_vc",              "Differential: Vascular Claudication"),
     ("03_medical", "med_medications",      "Medications"),
+    ("03_medical", "med_imaging",          "Imaging"),
     # 04 Pain Classification
     ("04_pain_classification", "pc_inflammatory", "Inflammatory"),
     ("04_pain_classification", "pc_nociceptive",  "Nociceptive"),
@@ -303,6 +304,12 @@ _FIELD_LABELS: dict[str, tuple[str, str | None, str]] = {
     "diff_as_action":        ("03_medical", "med_differential",   "Ankylosing spondylitis action"),
     "diff_aaa_action":       ("03_medical", "med_differential",   "AAA action"),
     "diff_vc_action":        ("03_medical", "med_differential",   "Vascular claudication action"),
+    "img_xray_detail":       ("03_medical", "med_imaging",        "Imaging: X-ray detail"),
+    "img_us_detail":         ("03_medical", "med_imaging",        "Imaging: Ultrasound detail"),
+    "img_ct_detail":         ("03_medical", "med_imaging",        "Imaging: CT detail"),
+    "img_mri_detail":        ("03_medical", "med_imaging",        "Imaging: MRI detail"),
+    "img_ncs_detail":        ("03_medical", "med_imaging",        "Imaging: NCS detail"),
+    "img_other_detail":      ("03_medical", "med_imaging",        "Imaging: Other detail"),
     # 04 Pain Classification
     "noci_interpretation":  ("04_pain_classification", "pc_nociceptive",  "Nociceptive interpretation"),
     "neuro_interpretation": ("04_pain_classification", "pc_neuropathic",  "Neuropathic interpretation"),

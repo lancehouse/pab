@@ -146,6 +146,9 @@ class MedicalSection(BaseSection):
     .med_col_dose     { width: 2fr; }
     .med_col_timing   { width: 2fr; }
     .med_col_comments { width: 5fr; }
+
+    .img_row { height: auto; width: 100%; margin-bottom: 1; }
+    .img_row TextArea { width: 1fr; height: auto; min-height: 3; max-height: 12; padding: 0 1; }
     """
 
     # Red flag field groups (all use FlagButton)
@@ -186,6 +189,15 @@ class MedicalSection(BaseSection):
         "rf_malignancy_comment", "rf_fracture_comment", "rf_infection_comment",
         "cauda_equina_action", "spinal_cord_action",
         "diff_as_action", "diff_aaa_action", "diff_vc_action",
+    ]
+
+    _IMAGING_FIELDS = [
+        ("Xray",  "img_xray",  "img_xray_detail"),
+        ("U/S",   "img_us",    "img_us_detail"),
+        ("CT",    "img_ct",    "img_ct_detail"),
+        ("MRI",   "img_mri",   "img_mri_detail"),
+        ("NCS",   "img_ncs",   "img_ncs_detail"),
+        ("Other", "img_other", "img_other_detail"),
     ]
 
     def __init__(self, **kwargs):
@@ -341,6 +353,13 @@ class MedicalSection(BaseSection):
             for i in range(4):
                 yield MedRow(i, classes="med_row")
 
+        # ── Imaging ──────────────────────────────────────────────────────
+        yield Label("— Imaging —", classes="subsection_header", id="med_imaging")
+        for lbl, btn_id, detail_id in self._IMAGING_FIELDS:
+            with Horizontal(classes="img_row"):
+                yield CheckButton(lbl, id=btn_id)
+                yield TextArea(id=detail_id, language="plain")
+
     # ------------------------------------------------------------------
     # Navigation
     # ------------------------------------------------------------------
@@ -468,6 +487,15 @@ class MedicalSection(BaseSection):
             if any(row.values()):
                 medications.append(row)
         data["medications"] = medications
+        for _, btn_id, detail_id in self._IMAGING_FIELDS:
+            try:
+                data[btn_id] = self.query_one(f"#{btn_id}", CheckButton).value
+            except Exception:
+                data[btn_id] = None
+            try:
+                data[detail_id] = self.query_one(f"#{detail_id}", TextArea).text
+            except Exception:
+                data[detail_id] = ""
         return data
 
     def load(self, data: dict) -> None:
@@ -503,6 +531,15 @@ class MedicalSection(BaseSection):
                 for _ in extra:
                     self._add_medication_row()
                 self.set_timer(0.1, lambda s=start, m=meds: self._load_extra_meds(m, s))
+            for _, btn_id, detail_id in self._IMAGING_FIELDS:
+                try:
+                    self.query_one(f"#{btn_id}", CheckButton).set_value(medical.get(btn_id))
+                except Exception:
+                    pass
+                try:
+                    self.query_one(f"#{detail_id}", TextArea).text = medical.get(detail_id, "")
+                except Exception:
+                    pass
         finally:
             self._loading = False
             self._update_rf_alert()
