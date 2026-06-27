@@ -2741,6 +2741,7 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
     txt("aggravating_factors",     s)
     txt("easing_factors",          s)
     f("mood_influences",           s)
+    txt("mood_text",               s)
     txt("daily_pattern_comments",  s)
     txt("hr24_am",                 s)
     txt("hr24_day",                s)
@@ -3815,6 +3816,11 @@ LABELS: dict[str, str] = {
     "sleep_overall_rating":             "Sleep overall rating",
     "sleep_feels_rested":               "Feels rested",
     "mood_influences":                  "Mood influences pain",
+    "mood_text":                        "Mood / emotional context",
+    "hr24_am":                          "24hr pattern — Morning",
+    "hr24_day":                         "24hr pattern — Daytime",
+    "hr24_pm":                          "24hr pattern — Evening",
+    "hr24_nocte":                       "24hr pattern — Night",
     "self_harm_risk":                   "Self-harm risk assessed",
     "symptom_location":                 "Symptom location",
     "symptom_nature":                   "Nature of symptoms",
@@ -4455,6 +4461,7 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     txt("aggravating_factors",    s)
     txt("easing_factors",         s)
     f("mood_influences",          s)
+    txt("mood_text",              s)
     txt("daily_pattern_comments", s)
     txt("hr24_am",                s)
     txt("hr24_day",               s)
