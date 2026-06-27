@@ -23,6 +23,74 @@ from .kb_panel import KBPanel
 
 logger = logging.getLogger(__name__)
 
+# ── Objective subsection nav chip ────────────────────────────────────────────
+
+class _ObjNavChip(Static):
+    """Subsection jump chip — scrolls obj_section_content to the anchor."""
+
+    DEFAULT_CSS = """
+    _ObjNavChip {
+        width: auto; height: 2; padding: 0 1; margin: 0 1 0 0;
+        background: #2a4060; color: white;
+        content-align: left middle;
+    }
+    _ObjNavChip:hover { background: #4a7090; }
+    """
+
+    def __init__(self, label: str, anchor_id: str, **kwargs) -> None:
+        super().__init__(label, **kwargs)
+        self._anchor_id = anchor_id
+
+    def on_click(self) -> None:
+        try:
+            sc = self.app.query_one("#obj_section_content", ScrollableContainer)
+            target = self.app.query_one(f"#{self._anchor_id}")
+            sc.scroll_to_widget(target, top=True, animate=False)
+        except Exception:
+            pass
+
+
+# Subsection chips per objective tab (label, anchor_id)
+_OBJ_SUBSECS: dict[str, list[tuple[str, str]]] = {
+    "01_general": [
+        ("Physical", "go_physical"),
+        ("Posture",  "go_posture"),
+    ],
+    "04_neurological": [
+        ("UL Reflex",  "nr_ul_reflexes"),
+        ("UL Myotome", "nr_ul_myotomes"),
+        ("UL Derm",    "nr_ul_dermatomes"),
+        ("UL ND",      "nr_ul_neurodynamics"),
+        ("LL Reflex",  "nr_reflexes"),
+        ("LL Myotome", "nr_myotomes"),
+        ("LL Derm",    "nr_dermatomes"),
+        ("LL ND",      "nr_neurodynamics"),
+        ("UMN",        "nr_umn"),
+    ],
+    "05_sensory": [
+        ("Hypo",  "sn_hyposensitivity"),
+        ("Hyper", "sn_hypersensitivity"),
+    ],
+    "07_functional": [
+        ("Goals",    "fn_goals"),
+        ("Movement", "fn_movement"),
+        ("Balance",  "fn_balance"),
+        ("Timed",    "fn_timed"),
+    ],
+    "09_crps": [
+        ("Pain",     "crps_disp"),
+        ("Sx",       "crps_sx"),
+        ("Signs",    "crps_sg"),
+        ("No Dx",    "crps_no_dx"),
+        ("Summary",  "crps_summary_hdr"),
+        ("Subtype",  "crps_subtype_hdr"),
+        ("TPD",      "crps_tpd"),
+        ("Vis'n",    "crps_vis"),
+        ("Lateral",  "crps_lat"),
+    ],
+}
+
+
 # ── Region toggle chip ───────────────────────────────────────────────────────
 
 class _RegionButton(Static):
@@ -35,8 +103,9 @@ class _RegionButton(Static):
 
     DEFAULT_CSS = """
     _RegionButton {
-        width: auto; height: 1; padding: 0 1; margin: 0 1 0 0;
+        width: auto; height: 2; padding: 0 1; margin: 0 1 0 0;
         background: $panel; color: $text-muted;
+        content-align: left middle;
     }
     _RegionButton.active-region {
         background: #2a5080; color: white; text-style: bold;
@@ -121,11 +190,23 @@ class RegionTopbar(Static):
         border-bottom: solid $border;
         background: $panel-darken-1;
     }
+    RegionTopbar #obj_subsec_bar {
+        width: 1fr;
+        height: 2;
+        layout: horizontal;
+    }
+    RegionTopbar #obj_region_bar {
+        width: auto;
+        height: 2;
+        layout: horizontal;
+        align: right middle;
+    }
     RegionTopbar .region_label {
         width: auto;
-        height: 1;
+        height: 2;
         margin-right: 1;
         color: $text-muted;
+        content-align: left middle;
     }
     """
 
@@ -134,12 +215,21 @@ class RegionTopbar(Static):
         self._active_regions = list(active_regions)
 
     def compose(self) -> ComposeResult:
-        yield Static("Regions:", classes="region_label")
-        for region_id, label in _ALL_REGIONS:
-            chip = _RegionButton(label, region_id, id=f"rgn_{region_id}")
-            if region_id in self._active_regions:
-                chip.add_class("active-region")
-            yield chip
+        yield Horizontal(id="obj_subsec_bar")
+        with Horizontal(id="obj_region_bar"):
+            yield Static("Regions:", classes="region_label")
+            for region_id, label in _ALL_REGIONS:
+                chip = _RegionButton(label, region_id, id=f"rgn_{region_id}")
+                if region_id in self._active_regions:
+                    chip.add_class("active-region")
+                yield chip
+
+    def set_section(self, section_id: str) -> None:
+        """Swap left-side subsection chips to match the active objective tab."""
+        bar = self.query_one("#obj_subsec_bar", Horizontal)
+        bar.remove_children()
+        for label, anchor_id in _OBJ_SUBSECS.get(section_id, []):
+            bar.mount(_ObjNavChip(label, anchor_id))
 
     @on(_RegionButton.Toggled)
     def _on_region_chip_toggled(self, event: _RegionButton.Toggled) -> None:
@@ -353,6 +443,10 @@ class ObjectiveAssessmentView(Container):
             self._mount_region(region_id)
 
         self._mounted = True
+        try:
+            self.query_one("#obj_region_topbar", RegionTopbar).set_section(self.active_section_id)
+        except Exception:
+            pass
         if self._pending_load is not None:
             data = self._pending_load
             self._pending_load = None
@@ -474,6 +568,10 @@ class ObjectiveAssessmentView(Container):
             self.active_section_id = section_id
         try:
             self.query_one("#obj_sidebar", ObjectiveSidebar).set_active(section_id)
+        except Exception:
+            pass
+        try:
+            self.query_one("#obj_region_topbar", RegionTopbar).set_section(section_id)
         except Exception:
             pass
 

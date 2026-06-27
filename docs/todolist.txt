@@ -1,18 +1,20 @@
 
 GTK:
 better words in the pain descriptors section.
-        
+        whis voice integration
+
 TUI:
+   
+    rename dermatome location tags wihtin the 05 tab.
  
- report:
-     Carriage return after freetext and all heading entries
-     
-     Obj General OBs section poorly tabulated.
-     Sensory poorly tabulated
-     Body Perception needs textarea
-     
-     OP Tx rotn and Lx lat flexion alwys populate even when empty
-     
+    imaging section in medical
+    
+    report: check all input fields for carryover. nb: activity diary.
+    scratchpad notes
+    
+    
+    
+    
   
      
           
