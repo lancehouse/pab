@@ -28,6 +28,7 @@ typedef struct {
     double     last_cx, last_cy;
     double     mid_pan_x0, mid_pan_y0;  /* pan at start of middle-button drag */
     double     mouse_x, mouse_y;        /* last known cursor position (screen px) */
+    gboolean   touch_drawing;           /* finger/mouse draw in progress */
     GtkWidget *da;
     GtkWidget *zoom_btn;
     GtkWidget *header_label;
@@ -53,10 +54,15 @@ static const BodyView SINGLE_SLOT_VIEWS[4] = {
  * All widths/sizes are body-space units (body = 200×400 bu). They scale      *
  * naturally with zoom because Cairo is already in body-space after the       *
  * col transform. Symbol patterns batch all geometry into one stroke/fill.    */
+/* ts: scale factor for body-space widths on touch strokes.
+ * Baked at draw time (1/draw_zoom), so body-space width is fixed after drawing.
+ * Strokes naturally scale on screen with zoom — same as all other body features. */
 static void draw_stroke(cairo_t *cr, const Stroke *s, const SymptomDef *sd,
-                        const AppState *app)
+                        const AppState *app, double zoom)
 {
     if (s->n_pts < 1) return;
+    const double ts = (s->draw_zoom > 0.0) ? (1.0 / s->draw_zoom) : 1.0;
+    (void)zoom;
 
     cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
     cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
@@ -70,14 +76,14 @@ static void draw_stroke(cairo_t *cr, const Stroke *s, const SymptomDef *sd,
         if (s->n_pts < 2) break;
         size_t n = s->n_pts;
         double p_cur = s->pts[0].pressure;
-        double w_cur = s->wide_mode ? (1.5 + p_cur * 14.5) : (0.375 + p_cur * 11.625);
+        double w_cur = ts * (s->wide_mode ? (1.5 + p_cur * 14.5) : (0.375 + p_cur * 11.625));
         cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
         cairo_set_line_width(cr, w_cur);
         cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 0.8);
         cairo_move_to(cr, s->pts[0].x, s->pts[0].y);
         for (size_t i = 1; i < n; i++) {
             double p = (s->pts[i-1].pressure + s->pts[i].pressure) * 0.5;
-            double w = s->wide_mode ? (1.5 + p * 14.5) : (0.375 + p * 11.625);
+            double w = ts * (s->wide_mode ? (1.5 + p * 14.5) : (0.375 + p * 11.625));
             if (fabs(w - w_cur) > 0.3) {
                 cairo_stroke(cr);
                 w_cur = w;
@@ -107,9 +113,9 @@ static void draw_stroke(cairo_t *cr, const Stroke *s, const SymptomDef *sd,
         double avg_p = 0.0;
         for (size_t i = 0; i < n; i++) avg_p += s->pts[i].pressure;
         avg_p /= (double)n;
-        cairo_set_line_width(cr, s->wide_mode ? (0.8 + avg_p * 9.2) : (0.3 + avg_p * 5.7));
+        cairo_set_line_width(cr, ts * (s->wide_mode ? (0.8 + avg_p * 9.2) : (0.3 + avg_p * 5.7)));
         cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 0.8);
-        double dashes[2] = { 6.0, 4.0 };
+        double dashes[2] = { ts * 6.0, ts * 4.0 };
         cairo_set_dash(cr, dashes, 2, 0);
         cairo_move_to(cr, s->pts[0].x, s->pts[0].y);
         for (size_t i = 1; i < n; i++) {
@@ -132,8 +138,8 @@ static void draw_stroke(cairo_t *cr, const Stroke *s, const SymptomDef *sd,
         /* Pressure controls COUNT of dots placed side-by-side perpendicular to stroke:
          *   p<0.40 → 1 dot   0.40–0.65 → 2 dots   0.65–0.82 → 3 dots   ≥0.82 → 4 dots
          * Dots are all the same radius (fixed, no size scaling with pressure). */
-        double dot_r   = (double)app->pen_dot_radius;
-        double spacing = (double)app->pen_dot_spacing;
+        double dot_r   = ts * (double)app->pen_dot_radius;
+        double spacing = ts * (double)app->pen_dot_spacing;
         double dot_gap = dot_r * 2.5;  /* centre-to-centre perpendicular gap */
         cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 0.8);
 
@@ -188,9 +194,9 @@ static void draw_stroke(cairo_t *cr, const Stroke *s, const SymptomDef *sd,
          *   0.65–0.85     → 2 short dashes stacked
          *   ≥0.85         → 2 long dashes stacked
          * Dashes are always horizontal; stroke width set by pen_dash_width. */
-        double dash_len = (double)app->pen_dash_len;
-        double spacing  = (double)app->pen_dash_spacing;
-        double lw       = (double)app->pen_dash_width;
+        double dash_len = ts * (double)app->pen_dash_len;
+        double spacing  = ts * (double)app->pen_dash_spacing;
+        double lw       = ts * (double)app->pen_dash_width;
         double dash_gap = dash_len * 0.9 + lw;  /* vertical gap between stacked dashes */
         cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 0.8);
         cairo_set_line_width(cr, lw);
@@ -233,9 +239,9 @@ static void draw_stroke(cairo_t *cr, const Stroke *s, const SymptomDef *sd,
         /* Pressure controls COUNT of X marks placed side-by-side perpendicular to stroke:
          *   p<0.40 → 1 X   0.40–0.65 → 2 X   0.65–0.82 → 3 X   ≥0.82 → 4 X
          * Stroke width set by pen_x_width. */
-        double arm     = (double)app->pen_x_arm;
-        double spacing = (double)app->pen_x_spacing;
-        double lw      = (double)app->pen_x_width;
+        double arm     = ts * (double)app->pen_x_arm;
+        double spacing = ts * (double)app->pen_x_spacing;
+        double lw      = ts * (double)app->pen_x_width;
         double x_gap   = arm * 2.6;  /* centre-to-centre perpendicular gap */
         cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 0.8);
         cairo_set_line_width(cr, lw);
@@ -322,14 +328,14 @@ static void draw_stroke(cairo_t *cr, const Stroke *s, const SymptomDef *sd,
         if (s->n_pts < 2) break;
         size_t n = s->n_pts;
         double p_cur = s->pts[0].pressure;
-        double w_cur = 0.6 + p_cur * 1.4;
+        double w_cur = ts * (0.6 + p_cur * 1.4);
         cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
         cairo_set_line_width(cr, w_cur);
         cairo_set_source_rgba(cr, sd->r, sd->g, sd->b, 1.0);
         cairo_move_to(cr, s->pts[0].x, s->pts[0].y);
         for (size_t i = 1; i < n; i++) {
             double p = (s->pts[i-1].pressure + s->pts[i].pressure) * 0.5;
-            double w = 0.6 + p * 1.4;
+            double w = ts * (0.6 + p * 1.4);
             if (fabs(w - w_cur) > 0.15) {
                 cairo_stroke(cr);
                 w_cur = w;
@@ -1064,7 +1070,7 @@ void canvas_render_view(AppState *app, cairo_t *cr, BodyView view,
         for (int i = 0; i < app->strokes->n; i++) {
             Stroke *sk = app->strokes->strokes[i];
             if (sk->view != (int)view) continue;
-            draw_stroke(cr, sk, &SYMPTOM_DEFS[sk->type], app);
+            draw_stroke(cr, sk, &SYMPTOM_DEFS[sk->type], app, zoom);
         }
 
         for (int i = 0; i < app->arrow_count; i++) {
@@ -1160,7 +1166,7 @@ static void rebuild_stroke_cache(ColData *cd)
     for (int i = 0; i < app->strokes->n; i++) {
         Stroke *s = app->strokes->strokes[i];
         if (s->view != (int)cd->view) continue;
-        draw_stroke(cr, s, &SYMPTOM_DEFS[s->type], app);
+        draw_stroke(cr, s, &SYMPTOM_DEFS[s->type], app, *cd->p_zoom);
     }
 
     /* Committed arrows */
@@ -1261,7 +1267,7 @@ static void on_col_draw(GtkDrawingArea *da, cairo_t *cr,
         /* Active stroke (in-progress — rendered fresh every frame) */
         if (app->active_stroke && app->active_stroke->view == (int)cd->view)
             draw_stroke(cr, app->active_stroke,
-                        &SYMPTOM_DEFS[app->active_stroke->type], app);
+                        &SYMPTOM_DEFS[app->active_stroke->type], app, *cd->p_zoom);
 
         /* Arrow preview while drawing */
         if (app->arrow_drawing && app->arrow_draw_view == (int)cd->view) {
@@ -1781,6 +1787,69 @@ static void on_drag_begin(GtkGestureDrag *gd, double x, double y, gpointer d)
             return;
         }
     }
+
+    /* Finger / mouse drawing — stylus takes priority via palm rejection */
+    if (app->pen_palm_reject &&
+        (g_get_monotonic_time() - app->last_stylus_us) < 500000)
+        return;
+
+    app->current_view = cd->view;
+    double bx, by;
+    screen_to_body(cd, x, y, &bx, &by);
+
+    if (app->tool == TOOL_NOTE) {
+        if (app->show_note_wizard_cb)
+            app->show_note_wizard_cb(app, (int)cd->view, bx, by);
+        return;
+    }
+
+    if (app->tool == TOOL_ARROW) {
+        int hit = arrow_head_hit_screen(app, cd, x, y);
+        if (hit >= 0) {
+            for (int k = hit; k < app->arrow_count - 1; k++)
+                app->arrows[k] = app->arrows[k + 1];
+            app->arrow_count--;
+            if (app->undo_type_top > 0 &&
+                app->undo_type_stack[app->undo_type_top - 1] == 1)
+                app->undo_type_top--;
+            app->stroke_version++;
+            gtk_widget_queue_draw(cd->da);
+            return;
+        }
+        app->arrow_drawing   = TRUE;
+        app->arrow_draw_view = (int)cd->view;
+        app->arrow_x1 = app->arrow_x2 = bx;
+        app->arrow_y1 = app->arrow_y2 = by;
+        app->arrow_track_n = 0;
+        arrow_track_add(app, bx, by);
+        cd->touch_drawing = TRUE;
+        gtk_widget_queue_draw(cd->da);
+        return;
+    }
+
+    if (app->current_mode == APP_MODE_OBJECTIVE) {
+        if (app->tool == TOOL_ERASE) {
+            obj_handle_erase(app, (int)cd->view, bx, by, cd->da);
+            return;
+        }
+        if (!app->obj_point_mode) {
+            if (app->obj_active_zone) {
+                obj_zone_free(app->obj_active_zone);
+                app->obj_active_zone = NULL;
+            }
+            app->obj_active_zone = obj_zone_new(app->obj_zone_type, (int)cd->view);
+            obj_zone_add_pt(app->obj_active_zone, (float)bx, (float)by);
+            cd->touch_drawing = TRUE;
+            gtk_widget_queue_draw(cd->da);
+        }
+        return;
+    }
+
+    input_begin(app, bx, by, 1.0);
+    if (app->active_stroke)
+        app->active_stroke->draw_zoom = *cd->p_zoom;
+    cd->touch_drawing = TRUE;
+    gtk_widget_queue_draw(cd->da);
 }
 
 static void on_drag_update(GtkGestureDrag *gd, double dx, double dy,
@@ -1826,6 +1895,20 @@ static void on_drag_update(GtkGestureDrag *gd, double dx, double dy,
         gtk_widget_queue_draw(cd->da);
         return;
     }
+
+    /* Finger / mouse drawing motion */
+    if (cd->touch_drawing) {
+        if (app->tool == TOOL_ARROW && app->arrow_drawing) {
+            app->arrow_x2 = bx;
+            app->arrow_y2 = by;
+            arrow_track_add(app, bx, by);
+        } else if (app->current_mode == APP_MODE_OBJECTIVE && app->obj_active_zone) {
+            obj_zone_add_pt(app->obj_active_zone, (float)bx, (float)by);
+        } else {
+            input_motion(app, bx, by, 1.0);
+        }
+        gtk_widget_queue_draw(cd->da);
+    }
 }
 
 static void on_drag_end(GtkGestureDrag *gd, double dx, double dy, gpointer d)
@@ -1853,7 +1936,46 @@ static void on_drag_end(GtkGestureDrag *gd, double dx, double dy, gpointer d)
         return;
     }
 
-    (void)gd; (void)dx; (void)dy;
+    if (!cd->touch_drawing) return;
+    cd->touch_drawing = FALSE;
+
+    double sx, sy;
+    gtk_gesture_drag_get_start_point(gd, &sx, &sy);
+    double bx, by;
+    screen_to_body(cd, sx + dx, sy + dy, &bx, &by);
+
+    if (app->tool == TOOL_ARROW && app->arrow_drawing) {
+        app->arrow_x2 = bx;
+        app->arrow_y2 = by;
+        double adx = bx - app->arrow_x1, ady = by - app->arrow_y1;
+        if (app->arrow_count < MAX_ARROWS &&
+            sqrt(adx*adx + ady*ady) >= 2.0) {
+            double cpx, cpy;
+            arrow_get_cp(app, &cpx, &cpy);
+            app->arrows[app->arrow_count] = (ArrowAnnotation){
+                .view = app->arrow_draw_view,
+                .x1 = app->arrow_x1, .y1 = app->arrow_y1,
+                .cx = cpx,           .cy = cpy,
+                .x2 = bx,            .y2 = by
+            };
+            if (app->undo_type_top < 64)
+                app->undo_type_stack[app->undo_type_top++] = 1;
+            app->arrow_count++;
+            app->stroke_version++;
+        }
+        app->arrow_drawing = FALSE;
+        app->arrow_track_n = 0;
+        gtk_widget_queue_draw(cd->da);
+        return;
+    }
+
+    if (app->current_mode == APP_MODE_OBJECTIVE) {
+        obj_commit_active_zone(app, cd->da);
+        return;
+    }
+
+    input_end(app);
+    gtk_widget_queue_draw(cd->da);
 }
 
 /* ── Zoom reset ──────────────────────────────────────────────────────────── */
@@ -1878,6 +2000,7 @@ static void on_zoom_begin(GtkGestureZoom *gz, GdkEventSequence *seq,
     gtk_gesture_get_bounding_box_center(GTK_GESTURE(gz),
                                          &cd->last_cx, &cd->last_cy);
     input_cancel(cd->app);
+    cd->touch_drawing           = FALSE;  /* cancel any in-progress finger draw */
     cd->app->note_drag_idx      = -1;
     cd->app->link_drag_active   = FALSE;
     cd->app->legend_drag_active = FALSE;
