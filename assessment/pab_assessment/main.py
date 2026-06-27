@@ -24,6 +24,7 @@ class PhysioAssessment(App):
 
     BINDINGS = [
         ("ctrl+q", "quit",              "Quit"),
+        Binding("ctrl+a", "textarea_select_all", show=False, priority=True),
         Binding("ctrl+d", "open_kb_db", "KB DB", show=True, priority=True),
         # Section tab navigation — F1-F9 (priority=True overrides any focused widget)
         Binding("f1", "section_consent",          show=False, priority=True),
@@ -166,6 +167,12 @@ class PhysioAssessment(App):
 
     def on_unmount(self) -> None:
         clear_tui_pid()
+
+    def action_textarea_select_all(self) -> None:
+        from textual.widgets import TextArea
+        focused = self.focused
+        if isinstance(focused, TextArea):
+            focused.action_select_all()
 
     def action_open_kb_db(self) -> None:
         """Ctrl+D — open the full Clinical KB database browser."""

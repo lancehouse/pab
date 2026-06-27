@@ -2977,6 +2977,31 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
     elif not clean:
         _emit("*(none recorded)*")
 
+    sub("Imaging")
+    _IMG = [
+        ("Xray",  "img_xray",  "img_xray_detail"),
+        ("U/S",   "img_us",    "img_us_detail"),
+        ("CT",    "img_ct",    "img_ct_detail"),
+        ("MRI",   "img_mri",   "img_mri_detail"),
+        ("NCS",   "img_ncs",   "img_ncs_detail"),
+        ("Other", "img_other", "img_other_detail"),
+    ]
+    if clean:
+        for lbl, bid, did in _IMG:
+            val = m.get(bid)
+            det = (m.get(did) or "").strip()
+            if val is True or det:
+                line = f"**{lbl}**" + (f": {det}" if det else "")
+                _emit(line + "  ")
+            elif val is False:
+                _emit(f"**{lbl}:** Not performed  ")
+    else:
+        for lbl, bid, did in _IMG:
+            val = m.get(bid)
+            det = (m.get(did) or "").strip()
+            line = f"**{lbl}:** {_v(val)}" + (f" — {det}" if det else "")
+            _emit(line)
+
     _emit_yaml_subs_md("medical", m, clean, _emit, sub)
 
     # ════════════════════════════════════════════════════════════════════════
@@ -4650,6 +4675,29 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
             _emit(f"  {i}. {med_str}")
     elif not clean:
         _emit("  (none recorded)")
+
+    sub("Imaging")
+    _IMG = [
+        ("Xray",  "img_xray",  "img_xray_detail"),
+        ("U/S",   "img_us",    "img_us_detail"),
+        ("CT",    "img_ct",    "img_ct_detail"),
+        ("MRI",   "img_mri",   "img_mri_detail"),
+        ("NCS",   "img_ncs",   "img_ncs_detail"),
+        ("Other", "img_other", "img_other_detail"),
+    ]
+    if clean:
+        for lbl, bid, did in _IMG:
+            val = m.get(bid)
+            det = (m.get(did) or "").strip()
+            if val is True or det:
+                _emit("  " + lbl + (f": {det}" if det else ""))
+            elif val is False:
+                _emit(f"  {lbl}: Not performed")
+    else:
+        for lbl, bid, did in _IMG:
+            val = m.get(bid)
+            det = (m.get(did) or "").strip()
+            _emit(f"  {lbl}: {_val_raw(val)}" + (f" — {det}" if det else ""))
 
     _emit_yaml_subs_raw("medical", m, clean, _emit, sub)
 
