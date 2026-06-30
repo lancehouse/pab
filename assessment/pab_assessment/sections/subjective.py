@@ -218,22 +218,21 @@ class SubjectiveSection(BaseSection):
                 yield Label("Previous treatment\n& response:")
                 yield TextArea(id="previous_treatment", language="plain")
 
-            # ── Flare-ups ─────────────────────────────────────────────
-            yield Label("— Flare-ups —", classes="subsection_header", id="subj_flareups")
-            yield Label("Frequency:")
-            with Horizontal(classes="btn_row"):
-                yield CheckButton("Rare",       id="flareup_rare")
-                yield CheckButton("Occasional", id="flareup_occasional")
-                yield FlagButton( "Frequent",   id="flareup_frequent")
+            # ── Behaviour ─────────────────────────────────────────────
+            yield Label("— Behaviour —", classes="subsection_header", id="subj_behaviour")
             with Horizontal(classes="field_row"):
-                yield Label("Triggers:")
-                yield TextArea(id="flareup_triggers", language="plain")
+                yield FlagButton("Boom-Bust",  id="behaviour_boom_bust")
+                yield TextArea(id="behaviour_boom_bust_text", language="plain")
             with Horizontal(classes="field_row"):
-                yield Label("Predictability:")
-                yield TextArea(id="flareup_predictability", language="plain")
+                yield FlagButton("Avoidance",  id="behaviour_avoidance")
+                yield TextArea(id="behaviour_avoidance_text", language="plain")
             with Horizontal(classes="field_row"):
-                yield Label("Duration of flare:")
-                yield TextArea(id="flareup_duration", language="plain")
+                yield FlagButton("Endurance",  id="behaviour_endurance")
+                yield TextArea(id="behaviour_endurance_text", language="plain")
+            with Horizontal(classes="field_row"):
+                yield FlagButton("Flare-ups",  id="behaviour_flareups")
+                yield TextArea(id="behaviour_flareups_text", language="plain")
+            yield Label("Predictability; duration; recovery", classes="reference_note")
 
             # ── Self-Management ───────────────────────────────────────
             yield Label("— Self-Management & Control —", classes="subsection_header",
@@ -500,13 +499,14 @@ class SubjectiveSection(BaseSection):
     _TOGGLE_FIELDS = [
         "body_chart_completed",
         "course_improving", "course_worsening", "course_stable", "course_fluctuating",
-        "flareup_rare", "flareup_occasional", "flareup_frequent",
+        "behaviour_boom_bust", "behaviour_avoidance", "behaviour_endurance", "behaviour_flareups",
         "mood_influences", "self_harm_risk",
     ]
 
     _TEXT_FIELDS = [
         "onset", "duration", "context_at_onset", "previous_episodes", "previous_treatment",
-        "flareup_triggers", "flareup_predictability", "flareup_duration",
+        "behaviour_boom_bust_text", "behaviour_avoidance_text",
+        "behaviour_endurance_text", "behaviour_flareups_text",
         "flareup_prevention", "management_strategies",
         "pre_activity_level", "current_activity_level",
         "exercise_type", "exercise_dose", "exercise_response",

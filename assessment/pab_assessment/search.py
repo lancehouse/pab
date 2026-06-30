@@ -72,7 +72,7 @@ _SUBSECTIONS: list[tuple[str, str, str]] = [
     # 02 Subjective
     ("02_subjective", "subj_symptoms",     "Body Chart Symptoms"),
     ("02_subjective", "subj_history",      "History"),
-    ("02_subjective", "subj_flareups",     "Flare-ups"),
+    ("02_subjective", "subj_behaviour",    "Behaviour"),
     ("02_subjective", "subj_management",   "Self-Management"),
     ("02_subjective", "subj_activity",     "Activity & Exercise"),
     ("02_subjective", "subj_work",         "Work"),
@@ -236,10 +236,11 @@ _FIELD_LABELS: dict[str, tuple[str, str | None, str]] = {
     "context_at_onset":   ("02_subjective", "subj_history",    "Context at onset"),
     "previous_episodes":  ("02_subjective", "subj_history",    "Previous episodes"),
     "previous_treatment": ("02_subjective", "subj_history",    "Previous treatment"),
-    # 02 Subjective — Flare-ups
-    "flareup_triggers":       ("02_subjective", "subj_flareups", "Flare-up triggers"),
-    "flareup_predictability": ("02_subjective", "subj_flareups", "Flare-up predictability"),
-    "flareup_duration":       ("02_subjective", "subj_flareups", "Flare-up duration"),
+    # 02 Subjective — Behaviour
+    "behaviour_boom_bust_text":  ("02_subjective", "subj_behaviour", "Boom-Bust"),
+    "behaviour_avoidance_text":  ("02_subjective", "subj_behaviour", "Avoidance"),
+    "behaviour_endurance_text":  ("02_subjective", "subj_behaviour", "Endurance"),
+    "behaviour_flareups_text":   ("02_subjective", "subj_behaviour", "Flare-ups"),
     # 02 Subjective — Management
     "pain_control_score":    ("02_subjective", "subj_management", "Pain control score"),
     "flareup_prevention":    ("02_subjective", "subj_management", "Flare-up prevention"),
@@ -323,9 +324,12 @@ _FIELD_LABELS: dict[str, tuple[str, str | None, str]] = {
     "summary_contributing": ("04_pain_classification", "pc_summary",      "Contributing factors"),
     "summary_reasoning":    ("04_pain_classification", "pc_summary",      "Classification reasoning"),
     # 05 Outcome Measures
-    "psfs_act_1":    ("05_outcome_measures", "om_psfs",       "PSFS activity 1"),
-    "psfs_act_2":    ("05_outcome_measures", "om_psfs",       "PSFS activity 2"),
-    "psfs_act_3":    ("05_outcome_measures", "om_psfs",       "PSFS activity 3"),
+    "psfs_act_1":       ("05_outcome_measures", "om_psfs", "PSFS activity 1"),
+    "psfs_act_1_score": ("05_outcome_measures", "om_psfs", "PSFS activity 1 score"),
+    "psfs_act_2":       ("05_outcome_measures", "om_psfs", "PSFS activity 2"),
+    "psfs_act_2_score": ("05_outcome_measures", "om_psfs", "PSFS activity 2 score"),
+    "psfs_act_3":       ("05_outcome_measures", "om_psfs", "PSFS activity 3"),
+    "psfs_act_3_score": ("05_outcome_measures", "om_psfs", "PSFS activity 3 score"),
     "bpi_activity":  ("05_outcome_measures", "om_bpi",        "BPI: Activity"),
     "bpi_mood":      ("05_outcome_measures", "om_bpi",        "BPI: Mood"),
     "bpi_walking":   ("05_outcome_measures", "om_bpi",        "BPI: Walking"),
