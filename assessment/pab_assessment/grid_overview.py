@@ -22,7 +22,7 @@ SUBJ_GRID_DATA: list[tuple[str, str, list[tuple[str, str]]]] = [
     ("02_subjective", "02 Subjective", [
         ("Symptoms",     "subj_symptoms"),
         ("History",      "subj_history"),
-        ("Flare-ups",    "subj_flareups"),
+        ("Behaviour",    "subj_behaviour"),
         ("Mgmt",         "subj_management"),
         ("Activity",     "subj_activity"),
         ("Work",         "subj_work"),

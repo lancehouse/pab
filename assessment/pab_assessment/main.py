@@ -49,7 +49,7 @@ class PhysioAssessment(App):
         # Subjective subsection jump — Alt+letter (priority=True overrides TextArea)
         Binding("alt+s", "sub_symptoms",             show=False, priority=True),
         Binding("alt+h", "sub_history",              show=False, priority=True),
-        Binding("alt+u", "sub_flareups",             show=False, priority=True),
+        Binding("alt+b", "sub_behaviour",            show=False, priority=True),
         Binding("alt+m", "sub_management",           show=False, priority=True),
         Binding("alt+a", "sub_activity",             show=False, priority=True),
         Binding("alt+w", "sub_work",                 show=False, priority=True),
@@ -243,7 +243,7 @@ class PhysioAssessment(App):
 
     def action_sub_symptoms(self):     self._goto_subjective_sub("subj_symptoms")
     def action_sub_history(self):      self._goto_subjective_sub("subj_history")
-    def action_sub_flareups(self):     self._goto_subjective_sub("subj_flareups")
+    def action_sub_behaviour(self):    self._goto_subjective_sub("subj_behaviour")
     def action_sub_management(self):   self._goto_subjective_sub("subj_management")
     def action_sub_activity(self):     self._goto_subjective_sub("subj_activity")
     def action_sub_work(self):         self._goto_subjective_sub("subj_work")

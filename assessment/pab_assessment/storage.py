@@ -2689,13 +2689,15 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
     txt("previous_episodes",  s)
     txt("previous_treatment", s)
 
-    sub("Flare-ups")
-    f("flareup_rare",              s)
-    f("flareup_occasional",        s)
-    f("flareup_frequent",          s)
-    txt("flareup_triggers",        s)
-    txt("flareup_predictability",  s)
-    txt("flareup_duration",        s)
+    sub("Behaviour")
+    f("behaviour_boom_bust",         s)
+    txt("behaviour_boom_bust_text",  s)
+    f("behaviour_avoidance",         s)
+    txt("behaviour_avoidance_text",  s)
+    f("behaviour_endurance",         s)
+    txt("behaviour_endurance_text",  s)
+    f("behaviour_flareups",          s)
+    txt("behaviour_flareups_text",   s)
 
     sub("Self-Management & Control")
     f("pain_control_score",       s)
@@ -3810,9 +3812,10 @@ LABELS: dict[str, str] = {
     "course_worsening":                 "Course: Worsening",
     "course_stable":                    "Course: Stable",
     "course_fluctuating":               "Course: Fluctuating",
-    "flareup_rare":                     "Flare-ups: Rare",
-    "flareup_occasional":               "Flare-ups: Occasional",
-    "flareup_frequent":                 "Flare-ups: Frequent",
+    "behaviour_boom_bust":               "Behaviour: Boom-Bust",
+    "behaviour_avoidance":              "Behaviour: Avoidance",
+    "behaviour_endurance":              "Behaviour: Endurance",
+    "behaviour_flareups":               "Behaviour: Flare-ups",
     "sleep_overall_rating":             "Sleep overall rating",
     "sleep_feels_rested":               "Feels rested",
     "mood_influences":                  "Mood influences pain",
@@ -3829,9 +3832,10 @@ LABELS: dict[str, str] = {
     "context_at_onset":                 "Context at onset",
     "previous_episodes":                "Previous episodes",
     "previous_treatment":               "Previous treatment",
-    "flareup_triggers":                 "Flare-up triggers",
-    "flareup_predictability":           "Flare-up predictability",
-    "flareup_duration":                 "Flare-up duration",
+    "behaviour_boom_bust_text":         "Boom-Bust (notes)",
+    "behaviour_avoidance_text":         "Avoidance (notes)",
+    "behaviour_endurance_text":         "Endurance (notes)",
+    "behaviour_flareups_text":          "Flare-ups (notes)",
     "flareup_prevention":               "Flare-up prevention",
     "management_strategies":            "Management strategies",
     "pre_activity_level":               "Pre-injury activity level",
@@ -4409,13 +4413,15 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     txt("previous_episodes",  s)
     txt("previous_treatment", s)
 
-    sub("Flare-ups")
-    f("flareup_rare",           s)
-    f("flareup_occasional",     s)
-    f("flareup_frequent",       s)
-    txt("flareup_triggers",     s)
-    txt("flareup_predictability", s)
-    txt("flareup_duration",     s)
+    sub("Behaviour")
+    f("behaviour_boom_bust",         s)
+    txt("behaviour_boom_bust_text",  s)
+    f("behaviour_avoidance",         s)
+    txt("behaviour_avoidance_text",  s)
+    f("behaviour_endurance",         s)
+    txt("behaviour_endurance_text",  s)
+    f("behaviour_flareups",          s)
+    txt("behaviour_flareups_text",   s)
 
     sub("Self-Management & Control")
     f("pain_control_score",      s)

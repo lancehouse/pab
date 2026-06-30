@@ -300,7 +300,7 @@ class SubsectionNavBar(Static):
     SUBJECTIVE_SUBS = [
         ("",      "S", "ymptoms",     "subj_symptoms"),
         ("",      "H", "istory",      "subj_history"),
-        ("Flare-","U", "ps",          "subj_flareups"),
+        ("",      "B", "ehaviour",    "subj_behaviour"),
         ("",      "M", "gmt",         "subj_management"),
         ("",      "A", "ctivity",     "subj_activity"),
         ("",      "W", "ork",         "subj_work"),

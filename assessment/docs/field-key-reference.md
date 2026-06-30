@@ -10,7 +10,7 @@ file (for hardcoded fields). Bilateral keys use the stem (without `_l`/`_r`).
 
 Jump to a section:
 - [Subjective — 01 Consent](#01-consent)
-- [Subjective — 02 Subjective History / Flare-ups / Management / Activity / Work](#02-subjective)
+- [Subjective — 02 Subjective History / Behaviour / Management / Activity / Work](#02-subjective)
 - [Subjective — 02 Sleep (YAML pilot)](#02-sleep-yaml-pilot)
 - [Subjective — 02 24-Hour Pattern / Psychosocial / Goals / Suicide Risk](#02-24hr-psychosocial-suicide)
 - [Subjective — 03 Medical Screening](#03-medical-screening)
@@ -54,13 +54,18 @@ Jump to a section:
 | `previous_episodes` | Previous episodes of this condition |
 | `previous_treatment` | Previous treatment received |
 
-### Flare-ups
+### Behaviour
 
 | Key | Description |
 |---|---|
-| `flareup_triggers` | Known flare-up triggers |
-| `flareup_predictability` | Predictability of flare-ups |
-| `flareup_duration` | Typical flare-up duration |
+| `behaviour_boom_bust` | Boom-bust behaviour flag |
+| `behaviour_boom_bust_text` | Boom-bust notes |
+| `behaviour_avoidance` | Avoidance behaviour flag |
+| `behaviour_avoidance_text` | Avoidance notes |
+| `behaviour_endurance` | Endurance behaviour flag |
+| `behaviour_endurance_text` | Endurance notes |
+| `behaviour_flareups` | Flare-ups flag |
+| `behaviour_flareups_text` | Flare-ups notes |
 
 ### Self-Management
 
@@ -233,7 +238,8 @@ dynamically by the search index. They have IDs beginning with `rf_`, `cvd_`,
 
 | Key | Description |
 |---|---|
-| `psfs_act_1` – `psfs_act_3` | PSFS activities 1–3 |
+| `psfs_act_1` – `psfs_act_3` | PSFS activity names 1–3 |
+| `psfs_act_1_score` – `psfs_act_3_score` | PSFS activity scores 1–3 (/10) |
 | `bpi_activity` | BPI: Activity interference |
 | `bpi_mood` | BPI: Mood interference |
 | `bpi_walking` | BPI: Walking interference |
