@@ -7,7 +7,7 @@ from textual.widgets import Input, Label, Static, TextArea
 
 from ...nav import escape_to_neighbor
 from ...sections.base import BaseSection
-from ...widgets import GridInput, RadioGroup
+from ...widgets import GridInput, GridTextArea, RadioGroup
 
 
 # ---------------------------------------------------------------------------
@@ -130,7 +130,7 @@ class FunctionalSection(BaseSection):
         for i in range(1, 5):
             with Horizontal(classes="goal_row"):
                 yield Static(f"{i}.", classes="goal_lbl")
-                yield TextArea(id=f"ft_goal_{i}", language="plain", classes="goal_ta")
+                yield GridTextArea(id=f"ft_goal_{i}", language="plain", classes="goal_ta")
 
         # ── Functional Movement Observation ───────────────────────────────────
         yield Label("Functional Movement", classes="subsection_header", id="fn_movement")
@@ -143,12 +143,12 @@ class FunctionalSection(BaseSection):
         # Functional obs — inline TextArea
         with Horizontal(classes="fm_ta_row"):
             yield Static("Functional obs", classes="fm_ta_lbl")
-            yield TextArea(id="ft_fm_obs", language="plain", classes="fm_ta")
+            yield GridTextArea(id="ft_fm_obs", language="plain", classes="fm_ta")
 
         # Custom Functional test — inline TextArea
         with Horizontal(classes="fm_ta_row"):
             yield Static("Custom Functional test", classes="fm_ta_lbl")
-            yield TextArea(id="ft_fm_custom", language="plain", classes="fm_ta")
+            yield GridTextArea(id="ft_fm_custom", language="plain", classes="fm_ta")
 
         # ── Balance (Steffen 2002) ────────────────────────────────────────────
         yield Label("Balance  (Steffen 2002)", classes="subsection_header", id="fn_balance")
@@ -175,7 +175,7 @@ class FunctionalSection(BaseSection):
 
         # ── Notes / Special Tests ─────────────────────────────────────────────
         yield Label("Special tests / notes:")
-        yield TextArea(id="ft_notes", language="plain")
+        yield GridTextArea(id="ft_notes", language="plain")
 
     # ------------------------------------------------------------------
     # Grid navigation — balance + capability rows
@@ -206,18 +206,19 @@ class FunctionalSection(BaseSection):
     @on(GridInput.Navigate)
     def _on_grid_navigate(self, event: GridInput.Navigate) -> None:
         focused = self.app.focused
-        if focused is None or focused.id not in self._grid_pos:
+        if focused is None:
             return
-        row, col = self._grid_pos[focused.id]
         navigated = False
-        if event.direction == "up":
-            navigated = self._focus_nearest(row - 1, col)
-        elif event.direction == "down":
-            navigated = self._focus_nearest(row + 1, col)
-        elif event.direction == "left" and col > 0:
-            navigated = self._focus_nearest(row, col - 1)
-        elif event.direction == "right" and col < len(self._grid[row]) - 1:
-            navigated = self._focus_nearest(row, col + 1)
+        if focused.id in self._grid_pos:
+            row, col = self._grid_pos[focused.id]
+            if event.direction == "up":
+                navigated = self._focus_nearest(row - 1, col)
+            elif event.direction == "down":
+                navigated = self._focus_nearest(row + 1, col)
+            elif event.direction == "left" and col > 0:
+                navigated = self._focus_nearest(row, col - 1)
+            elif event.direction == "right" and col < len(self._grid[row]) - 1:
+                navigated = self._focus_nearest(row, col + 1)
         if not navigated:
             escape_to_neighbor(self, focused, event.direction)
         event.stop()
