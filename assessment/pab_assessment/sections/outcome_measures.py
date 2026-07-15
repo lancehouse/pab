@@ -597,7 +597,7 @@ class OutcomeMeasuresSection(BaseSection):
     /* Input visibility — distinct background so fields are clearly visible */
     OutcomeMeasuresSection Input {
         background: $surface-darken-2;
-        border: tall $primary 40%;
+        border: tall $panel-lighten-3;
         height: auto; min-height: 1; margin-bottom: 0;
     }
     OutcomeMeasuresSection TextArea {

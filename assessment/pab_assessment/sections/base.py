@@ -23,6 +23,12 @@ class BaseSection(Container):
         padding: 0 1;
     }
 
+    /* Default borders — high-contrast edge against the background so field
+       boxes read as clearly bounded rectangles rather than blending in. */
+    BaseSection Input     { border: tall $panel-lighten-3; }
+    BaseSection Button    { border: tall $panel-lighten-3; }
+    BaseSection TextArea  { border: solid $panel-lighten-3; }
+
     /* Focus highlight — bright accent ring on every focusable widget type */
     BaseSection Input:focus      { border: tall $accent; }
     BaseSection Button:focus     { border: tall $accent; background: $accent 15%; }
