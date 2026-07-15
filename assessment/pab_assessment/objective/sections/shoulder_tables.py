@@ -83,7 +83,8 @@ class ShoulderPassiveTables(Static):
     ShoulderPassiveTables .op_subhdr_txt  { width: 1fr; }
     ShoulderPassiveTables .op_row      { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
     ShoulderPassiveTables .op_row_lbl  { width: 12; height: 3; content-align: left middle; }
-    ShoulderPassiveTables .op_txt      { width: 1fr; height: 3; padding: 0 1; }
+    ShoulderPassiveTables .op_txt      { width: 1fr; height: 3; padding: 0 1; border: solid $panel-lighten-3; }
+    ShoulderPassiveTables .op_txt:focus { border: solid $accent; }
 
     /* GH accessory glides */
     ShoulderPassiveTables .acc_hdr         { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
@@ -95,7 +96,8 @@ class ShoulderPassiveTables(Static):
     ShoulderPassiveTables .acc_subhdr_txt  { width: 1fr; }
     ShoulderPassiveTables .acc_row         { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
     ShoulderPassiveTables .acc_row_lbl     { width: 12; height: 3; content-align: left middle; }
-    ShoulderPassiveTables .acc_txt         { width: 1fr; height: 3; padding: 0 1; }
+    ShoulderPassiveTables .acc_txt         { width: 1fr; height: 3; padding: 0 1; border: solid $panel-lighten-3; }
+    ShoulderPassiveTables .acc_txt:focus   { border: solid $accent; }
 
     /* AC / SC joint — bilateral */
     ShoulderPassiveTables .acsc_hdr      { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
@@ -107,9 +109,11 @@ class ShoulderPassiveTables(Static):
     ShoulderPassiveTables .acsc_subhdr_txt  { width: 1fr; }
     ShoulderPassiveTables .acsc_row      { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
     ShoulderPassiveTables .acsc_row_lbl  { width: 12; height: 3; content-align: left middle; }
-    ShoulderPassiveTables .acsc_txt      { width: 1fr; height: 3; padding: 0 1; }
+    ShoulderPassiveTables .acsc_txt      { width: 1fr; height: 3; padding: 0 1; border: solid $panel-lighten-3; }
+    ShoulderPassiveTables .acsc_txt:focus { border: solid $accent; }
 
-    ShoulderPassiveTables TextArea { height: auto; min-height: 2; padding: 0 1; }
+    ShoulderPassiveTables TextArea { height: auto; min-height: 2; padding: 0 1; border: solid $panel-lighten-3; }
+    ShoulderPassiveTables TextArea:focus { border: solid $accent; }
     ShoulderPassiveTables Label    { height: auto; margin-top: 0; }
     """
 

@@ -84,7 +84,8 @@ class LumbarPassiveTables(Static):
     LumbarPassiveTables .op_row      { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
     LumbarPassiveTables .op_row_lbl  { width: 16; height: 3; content-align: left middle; }
     LumbarPassiveTables .op_side     { width: 2; height: 3; content-align: left middle; color: $text-muted; }
-    LumbarPassiveTables .op_txt      { width: 1fr; height: 3; padding: 0 1; }
+    LumbarPassiveTables .op_txt      { width: 1fr; height: 3; padding: 0 1; border: solid $panel-lighten-3; }
+    LumbarPassiveTables .op_txt:focus { border: solid $accent; }
 
     LumbarPassiveTables .paivm_hdr      { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
     LumbarPassiveTables .paivm_hdr_lbl  { width: 6; }
@@ -92,9 +93,11 @@ class LumbarPassiveTables(Static):
     LumbarPassiveTables .paivm_hdr_txt  { width: 1fr; }
     LumbarPassiveTables .paivm_row      { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
     LumbarPassiveTables .paivm_row_lbl  { width: 6; height: 3; content-align: left middle; }
-    LumbarPassiveTables .paivm_txt      { width: 1fr; height: 3; padding: 0 1; }
+    LumbarPassiveTables .paivm_txt      { width: 1fr; height: 3; padding: 0 1; border: solid $panel-lighten-3; }
+    LumbarPassiveTables .paivm_txt:focus { border: solid $accent; }
 
-    LumbarPassiveTables TextArea { height: auto; min-height: 2; padding: 0 1; }
+    LumbarPassiveTables TextArea { height: auto; min-height: 2; padding: 0 1; border: solid $panel-lighten-3; }
+    LumbarPassiveTables TextArea:focus { border: solid $accent; }
     LumbarPassiveTables Label    { height: auto; margin-top: 0; }
     """
 

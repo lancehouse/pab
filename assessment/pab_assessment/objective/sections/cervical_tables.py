@@ -82,7 +82,8 @@ class CervicalPassiveTables(Static):
     CervicalPassiveTables .op_row      { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
     CervicalPassiveTables .op_row_lbl  { width: 16; height: 3; content-align: left middle; }
     CervicalPassiveTables .op_side     { width: 2; height: 3; content-align: left middle; color: $text-muted; }
-    CervicalPassiveTables .op_txt      { width: 1fr; height: 3; padding: 0 1; }
+    CervicalPassiveTables .op_txt      { width: 1fr; height: 3; padding: 0 1; border: solid $panel-lighten-3; }
+    CervicalPassiveTables .op_txt:focus { border: solid $accent; }
 
     CervicalPassiveTables .paivm_hdr      { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
     CervicalPassiveTables .paivm_hdr_lbl  { width: 6; }
@@ -90,9 +91,11 @@ class CervicalPassiveTables(Static):
     CervicalPassiveTables .paivm_hdr_txt  { width: 1fr; }
     CervicalPassiveTables .paivm_row      { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
     CervicalPassiveTables .paivm_row_lbl  { width: 6; height: 3; content-align: left middle; }
-    CervicalPassiveTables .paivm_txt      { width: 1fr; height: 3; padding: 0 1; }
+    CervicalPassiveTables .paivm_txt      { width: 1fr; height: 3; padding: 0 1; border: solid $panel-lighten-3; }
+    CervicalPassiveTables .paivm_txt:focus { border: solid $accent; }
 
-    CervicalPassiveTables TextArea { height: auto; min-height: 2; padding: 0 1; }
+    CervicalPassiveTables TextArea { height: auto; min-height: 2; padding: 0 1; border: solid $panel-lighten-3; }
+    CervicalPassiveTables TextArea:focus { border: solid $accent; }
     CervicalPassiveTables Label    { height: auto; margin-top: 0; }
     """
 

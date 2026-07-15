@@ -59,9 +59,11 @@ class KneePassiveTables(Static):
     KneePassiveTables .op_subhdr_txt  { width: 1fr; }
     KneePassiveTables .op_row         { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
     KneePassiveTables .op_row_lbl     { width: 18; height: 3; content-align: left middle; }
-    KneePassiveTables .op_txt         { width: 1fr; height: 3; padding: 0 1; }
+    KneePassiveTables .op_txt         { width: 1fr; height: 3; padding: 0 1; border: solid $panel-lighten-3; }
+    KneePassiveTables .op_txt:focus   { border: solid $accent; }
 
-    KneePassiveTables TextArea { height: auto; min-height: 3; max-height: 12; padding: 0 1; }
+    KneePassiveTables TextArea { height: auto; min-height: 3; max-height: 12; padding: 0 1; border: solid $panel-lighten-3; }
+    KneePassiveTables TextArea:focus { border: solid $accent; }
     KneePassiveTables Label    { height: auto; margin-top: 0; }
     """
 
