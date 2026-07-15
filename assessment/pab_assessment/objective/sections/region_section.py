@@ -27,7 +27,7 @@ from textual.containers import Container, Horizontal, Vertical
 from textual.message import Message
 from textual.widgets import Label, Static, TextArea
 
-from ...widgets import CycleButton, GridInput, RadioGroup
+from ...widgets import CycleButton, GridInput, GridTextArea, RadioGroup
 from .active_movement import RangeCell, ROMRow
 from .ankle_tables import AnkleMuscleTables, AnklePassiveTables, AnkleTables
 from .cervical_tables import CervicalMuscleTables, CervicalPassiveTables, CervicalTables
@@ -303,31 +303,49 @@ class SpecialTestsWidget(Static):
                 yield RadioGroup(gang, id=self._rg_id(row["id"]))
         if self._notes_id:
             yield Label("Notes:")
-            yield TextArea(id=self._notes_id, language="plain")
+            yield GridTextArea(id=self._notes_id, language="plain")
 
     def on_mount(self) -> None:
         for idx, row in enumerate(self._rows):
             rg_id = self._rg_id(row["id"])
             self._grid.append(rg_id)
             self._grid_pos[rg_id] = idx
+        if self._notes_id:
+            self._grid_pos[self._notes_id] = len(self._grid)
+            self._grid.append(self._notes_id)
+
+    def _focus_by_index(self, direction: str, fid: str) -> bool:
+        if fid not in self._grid_pos:
+            return False
+        idx = self._grid_pos[fid]
+        target = idx - 1 if direction == "up" else idx + 1
+        if 0 <= target < len(self._grid):
+            try:
+                self.query_one(f"#{self._grid[target]}").focus()
+                return True
+            except Exception:
+                return False
+        return False
 
     def on_key(self, event) -> None:
         focused = self.app.focused
         if not isinstance(focused, RadioGroup):
             return
-        fid = focused.id or ""
-        if fid not in self._grid_pos:
-            return
         if event.key not in ("up", "down"):
             return
-        idx = self._grid_pos[fid]
-        target = idx - 1 if event.key == "up" else idx + 1
-        if 0 <= target < len(self._grid):
-            try:
-                self.query_one(f"#{self._grid[target]}", RadioGroup).focus()
-                event.stop()
-            except Exception:
-                pass
+        fid = focused.id or ""
+        if fid in self._grid_pos and self._focus_by_index(event.key, fid):
+            event.stop()
+
+    @on(GridInput.Navigate)
+    def _on_grid_navigate(self, event: GridInput.Navigate) -> None:
+        if event.direction not in ("up", "down"):
+            return
+        focused = self.app.focused
+        fid = focused.id if focused else ""
+        if fid in self._grid_pos:
+            self._focus_by_index(event.direction, fid)
+        event.stop()
 
     def collect(self) -> dict:
         data: dict = {}
@@ -429,7 +447,7 @@ class BilateralGridSpecialTestsWidget(Static):
                             yield CycleButton(self._STATES, id=f"st_{right['id']}_r")
         if self._notes_id:
             yield Label("Notes:")
-            yield TextArea(id=self._notes_id, language="plain")
+            yield GridTextArea(id=self._notes_id, language="plain")
 
     def on_mount(self) -> None:
         for group in self._groups:
@@ -443,6 +461,22 @@ class BilateralGridSpecialTestsWidget(Static):
                 for btn_id in btn_ids:
                     self._grid_pos[btn_id] = len(self._grid)
                     self._grid.append(btn_id)
+        if self._notes_id:
+            self._grid_pos[self._notes_id] = len(self._grid)
+            self._grid.append(self._notes_id)
+
+    def _focus_by_index(self, direction: str, fid: str) -> bool:
+        if fid not in self._grid_pos:
+            return False
+        idx = self._grid_pos[fid]
+        target = idx - 1 if direction == "up" else idx + 1
+        if 0 <= target < len(self._grid):
+            try:
+                self.query_one(f"#{self._grid[target]}").focus()
+                return True
+            except Exception:
+                return False
+        return False
 
     def on_key(self, event) -> None:
         focused = self.app.focused
@@ -451,14 +485,18 @@ class BilateralGridSpecialTestsWidget(Static):
             return
         if event.key not in ("up", "down"):
             return
-        idx = self._grid_pos[fid]
-        target = idx - 1 if event.key == "up" else idx + 1
-        if 0 <= target < len(self._grid):
-            try:
-                self.query_one(f"#{self._grid[target]}").focus()
-                event.stop()
-            except Exception:
-                pass
+        if self._focus_by_index(event.key, fid):
+            event.stop()
+
+    @on(GridInput.Navigate)
+    def _on_grid_navigate(self, event: GridInput.Navigate) -> None:
+        if event.direction not in ("up", "down"):
+            return
+        focused = self.app.focused
+        fid = focused.id if focused else ""
+        if fid in self._grid_pos:
+            self._focus_by_index(event.direction, fid)
+        event.stop()
 
     def collect(self) -> dict:
         data: dict = {}
