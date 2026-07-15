@@ -15,7 +15,7 @@ from textual.containers import Horizontal
 from textual.message import Message
 from textual.widgets import Button, Label, Static, TextArea
 
-from ...widgets import CycleButton, GridInput
+from ...widgets import CycleButton, GridInput, GridTextArea
 
 
 # ── Shared changed message ────────────────────────────────────────────────────
@@ -143,7 +143,7 @@ class ShoulderPassiveTables(Static):
                 yield CycleButton(_NORM_STATE, id=f"{prefix}_r_norm")
                 yield GridInput(placeholder="findings", id=f"{prefix}_r_txt", classes="op_txt")
         yield Label("OP notes:")
-        yield TextArea(id="sh_pm_op_notes", language="plain")
+        yield GridTextArea(id="sh_pm_op_notes", language="plain")
 
         # ── GH Accessory glides ───────────────────────────────────────────────
         yield Label("GH Accessory Glides", classes="subsection_header")
@@ -167,7 +167,7 @@ class ShoulderPassiveTables(Static):
                 yield GridInput(placeholder="grade / findings",
                                 id=f"sh_acc_{dir_key}_r_txt", classes="acc_txt")
         yield Label("Accessory notes:")
-        yield TextArea(id="sh_pm_acc_notes", language="plain")
+        yield GridTextArea(id="sh_pm_acc_notes", language="plain")
 
         # ── AC / SC joint (bilateral) ─────────────────────────────────────────
         yield Label("AC / SC Joint", classes="subsection_header")
@@ -198,6 +198,8 @@ class ShoulderPassiveTables(Static):
             self._grid.append(row)
             for col_idx, wid in enumerate(row):
                 self._grid_pos[wid] = (row_idx, col_idx)
+        self._grid_pos["sh_pm_op_notes"] = (len(self._grid), 0)
+        self._grid.append(["sh_pm_op_notes"])
         # GH Acc (4 cols, one row per direction)
         for _, dir_key in _ACC_DIRS:
             row = [f"sh_acc_{dir_key}_l_norm_btn", f"sh_acc_{dir_key}_l_txt",
@@ -206,6 +208,8 @@ class ShoulderPassiveTables(Static):
             self._grid.append(row)
             for col_idx, wid in enumerate(row):
                 self._grid_pos[wid] = (row_idx, col_idx)
+        self._grid_pos["sh_pm_acc_notes"] = (len(self._grid), 0)
+        self._grid.append(["sh_pm_acc_notes"])
         # AC/SC bilateral rows (4 cols)
         for _, prefix in _AC_SC_ROWS:
             row = [f"{prefix}_l_norm_btn", f"{prefix}_l_txt",
