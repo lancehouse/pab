@@ -1,10 +1,9 @@
 """Active Movement section — 02 Objective Examination."""
 
-from textual import events
 from textual.app import ComposeResult, on
 from textual.containers import Horizontal
 from textual.message import Message
-from textual.widgets import Button, Input, Label, Static, TextArea
+from textual.widgets import Input, Label, Static, TextArea
 
 from ...nav import escape_to_neighbor
 from ...sections.base import BaseSection
@@ -12,20 +11,11 @@ from ...widgets import GridInput
 
 
 # ---------------------------------------------------------------------------
-# Pain / Stiff cycle
-# ---------------------------------------------------------------------------
-
-_PS_CYCLE:   list[str | None]      = [None,      "Pain",  "Stiff"]
-_PS_VARIANT: dict[str | None, str] = {None: "default", "Pain": "error", "Stiff": "warning"}
-_PS_LABEL:   dict[str | None, str] = {None: "·",       "Pain": "Pain",  "Stiff": "Stiff"}
-
-
-# ---------------------------------------------------------------------------
-# RangeCell — one grid cell: degree input + Pain/Stiff flag button (each 1fr = 1/8 data width)
+# RangeCell — one grid cell: degree input (full width of the data column)
 # ---------------------------------------------------------------------------
 
 class RangeCell(Static):
-    """Degree ° input + cycling Pain/Stiff button. Both children are 1fr, so each is 1/8 of data area."""
+    """Degree ° input, filling the full width of its data column."""
 
     class Changed(Message):
         pass
@@ -37,28 +27,16 @@ class RangeCell(Static):
         width: 1fr;
         padding: 0;
     }
-    RangeCell .rc_input { width: 1fr; height: 3; padding: 0 1; }
-    RangeCell .rc_btn   { width: 1fr; height: 3; min-width: 0; }
+    RangeCell .rc_input { width: 1fr; height: 3; padding: 0 1; border: solid $panel-lighten-3; }
+    RangeCell .rc_input:focus { border: solid $accent; }
     """
 
     def __init__(self, prefix: str, **kwargs) -> None:
         super().__init__(**kwargs)
         self._prefix = prefix
-        self._ps: str | None = None
 
     def compose(self) -> ComposeResult:
         yield GridInput(placeholder="°", id=f"{self._prefix}_range", classes="rc_input")
-        yield Button("·", id=f"{self._prefix}_ps", variant="default", classes="rc_btn")
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == f"{self._prefix}_ps":
-            idx = _PS_CYCLE.index(self._ps) if self._ps in _PS_CYCLE else 0
-            self._ps = _PS_CYCLE[(idx + 1) % len(_PS_CYCLE)]
-            btn = self.query_one(f"#{self._prefix}_ps", Button)
-            btn.label   = _PS_LABEL[self._ps]
-            btn.variant = _PS_VARIANT[self._ps]
-            self.post_message(self.Changed())
-            event.stop()
 
     def on_input_changed(self, event: Input.Changed) -> None:
         self.post_message(self.Changed())
@@ -69,18 +47,11 @@ class RangeCell(Static):
             rng = self.query_one(f"#{self._prefix}_range", GridInput).value.strip()
         except Exception:
             rng = ""
-        return {f"{self._prefix}_range": rng, f"{self._prefix}_ps": self._ps}
+        return {f"{self._prefix}_range": rng}
 
     def load(self, data: dict) -> None:
         try:
             self.query_one(f"#{self._prefix}_range", GridInput).value = data.get(f"{self._prefix}_range", "")
-        except Exception:
-            pass
-        self._ps = data.get(f"{self._prefix}_ps")
-        try:
-            btn = self.query_one(f"#{self._prefix}_ps", Button)
-            btn.label   = _PS_LABEL.get(self._ps, "·")
-            btn.variant = _PS_VARIANT.get(self._ps, "default")
         except Exception:
             pass
 
@@ -220,17 +191,17 @@ class ActiveMovementSection(BaseSection):
         for row_idx, (_, prefix, bilateral) in enumerate(self._LX_ROWS + self._TX_ROWS):
             if bilateral:
                 cols: list[str | None] = [
-                    f"{prefix}_ax_l_range",  f"{prefix}_ax_l_ps",
-                    None, None,
-                    f"{prefix}_reax_l_range", f"{prefix}_reax_l_ps",
-                    None, None,
+                    f"{prefix}_ax_l_range",
+                    None,
+                    f"{prefix}_reax_l_range",
+                    None,
                 ]
             else:
                 cols = [
-                    f"{prefix}_ax_l_range",  f"{prefix}_ax_l_ps",
-                    f"{prefix}_ax_r_range",  f"{prefix}_ax_r_ps",
-                    f"{prefix}_reax_l_range", f"{prefix}_reax_l_ps",
-                    f"{prefix}_reax_r_range", f"{prefix}_reax_r_ps",
+                    f"{prefix}_ax_l_range",
+                    f"{prefix}_ax_r_range",
+                    f"{prefix}_reax_l_range",
+                    f"{prefix}_reax_r_range",
                 ]
             self._grid.append(cols)
             for col_idx, wid in enumerate(cols):
@@ -299,15 +270,6 @@ class ActiveMovementSection(BaseSection):
             if not self._nav(event.direction, focused.id):
                 escape_to_neighbor(self, focused, event.direction)
         event.stop()
-
-    # Buttons bubble arrow keys — only stop if _nav moved focus (boundary → fall through to TUI)
-    def on_key(self, event: events.Key) -> None:
-        focused = self.app.focused
-        if not isinstance(focused, Button) or focused.id not in self._grid_pos:
-            return
-        if event.key in ("up", "down", "left", "right"):
-            if self._nav(event.key, focused.id):
-                event.stop()
 
     # ------------------------------------------------------------------
     # Field change → autosave
