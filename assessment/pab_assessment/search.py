@@ -115,14 +115,9 @@ _SUBSECTIONS: list[tuple[str, str, str]] = [
     ("05_outcome_measures", "om_sleep",      "ISI / Sleep"),
     ("05_outcome_measures", "om_additional", "Additional Measures"),
     ("05_outcome_measures", "om_hypothesis", "Outcome Hypothesis"),
-    # 06 Diagnosis
-    ("06_diagnosis", "dx_overview",    "Overview"),
-    ("06_diagnosis", "dx_primary",     "Primary Diagnosis"),
-    ("06_diagnosis", "dx_surgical",    "Post-Surgical"),
-    ("06_diagnosis", "dx_traumatic",   "Post-Traumatic"),
-    ("06_diagnosis", "dx_msk",         "MSK"),
-    ("06_diagnosis", "dx_neuropathic", "Neuropathic Diagnosis"),
-    ("06_diagnosis", "dx_mixed",       "Mixed"),
+    # 06 Diagnosis — no fixed subsections: the CAL-CP walker is per-workup
+    # (runtime-variable count), harvested dynamically in build_index() below
+    # rather than listed here statically.
     # 07 Barriers
     ("07_barriers", "br_physical",     "Physical Barriers"),
     ("07_barriers", "br_neuro",        "Neurological Barriers"),
@@ -369,15 +364,9 @@ _FIELD_LABELS: dict[str, tuple[str, str | None, str]] = {
     "plan_pcl5":     ("05_outcome_measures", "om_pseq",       "Plan: PCL-5"),
     "plan_sleep":    ("05_outcome_measures", "om_sleep",      "Plan: Sleep measures"),
     "plan_additional":("05_outcome_measures","om_additional", "Plan: Additional measures"),
-    # 06 Diagnosis
-    "surgical_procedure": ("06_diagnosis", "dx_surgical",    "Surgical procedure"),
-    "surgical_source":    ("06_diagnosis", "dx_surgical",    "Surgical source"),
-    "traumatic_event":    ("06_diagnosis", "dx_traumatic",   "Traumatic event"),
-    "traumatic_source":   ("06_diagnosis", "dx_traumatic",   "Traumatic source"),
-    "msk_pathology":      ("06_diagnosis", "dx_msk",         "MSK pathology"),
-    "msk_source":         ("06_diagnosis", "dx_msk",         "MSK source"),
-    "neuro_lesion":       ("06_diagnosis", "dx_neuropathic", "Neurological lesion"),
-    "mixed_reasoning":    ("06_diagnosis", "dx_mixed",       "Mixed reasoning"),
+    # 06 Diagnosis — no static entries: the CAL-CP walker's fields are
+    # per-workup (runtime-variable count/ids), harvested dynamically in
+    # build_index() below instead (see the "CAL-CP diagnosis workups" block).
     "goal_1":             ("02_subjective", "subj_goals",     "Goal 1"),
     "goal_2":             ("02_subjective", "subj_goals",     "Goal 2"),
     "goal_3":             ("02_subjective", "subj_goals",     "Goal 3"),
@@ -727,6 +716,35 @@ def build_index(app: "App") -> list[SearchEntry]:
             widget_id=widget_id,
             kind="content",
         ))
+
+    # 5b — CAL-CP diagnosis workups (dynamic: one entry per pain-site
+    # workup, pointing at whatever's currently actionable — the intro-form
+    # Start button before it's begun, or the current trunk question after.
+    # Widget ids are namespaced "<base>__<workup_id>" since Textual keeps
+    # every workup's tab content mounted simultaneously — see
+    # sections/diagnosis.py. A finished workup has no actionable widget
+    # left (just a static result banner), so it's skipped here.
+    dx_section = av.sections.get("06_diagnosis")
+    if dx_section is not None:
+        short = _SECTION_SHORT.get("06_diagnosis", "06_diagnosis")
+        try:
+            for wid, w in getattr(dx_section, "_workups", {}).items():
+                if w.finished:
+                    continue
+                if not w.intro_done:
+                    widget_id, human = f"dx_intro_start__{wid}", "Start intro form"
+                else:
+                    widget_id, human = f"dx_node_box__{wid}", "Current question"
+                entries.append(SearchEntry(
+                    display=f"{short} › {w.label} › {human}",
+                    match_text=f"{w.label} {human} diagnosis CAL-CP ICD-11 chronic pain",
+                    section_id="06_diagnosis",
+                    anchor_id=None,
+                    widget_id=widget_id,
+                    kind="field",
+                ))
+        except Exception:
+            pass
 
     # 6 — Objective KB special test fields
     for widget_id, region, sec_id, human_name, extra in _OBJ_KB_FIELDS:
