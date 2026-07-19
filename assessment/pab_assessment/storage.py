@@ -2443,8 +2443,15 @@ def _emit_pain_class_dev(pc: dict, clean: bool, emit_fn, sub_fn) -> None:
               ("Dynamic mechanical allodynia","bacpap_dynamic"),
               ("Heat or cold allodynia","bacpap_thermal"),
               ("Painful after-sensations","bacpap_after")]
-    _BP_NO = [("Hx hypersensitivity","bacpap_hx"),
-              ("Comorbid symptom present","bacpap_comorbid")]
+    _BP_NO = [("Hypersensitivity — touch","bacpap_hyper_touch"),
+              ("Hypersensitivity — movement","bacpap_hyper_movement"),
+              ("Hypersensitivity — pressure","bacpap_hyper_pressure"),
+              ("Hypersensitivity — heat","bacpap_hyper_heat"),
+              ("Hypersensitivity — cold","bacpap_hyper_cold"),
+              ("Comorbid — light/sound/odour sensitivity","bacpap_como_sensory"),
+              ("Comorbid — sleep disturbance","bacpap_como_sleep"),
+              ("Comorbid — fatigue","bacpap_como_fatigue"),
+              ("Comorbid — cognitive problems","bacpap_como_cognitive")]
     bp_notes = (pc.get("bacpap_notes") or "").strip()
     _bp_all  = _BP_CH + _BP_ME + _BP_EV + _BP_NO
     if not clean or _any(_bp_all):
@@ -3240,8 +3247,15 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
                 ("Dynamic mechanical allodynia",     "bacpap_dynamic"),
                 ("Heat or cold allodynia",           "bacpap_thermal"),
                 ("Painful after-sensations",         "bacpap_after"),
-                ("Hx hypersensitivity",              "bacpap_hx"),
-                ("Comorbid symptom present",         "bacpap_comorbid"),
+                ("Hypersensitivity — touch",         "bacpap_hyper_touch"),
+                ("Hypersensitivity — movement",      "bacpap_hyper_movement"),
+                ("Hypersensitivity — pressure",      "bacpap_hyper_pressure"),
+                ("Hypersensitivity — heat",          "bacpap_hyper_heat"),
+                ("Hypersensitivity — cold",          "bacpap_hyper_cold"),
+                ("Comorbid — light/sound/odour sensitivity", "bacpap_como_sensory"),
+                ("Comorbid — sleep disturbance",     "bacpap_como_sleep"),
+                ("Comorbid — fatigue",               "bacpap_como_fatigue"),
+                ("Comorbid — cognitive problems",    "bacpap_como_cognitive"),
             ], pc)
         else:
             f("bacpap_chronic",      pc)
@@ -3252,8 +3266,15 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
             f("bacpap_dynamic",      pc)
             f("bacpap_thermal",      pc)
             f("bacpap_after",        pc)
-            f("bacpap_hx",           pc)
-            f("bacpap_comorbid",     pc)
+            f("bacpap_hyper_touch",     pc)
+            f("bacpap_hyper_movement",  pc)
+            f("bacpap_hyper_pressure",  pc)
+            f("bacpap_hyper_heat",      pc)
+            f("bacpap_hyper_cold",      pc)
+            f("bacpap_como_sensory",    pc)
+            f("bacpap_como_sleep",      pc)
+            f("bacpap_como_fatigue",    pc)
+            f("bacpap_como_cognitive",  pc)
         txt("bacpap_notes",          pc)
 
         sub("Pain Type Summary")
@@ -4045,8 +4066,15 @@ LABELS: dict[str, str] = {
     "bacpap_dynamic":                   "BACPAP: Dynamic mechanical allodynia",
     "bacpap_thermal":                   "BACPAP: Heat or cold allodynia",
     "bacpap_after":                     "BACPAP: Painful after-sensations",
-    "bacpap_hx":                        "BACPAP: Hx hypersensitivity",
-    "bacpap_comorbid":                  "BACPAP: Comorbid symptom present",
+    "bacpap_hyper_touch":               "BACPAP: Hypersensitivity — touch",
+    "bacpap_hyper_movement":            "BACPAP: Hypersensitivity — movement",
+    "bacpap_hyper_pressure":            "BACPAP: Hypersensitivity — pressure",
+    "bacpap_hyper_heat":                "BACPAP: Hypersensitivity — heat",
+    "bacpap_hyper_cold":                "BACPAP: Hypersensitivity — cold",
+    "bacpap_como_sensory":              "BACPAP: Comorbid — light/sound/odour sensitivity",
+    "bacpap_como_sleep":                "BACPAP: Comorbid — sleep disturbance",
+    "bacpap_como_fatigue":              "BACPAP: Comorbid — fatigue",
+    "bacpap_como_cognitive":            "BACPAP: Comorbid — cognitive problems",
     "bacpap_notes":                     "BACPAP: Notes",
     "summary_dominant":                 "Dominant pain type",
     "summary_contributing":             "Contributing pain types",
@@ -4955,8 +4983,15 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
             ("Dynamic mechanical allodynia",     "bacpap_dynamic"),
             ("Heat or cold allodynia",           "bacpap_thermal"),
             ("Painful after-sensations",         "bacpap_after"),
-            ("Hx hypersensitivity",              "bacpap_hx"),
-            ("Comorbid symptom present",         "bacpap_comorbid"),
+            ("Hypersensitivity — touch",         "bacpap_hyper_touch"),
+            ("Hypersensitivity — movement",      "bacpap_hyper_movement"),
+            ("Hypersensitivity — pressure",      "bacpap_hyper_pressure"),
+            ("Hypersensitivity — heat",          "bacpap_hyper_heat"),
+            ("Hypersensitivity — cold",          "bacpap_hyper_cold"),
+            ("Comorbid — light/sound/odour sensitivity", "bacpap_como_sensory"),
+            ("Comorbid — sleep disturbance",     "bacpap_como_sleep"),
+            ("Comorbid — fatigue",               "bacpap_como_fatigue"),
+            ("Comorbid — cognitive problems",    "bacpap_como_cognitive"),
         ], pc)
     else:
         f("bacpap_chronic",      pc)
@@ -4967,8 +5002,15 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
         f("bacpap_dynamic",      pc)
         f("bacpap_thermal",      pc)
         f("bacpap_after",        pc)
-        f("bacpap_hx",           pc)
-        f("bacpap_comorbid",     pc)
+        f("bacpap_hyper_touch",     pc)
+        f("bacpap_hyper_movement",  pc)
+        f("bacpap_hyper_pressure",  pc)
+        f("bacpap_hyper_heat",      pc)
+        f("bacpap_hyper_cold",      pc)
+        f("bacpap_como_sensory",    pc)
+        f("bacpap_como_sleep",      pc)
+        f("bacpap_como_fatigue",    pc)
+        f("bacpap_como_cognitive",  pc)
     txt("bacpap_notes",         pc)
 
     sub("Pain Type Summary")

@@ -226,8 +226,15 @@ dynamically by the search index. They have IDs beginning with `rf_`, `cvd_`,
 | `bacpap_dynamic` | BACPAP: Dynamic mechanical allodynia |
 | `bacpap_thermal` | BACPAP: Heat or cold allodynia |
 | `bacpap_after` | BACPAP: Painful after-sensations |
-| `bacpap_hx` | BACPAP: History of hypersensitivity |
-| `bacpap_comorbid` | BACPAP: ≥1 comorbid symptom present |
+| `bacpap_hyper_touch` | BACPAP: Hypersensitivity — touch |
+| `bacpap_hyper_movement` | BACPAP: Hypersensitivity — movement |
+| `bacpap_hyper_pressure` | BACPAP: Hypersensitivity — pressure |
+| `bacpap_hyper_heat` | BACPAP: Hypersensitivity — heat |
+| `bacpap_hyper_cold` | BACPAP: Hypersensitivity — cold |
+| `bacpap_como_sensory` | BACPAP: Comorbid — light/sound/odour sensitivity |
+| `bacpap_como_sleep` | BACPAP: Comorbid — sleep disturbance |
+| `bacpap_como_fatigue` | BACPAP: Comorbid — fatigue |
+| `bacpap_como_cognitive` | BACPAP: Comorbid — cognitive problems |
 | `bacpap_notes` | BACPAP: Clinician notes |
 | `summary_contributing` | Contributing factor summary |
 | `summary_reasoning` | Pain classification reasoning |
