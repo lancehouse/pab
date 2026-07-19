@@ -1,7 +1,7 @@
 
 GTK:
 better words in the pain descriptors section.
-        whis voice integration
+        whis voice integration repair
 
 TUI:
    
