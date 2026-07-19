@@ -490,9 +490,8 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
             for label, prefix, bilateral in rows_def:
                 def _cell(p, s):
                     v   = act.get(f"{p}_{s}_range", "") or ""
-                    ps  = act.get(f"{p}_{s}_ps") or ""
                     txt = f"{v}°" if v else "—"
-                    return f"{txt} {ps}".strip() if ps else txt
+                    return txt
                 ax_l = _cell(prefix, "ax_l"); reax_l = _cell(prefix, "reax_l")
                 if bilateral:
                     tbl_rows.append([label, ax_l, "—", reax_l, "—"])
@@ -505,9 +504,8 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         if any(k.startswith("cx_") or k.startswith("tx_cx_") for k in act):
             def _cx_cell(p, s):
                 v  = act.get(f"{p}_{s}_range","") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 txt = f"{v}°" if v else "—"
-                return f"{txt} {ps}".strip() if ps else txt
+                return txt
             for cx_title, cx_rows_def in [
                 ("Cervical ROM", [("Flexion","cx_flex",True),("Extension","cx_ext",True),
                                   ("Lat Flex","cx_lf",False),("Rotation","cx_rot",False)]),
@@ -529,9 +527,8 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         if any(k.startswith("sh_") or k.startswith("tx_sh_") for k in act):
             def _sh_cell(p, s):
                 v  = act.get(f"{p}_{s}_range", "") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 txt = f"{v}°" if v else "—"
-                return f"{txt} {ps}".strip() if ps else txt
+                return txt
             sh_rom_def = [("Flexion","sh_flex"),("Extension","sh_ext"),
                           ("Abduction","sh_abd"),("Int Rotation","sh_ir"),
                           ("Ext Rotation","sh_er"),("Horiz Add","sh_hadd"),
@@ -557,9 +554,8 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         if any(k.startswith("hp_") for k in act):
             def _hp_cell(p, s):
                 v  = act.get(f"{p}_{s}_range", "") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 txt = f"{v}°" if v else "—"
-                return f"{txt} {ps}".strip() if ps else txt
+                return txt
             hp_rom_def = [("Flexion","hp_flex"),("Extension","hp_ext"),
                           ("Abduction","hp_abd"),("Adduction","hp_add"),
                           ("Int Rotation","hp_ir"),("Ext Rotation","hp_er")]
@@ -571,9 +567,8 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         if any(k.startswith("kn_") for k in act):
             def _kn_cell(p, s):
                 v  = act.get(f"{p}_{s}_range", "") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 txt = f"{v}°" if v else "—"
-                return f"{txt} {ps}".strip() if ps else txt
+                return txt
             kn_rom_def = [("Flexion","kn_flex"),("Extension","kn_ext")]
             kn_tbl = [[lbl, _kn_cell(p,"ax_l"), _kn_cell(p,"ax_r"),
                             _kn_cell(p,"reax_l"), _kn_cell(p,"reax_r")]
@@ -583,9 +578,8 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         if any(k.startswith("ak_") for k in act):
             def _ak_cell(p, s):
                 v  = act.get(f"{p}_{s}_range", "") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 txt = f"{v}°" if v else "—"
-                return f"{txt} {ps}".strip() if ps else txt
+                return txt
             ak_rom_def = [("Dorsiflexion","ak_df"),("Plantarflexion","ak_pf"),
                           ("Inversion","ak_inv"),("Eversion","ak_ev"),
                           ("WB DF (lunge)","ak_wbdf")]
@@ -1304,9 +1298,8 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
             for lbl, prefix, bilateral in rows_def:
                 def _cell(p, s):
                     v  = act.get(f"{p}_{s}_range", "") or ""
-                    ps = act.get(f"{p}_{s}_ps") or ""
                     t  = f"{v}°" if v else "-"
-                    return f"{t} {ps}".strip() if ps else t
+                    return t
                 ax_l = _cell(prefix,"ax_l"); reax_l = _cell(prefix,"reax_l")
                 if bilateral:
                     tbl_rows.append([lbl, ax_l, "-", reax_l, "-"])
@@ -1329,9 +1322,8 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         if any(k.startswith("cx_") or k.startswith("tx_cx_") for k in act):
             def _cx_cell_r(p, s):
                 v  = act.get(f"{p}_{s}_range","") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 t  = f"{v}°" if v else "-"
-                return f"{t} {ps}".strip() if ps else t
+                return t
             for cx_title, cx_rows_def in [
                 ("Cervical ROM", [("Flexion","cx_flex",True),("Extension","cx_ext",True),
                                   ("Lat Flex","cx_lf",False),("Rotation","cx_rot",False)]),
@@ -1363,9 +1355,8 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         if any(k.startswith("sh_") or k.startswith("tx_sh_") for k in act):
             def _sh_cell_r(p, s):
                 v  = act.get(f"{p}_{s}_range", "") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 t  = f"{v}°" if v else "-"
-                return f"{t} {ps}".strip() if ps else t
+                return t
             sh_rom_def_r = [("Flexion","sh_flex"),("Extension","sh_ext"),
                             ("Abduction","sh_abd"),("Int Rotation","sh_ir"),
                             ("Ext Rotation","sh_er"),("Horiz Add","sh_hadd"),
@@ -1407,9 +1398,8 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         if any(k.startswith("hp_") for k in act):
             def _hp_cell_r(p, s):
                 v  = act.get(f"{p}_{s}_range", "") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 t  = f"{v}°" if v else "-"
-                return f"{t} {ps}".strip() if ps else t
+                return t
             hp_rom_def_r = [("Flexion","hp_flex"),("Extension","hp_ext"),
                             ("Abduction","hp_abd"),("Adduction","hp_add"),
                             ("Int Rotation","hp_ir"),("Ext Rotation","hp_er")]
@@ -1431,9 +1421,8 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         if any(k.startswith("kn_") for k in act):
             def _kn_cell_r(p, s):
                 v  = act.get(f"{p}_{s}_range", "") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 t  = f"{v}°" if v else "-"
-                return f"{t} {ps}".strip() if ps else t
+                return t
             kn_rom_def_r = [("Flexion","kn_flex"),("Extension","kn_ext")]
             kn_tbl_r = [[lbl, _kn_cell_r(p,"ax_l"), _kn_cell_r(p,"ax_r"),
                               _kn_cell_r(p,"reax_l"), _kn_cell_r(p,"reax_r")]
@@ -1453,9 +1442,8 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         if any(k.startswith("ak_") for k in act):
             def _ak_cell_r(p, s):
                 v  = act.get(f"{p}_{s}_range", "") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 t  = f"{v}°" if v else "-"
-                return f"{t} {ps}".strip() if ps else t
+                return t
             ak_rom_def_r = [("Dorsiflexion","ak_df"),("Plantarflexion","ak_pf"),
                             ("Inversion","ak_inv"),("Eversion","ak_ev"),
                             ("WB DF (lunge)","ak_wbdf")]

@@ -919,7 +919,6 @@ Field IDs: `sh_acc_{direction}_{side}_{type}` — direction: `inf`, `post`, `ant
 | Left field | Right field | Notes |
 |---|---|---|
 | `hp_flex_ax_l_range` | `hp_flex_ax_r_range` | Flexion range (°) |
-| `hp_flex_ax_l_ps` | `hp_flex_ax_r_ps` | Pain/Stiff qualifier |
 | `hp_ext_ax_l_range` | `hp_ext_ax_r_range` | Extension range |
 | `hp_abd_ax_l_range` | `hp_abd_ax_r_range` | Abduction range |
 | `hp_add_ax_l_range` | `hp_add_ax_r_range` | Adduction range |
