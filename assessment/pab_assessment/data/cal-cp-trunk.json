@@ -1,0 +1,4659 @@
+{
+  "_meta": {
+    "source": "Korwisi et al. 2021, PAIN — CAL-CP (Classification Algorithm for the ICD-11 Chronic Pain Classification), Supplementary Digital Content 1",
+    "source_file": "workfiles/pain_2021_06_25_korwisi_pain-d-20-01372_sdc1.pdf",
+    "extracted_pages": "p6 (intro form), p8 (initial decision trunk), p9 (trunk footnotes)",
+    "status": "DRAFT — extracted for review, not yet wired into any app code",
+    "note": "This file is the single source of truth for both the standalone HTML wizard and (later) the TUI 07 Diagnosis section. Only the initial decision trunk (p8) is fully represented. Every diagnosis node that carries a 'continues_to' page reference is a STUB in this phase — the secondary branch itself has not been extracted or built yet."
+  },
+  "intro_form": {
+    "_source_page": 6,
+    "before_you_begin": "Does this patient show any symptoms suggestive of an underlying disease that has not been diagnosed previously? Please assess these red flags as you would usually do in your field of expertise and decide whether further diagnostic processes or referral are necessary.",
+    "chronic_pain_specifier": {
+      "note": "If the patient presents with several forms of chronic pain, please assess the chronic pain specifier separately for each chronic pain condition.",
+      "fields": [
+        {
+          "id": "onset_date",
+          "label": "a. When did the pain begin? (month/year)",
+          "type": "month_year"
+        },
+        {
+          "id": "chronicity_note",
+          "type": "note",
+          "text": "Pain must have been present for longer than 3 months to be considered as chronic!"
+        },
+        {
+          "id": "nrs_intensity",
+          "label": "b. Ask the patient to rate his or her average pain intensity over last week",
+          "type": "nrs_0_10",
+          "anchor_low": "No pain",
+          "anchor_high": "Worst pain imaginable"
+        },
+        {
+          "id": "temporal_pattern",
+          "label": "c. Ask the patient to describe the temporal pattern of the pain over time",
+          "type": "single_select",
+          "options": [
+            {
+              "value": "persistent",
+              "label": "Persistent"
+            },
+            {
+              "value": "recurring",
+              "label": "Recurring with pain-free intervals"
+            },
+            {
+              "value": "persistent_with_attacks",
+              "label": "Persistent with overlapping pain attacks"
+            }
+          ]
+        },
+        {
+          "id": "distress",
+          "label": "d. Pain-related distress: average pain-related distress over the last week (worries, sense of helplessness, low self-esteem, or anger)",
+          "type": "nrs_0_10",
+          "anchor_low": "No pain-related distress",
+          "anchor_high": "Extreme pain-related distress"
+        },
+        {
+          "id": "interference",
+          "label": "e. Pain-related interference: average pain-related interference in daily activities over the last week (work, school, household duties, exercise, or sleep)",
+          "type": "nrs_0_10",
+          "anchor_low": "No interference",
+          "anchor_high": "Unable to carry on activities"
+        }
+      ]
+    }
+  },
+  "appendix": {
+    "_source_pages": "41-45",
+    "_meta_note": "This list gives examples of diseases, injuries, and medical procedures that may be associated with chronic pain. Please note that the chronic pain diagnosis cannot be assigned solely based on the presence of one of these examples. In all cases where an underlying potential cause of chronic secondary pain is present, you need to ensure that all chronic pain diagnostic criteria are met. This list is not exhaustive.",
+    "entries": [
+      {
+        "codes": [
+          "MG30.10",
+          "MG30.11"
+        ],
+        "title": "Chronic cancer pain & Chronic post cancer treatment pain",
+        "note": "Most tumors and metastases, as well as most cancer treatments, may be associated with chronic pain.",
+        "examples": [],
+        "_referenced_by_nodes": [],
+        "_note": "No bullet list in source, and no node in the built graph explicitly cites '(see Appendix)' for this entry — included for completeness/documentation only."
+      },
+      {
+        "codes": [
+          "MG30.21"
+        ],
+        "title": "Chronic postsurgical pain",
+        "note": "Surgeries that may be associated with chronic postsurgical pain include:",
+        "examples": [
+          "Abdominal surgery (bowel, colorectal)",
+          "Amputation",
+          "Breast surgery",
+          "Caesarian delivery",
+          "Cholecystectomy",
+          "Cosmetic surgery",
+          "Craniotomy",
+          "Dental surgery",
+          "Herniotomy",
+          "Hip arthroplasty",
+          "Hysterectomy",
+          "Inguinal herniotomy",
+          "Knee arthroplasty",
+          "Mastectomy",
+          "Melanoma resection",
+          "Rectum amputation",
+          "Spinal fusion",
+          "Spinal surgery",
+          "Sternotomy",
+          "Thoracotomy",
+          "Vasectomy"
+        ],
+        "_referenced_by_nodes": [],
+        "_note": "No node in the built graph explicitly cites '(see Appendix)' for this entry (n153/n159's footnotes don't mention it) — included for completeness/documentation only."
+      },
+      {
+        "codes": [
+          "MG30.20"
+        ],
+        "title": "Chronic post-traumatic pain",
+        "note": "Injuries that may be associated with chronic post-traumatic pain include:",
+        "examples": [
+          "Bone fractures",
+          "Brachial plexus injury",
+          "Brain injury",
+          "Burns injury",
+          "Contusion",
+          "Joint injuries",
+          "Ligament injuries",
+          "Muscle injuries",
+          "Peripheral nerve injury",
+          "Spinal cord injury",
+          "Traumatic amputation",
+          "Whiplash injury"
+        ],
+        "_referenced_by_nodes": [],
+        "_note": "No node in the built graph explicitly cites '(see Appendix)' for this entry — included for completeness/documentation only."
+      },
+      {
+        "codes": [
+          "MG30.51"
+        ],
+        "title": "Chronic peripheral neuropathic pain",
+        "note": "Diseases or lesions of the peripheral nervous system that may be associated with chronic neuropathic pain include:",
+        "examples": [
+          {
+            "item": "Entrapment",
+            "sub_items": [
+              "Carpal tunnel syndrome",
+              "Morton's neuroma",
+              "Pudendal syndrome"
+            ]
+          },
+          "Herpes zoster (shingles)",
+          "Nerve injury",
+          {
+            "item": "Polyneuropathy, for example due to (the list is not exhaustive)",
+            "sub_items": [
+              "Diabetic polyneuropathy",
+              "Other metabolic polyneuropathy",
+              "Polyneuropathy associated with a disease of the immune system",
+              "Polyneuropathy associated with genetic conditions",
+              "Polyneuropathy associated with vitamin insufficiency (e.g., vitamin B1 or B12)",
+              "Polyneuropathy in alcohol abuse",
+              "Polyneuropathy in human immunodeficiency virus disease (HIV)",
+              "Polyneuropathy in leprosy",
+              "Toxic polyneuropathy"
+            ]
+          },
+          "Radiculopathy",
+          "Trigeminal neuralgia"
+        ],
+        "other_factors_note": "Other factors that may be associated with chronic peripheral neuropathic pain include:",
+        "other_factors": [
+          "Alcohol abuse or addiction",
+          "Degenerative changes in nerves",
+          "Exposure to environmental or occupational toxins",
+          "Treatment with neurotoxic drugs"
+        ],
+        "_referenced_by_nodes": [
+          "n13",
+          "n217"
+        ]
+      },
+      {
+        "codes": [
+          "MG30.50"
+        ],
+        "title": "Chronic central neuropathic pain",
+        "note": "Diseases or lesions of the central nervous system that may be associated with chronic neuropathic pain include:",
+        "examples": [
+          "Brain injury",
+          "HIV / AIDS",
+          "Multiple sclerosis",
+          "Spinal cord injury",
+          "Stroke"
+        ],
+        "_referenced_by_nodes": [
+          "n13",
+          "n219"
+        ]
+      },
+      {
+        "codes": [
+          "MG30.42"
+        ],
+        "title": "Chronic secondary visceral pain from persistent inflammation",
+        "note": "Inflammatory diseases of internal organs that may be associated with chronic secondary visceral pain include:",
+        "examples": [
+          "Behçet's disease",
+          "Bronchiectasis",
+          "Chronic appendicitis",
+          "Chronic duodenitis",
+          "Chronic Eosinophilic esophagitis",
+          "Chronic gastritis",
+          "Chronic infectious esophagitis",
+          "Chronic laryngitis",
+          "Chronic oophoritis",
+          "Chronic pancreatitis",
+          "Chronic pericarditis",
+          "Chronic pharyngitis",
+          "Chronic pleurisy",
+          "Chronic prostatitis",
+          "Chronic salpingitis",
+          "Chronic tonsillitis",
+          "Chronic vaginitis",
+          "Crohn's disease",
+          "Cystitis",
+          "Endometriosis",
+          "Gastro-esophageal reflux disease",
+          "Recurrent diverticulitis",
+          "Systemic lupus erythematosus",
+          "Ulcer of esophagus",
+          "Ulcerative colitis",
+          "Urethritis",
+          "Wegner's Granulomatosis"
+        ],
+        "_referenced_by_nodes": [
+          "n16",
+          "n261",
+          "n278",
+          "n281",
+          "n284",
+          "n287"
+        ]
+      },
+      {
+        "codes": [
+          "MG30.41"
+        ],
+        "title": "Chronic secondary visceral pain from vascular mechanisms",
+        "note": "Alterations of arterial and/or venous blood vessels from/to internal organs that may be associated with chronic secondary visceral pain include:",
+        "examples": [
+          "Aneurysms (e.g., carotid artery, thoracic aorta)",
+          "Aortic dissection",
+          "Iliac artery aneurysms",
+          "Ischemic colitis",
+          "Ischemic heart disease",
+          "Mesenteric angina",
+          "Pelvic congestion syndrome",
+          "Polyarteritis nodosa",
+          "Sickle cell disease",
+          {
+            "item": "Vascular entrapment syndromes",
+            "sub_items": [
+              "Nutcracker syndrome",
+              "May-Thurner syndrome",
+              "Median arcuate ligament syndrome",
+              "Superior mesenteric artery syndrome"
+            ]
+          },
+          "Vasculitis"
+        ],
+        "_referenced_by_nodes": [
+          "n16",
+          "n265",
+          "n292",
+          "n295",
+          "n298",
+          "n301"
+        ]
+      },
+      {
+        "codes": [
+          "MG30.40"
+        ],
+        "title": "Chronic secondary visceral pain from mechanical factors",
+        "note": "Mechanical factors affecting one or more internal organs that may be associated with chronic secondary visceral pain include:",
+        "examples": [
+          "Chronic intestinal pseudo-obstruction",
+          "Lithiasis of lower urinary tract",
+          "Obstruction or distension of hollow internal organs",
+          "Recurrent urinary colic",
+          "Sclerosing cholangitis or luminal obstructions of the gastrointestinal tract",
+          "Stenosis",
+          "Stones obstructing the biliary or renal tracts",
+          "Traction or compression of ligaments and vessels to internal organs",
+          "Ureteric kinking"
+        ],
+        "_referenced_by_nodes": [
+          "n16",
+          "n269",
+          "n306",
+          "n309",
+          "n312",
+          "n315"
+        ]
+      },
+      {
+        "codes": [
+          "MG30.30"
+        ],
+        "title": "Chronic secondary musculoskeletal pain from persistent inflammation",
+        "note": "Infections that may be associated with chronic secondary musculoskeletal pain include:",
+        "examples": [
+          "Borrelia burgdorferi / Lyme disease",
+          "Brucella",
+          "Chikungunya",
+          "Epstein-Barr virus",
+          "Hepatitis B",
+          "Hepatitis C",
+          "Herpes virus",
+          "HIV",
+          "Human T-lymphotropic virus 1 (HTLV-1)",
+          "Infection of prosthetic joints",
+          "Mycobacteria",
+          "Parvoviruses",
+          "Rickettsia"
+        ],
+        "crystal_depositions_note": "Crystal depositions that may be associated with chronic secondary musculoskeletal pain include:",
+        "crystal_depositions": [
+          "Calcium pyrophosphates",
+          "Hydroxyapatite",
+          "Uric acid / gout"
+        ],
+        "autoimmune_autoinflammatory_note": "Autoimmune and auto-inflammatory diseases that may be associated with chronic secondary musculoskeletal pain include:",
+        "autoimmune_autoinflammatory": [
+          "Psoriatic arthritis",
+          "Rheumatoid arthritis",
+          "Sjögren's syndrome",
+          "Spondyloarthritis",
+          "Systemic lupus erythematosus"
+        ],
+        "_referenced_by_nodes": [
+          "n22",
+          "n319"
+        ]
+      },
+      {
+        "codes": [
+          "MG30.31"
+        ],
+        "title": "Chronic secondary musculoskeletal pain associated with structural changes",
+        "note": "Structural changes of the musculoskeletal system that may be associated with chronic secondary musculoskeletal pain include:",
+        "examples": [
+          "Anatomical changes after bone fracture",
+          "Anatomical changes in entheses",
+          "Anatomical changes in tendons",
+          "Osteoarthritis",
+          "Spondylosis"
+        ],
+        "_referenced_by_nodes": [
+          "n22",
+          "n321"
+        ]
+      },
+      {
+        "codes": [
+          "MG30.32"
+        ],
+        "title": "Chronic secondary musculoskeletal pain associated with a disease of the nervous system",
+        "note": "Neurological diseases that may be associated with chronic secondary musculoskeletal pain include:",
+        "examples": [
+          "Charcot joint disease in peripheral neuropathy",
+          "Extrapyramidal disorders",
+          "Motor neuron disease",
+          "Multiple sclerosis",
+          "Parkinson disease"
+        ],
+        "_referenced_by_nodes": [
+          "n22",
+          "n324"
+        ]
+      }
+    ]
+  },
+  "trunk": {
+    "_source_page": 8,
+    "start_node": "n1",
+    "shared_notes": {
+      "distress_disability_scoring": {
+        "applies_to": [
+          "n4",
+          "n28"
+        ],
+        "footnote_ref": "4,28",
+        "text": "Check NRS on page 6. Pain-related emotional distress and pain-related interference should be assessed in all patients with chronic pain, chronic primary pain as well as chronic secondary pain. The ratings can be converted into the WHO severity scheme and can be coded as an extension code. However, in chronic primary pain, the presence of emotional distress or functional disability also is a diagnostic criterion, and thus represents a prerequisite to assign this diagnosis."
+      },
+      "check_all_pain_explained": {
+        "applies_to": [
+          "n7",
+          "n9",
+          "n12",
+          "n15",
+          "n20",
+          "n23",
+          "n30",
+          "n32",
+          "n33"
+        ],
+        "footnote_ref": "7,9,12,15,20,23,30,32,33",
+        "text": "Only if you are assigning a diagnosis on this first diagnostic level: Check the pain location chart on page 7 whether all chronic pain has been explained. If additional chronic pain syndromes are present, refer to the initial decision trunk on page 8 to check where to continue."
+      },
+      "check_all_pain_explained_p10_13": {
+        "applies_to": [
+          "n44",
+          "n60",
+          "n62",
+          "n64",
+          "n66",
+          "n67"
+        ],
+        "footnote_ref": "44,60,62,64,66,67",
+        "text": "Check the pain location chart on page 7 whether all chronic pain has been explained. If additional chronic pain syndromes are present, refer to the initial decision trunk on page 8 to check where to continue."
+      },
+      "check_all_pain_explained_p14_15": {
+        "applies_to": [
+          "n72",
+          "n77",
+          "n82",
+          "n84",
+          "n87",
+          "n89",
+          "n90"
+        ],
+        "footnote_ref": "72,77,82,84,87,89,90",
+        "text": "Check the pain location chart on page 7 whether all chronic pain has been explained. If additional chronic pain syndromes are present, refer to the initial decision trunk on page 8 to check where to continue."
+      },
+      "check_all_pain_explained_p16_20": {
+        "applies_to": [
+          "n103",
+          "n104",
+          "n109",
+          "n111",
+          "n114",
+          "n115",
+          "n118",
+          "n120",
+          "n121",
+          "n124",
+          "n127",
+          "n128",
+          "n132",
+          "n133",
+          "n136",
+          "n138",
+          "n139",
+          "n143",
+          "n144",
+          "n147",
+          "n149",
+          "n150"
+        ],
+        "footnote_ref": "103,104,109,111,114,115,118,120,121,124,127,128,132,133,136,138,139,143,144,147,149,150",
+        "text": "Check the pain location chart on page 7 whether all chronic pain has been explained. If additional chronic pain syndromes are present, refer to the initial decision trunk on page 8 to check where to continue."
+      },
+      "neuropathic_negative_testing_caution": {
+        "applies_to": [
+          "n116",
+          "n117",
+          "n119",
+          "n134",
+          "n135",
+          "n137",
+          "n145",
+          "n146",
+          "n148",
+          "n211",
+          "n212",
+          "n214"
+        ],
+        "footnote_ref": "116,117,119 (p17); 134,135,136,137 (p19); 145,146,148 (p20); 211,212,214 (p27/28)",
+        "text": "Negative or positive sensory signs consistent with the distribution of the pain may be sufficient to indicate the presence of a lesion or disease of the somatosensory nervous system. The clinical examination may be supplemented by laboratory tests, e.g., quantitative sensory testing. Tests that reveal the relevant lesion or disease affecting the somatosensory system may, e.g., consist of surgical or radiological confirmation of nerve compression, nerve conduction study, laser-evoked potentials, blink reflex, or skin biopsy confirmation of reduced nerve fiber terminals. Positive findings in these investigations may provide important diagnostic hints at the source of pain. However, all clinical and diagnostic aspects of the pain need to be considered before assuming causality. If clinical examination or diagnostic testing are performed, and the results are negative, neuropathic pain is unlikely (or less likely). Consider using another chronic pain diagnosis."
+      },
+      "check_all_pain_explained_p21_26": {
+        "applies_to": [
+          "n157",
+          "n158",
+          "n166",
+          "n168",
+          "n170",
+          "n172",
+          "n174",
+          "n176",
+          "n178",
+          "n179",
+          "n182",
+          "n184",
+          "n194",
+          "n195",
+          "n202"
+        ],
+        "footnote_ref": "157,158 (p21); 166,168,170,172,174,176,178,179 (p22/23); 182,184,194,195 (p24); 202 (p25)",
+        "text": "Check the pain location chart on page 7 whether all chronic pain has been explained. If additional chronic pain syndromes are present, refer to the initial decision trunk on page 8 to check where to continue."
+      },
+      "check_all_pain_explained_p27_31": {
+        "applies_to": [
+          "n222",
+          "n223",
+          "n227",
+          "n230",
+          "n233",
+          "n235",
+          "n236",
+          "n240",
+          "n242",
+          "n245",
+          "n248",
+          "n251",
+          "n252",
+          "n256",
+          "n258",
+          "n259"
+        ],
+        "footnote_ref": "222,223 (p27); 227,230,233,235,236 (p29); 240,242,245,248,251,252 (p30); 256,258,259 (p31)",
+        "text": "Check the pain location chart on page 7 whether all chronic pain has been explained. If additional chronic pain syndromes are present, refer to the initial decision trunk on page 8 to check where to continue."
+      },
+      "check_all_pain_explained_p32_36": {
+        "applies_to": [
+          "n274",
+          "n275",
+          "n279",
+          "n282",
+          "n285",
+          "n288",
+          "n289",
+          "n293",
+          "n296",
+          "n299",
+          "n302",
+          "n303",
+          "n307",
+          "n310",
+          "n313",
+          "n316",
+          "n317"
+        ],
+        "footnote_ref": "274,275 (p32); 279,282,285,288,289 (p34); 293,296,299,302,303 (p35); 307,310,313,316,317 (p36)",
+        "text": "Check the pain location chart on page 7 whether all chronic pain has been explained. If additional chronic pain syndromes are present, refer to the initial decision trunk on page 8 to check where to continue."
+      },
+      "see_appendix_visceral_mechanisms": {
+        "applies_to": [
+          "n278",
+          "n281",
+          "n284",
+          "n287",
+          "n292",
+          "n295",
+          "n298",
+          "n301",
+          "n306",
+          "n309",
+          "n312",
+          "n315"
+        ],
+        "footnote_ref": "278,281,284,287 (p34); 292,295,298,301 (p35); 306,309,312,315 (p36)",
+        "text": "See Appendix (page 41) for a list of examples."
+      },
+      "check_all_pain_explained_p37_40": {
+        "applies_to": [
+          "n328",
+          "n329",
+          "n332",
+          "n334",
+          "n336",
+          "n337",
+          "n340",
+          "n343",
+          "n346",
+          "n349",
+          "n351",
+          "n353",
+          "n354"
+        ],
+        "footnote_ref": "328,329 (p37); 332,334,336,337 (p38); 340,343,346 (p39); 349,351,353,354 (p40)",
+        "text": "Check the pain location chart on page 7 whether all chronic pain has been explained. If additional chronic pain syndromes are present, refer to the initial decision trunk on page 8 to check where to continue."
+      }
+    },
+    "nodes": [
+      {
+        "id": "n1",
+        "number": 1,
+        "type": "decision",
+        "style": "entry",
+        "text": "Pain > 3 months",
+        "yes": "n3",
+        "no": "n2"
+      },
+      {
+        "id": "n2",
+        "number": 2,
+        "type": "terminal_no_diagnosis",
+        "text": "No chronic pain"
+      },
+      {
+        "id": "n3",
+        "number": 3,
+        "type": "decision",
+        "text": "Red flags present",
+        "footnote_ref": "3",
+        "footnote": "Yes, if the patient has a history of any of the following: history of cancer or cancer treatment, pain began or intensified after a surgery or trauma, history of a disease or lesion of the central or peripheral nervous system, history of inflammatory disease of one or more internal organs or history of alterations of arterial or venous blood vessels from or to internal organs, history of mechanical factors affecting one or more internal organs, history of inflammatory musculoskeletal disease, history of structural changes of the musculoskeletal system, history of a neurological disease that may affect the musculoskeletal system.",
+        "yes": "n8",
+        "no": "n4"
+      },
+      {
+        "id": "n4",
+        "number": 4,
+        "type": "action",
+        "text": "Check emotional distress and functional disability",
+        "shared_note_ref": "distress_disability_scoring",
+        "merge_with_next": true,
+        "next": "n5"
+      },
+      {
+        "id": "n5",
+        "number": 5,
+        "type": "decision",
+        "text": "Score ≥ 3 for distress OR disability",
+        "yes": "n6",
+        "no": "n8"
+      },
+      {
+        "id": "n6",
+        "number": 6,
+        "type": "decision",
+        "text": "Not better accounted for by a chronic secondary pain condition",
+        "yes": "n7",
+        "no": "n8"
+      },
+      {
+        "id": "n7",
+        "number": 7,
+        "type": "diagnosis",
+        "code": "MG30.0",
+        "name": "Chronic primary pain",
+        "level": 2,
+        "border": "dotted",
+        "shared_note_ref": "check_all_pain_explained",
+        "footnote_ref": "7,30",
+        "footnote": "Continue on page 10. This is the first diagnostic level. Continue to find the appropriate diagnosis on the next level.",
+        "optional_continue": true,
+        "next": "n34",
+        "continues_to": {
+          "page": 10,
+          "branch": "Chronic Primary Pain",
+          "stub": false
+        }
+      },
+      {
+        "id": "n8",
+        "number": 8,
+        "type": "decision",
+        "text": "Pain caused by active tumor OR cancer treatment other than surgery",
+        "yes": "n9",
+        "no": "n10"
+      },
+      {
+        "id": "n9",
+        "number": 9,
+        "type": "diagnosis",
+        "code": "MG30.1",
+        "name": "Chronic cancer related pain",
+        "level": 2,
+        "border": "dotted",
+        "shared_note_ref": "check_all_pain_explained",
+        "footnote_ref": "8,9",
+        "footnote": "If the chronic pain began after cancer surgery, it should be coded as chronic postsurgical or post traumatic pain, continue with box 10. Otherwise: continue on page 16. This is the first diagnostic level. Continue to find the appropriate diagnosis on the next level.",
+        "optional_continue": true,
+        "next": "n91",
+        "continues_to": {
+          "page": 16,
+          "branch": "Chronic Cancer Related Pain",
+          "stub": false
+        }
+      },
+      {
+        "id": "n10",
+        "number": 10,
+        "type": "decision",
+        "text": "Pain onset after surgery or tissue trauma OR higher pain intensity after surgery or trauma",
+        "yes": "n11",
+        "no": "n13"
+      },
+      {
+        "id": "n11",
+        "number": 11,
+        "type": "decision",
+        "text": "Pain in or referred from area of surgery or tissue trauma",
+        "yes": "n12",
+        "no": "n13"
+      },
+      {
+        "id": "n12",
+        "number": 12,
+        "type": "diagnosis",
+        "code": "MG30.2",
+        "name": "Chronic postsurgical or post traumatic pain",
+        "level": 2,
+        "border": "dotted",
+        "shared_note_ref": "check_all_pain_explained",
+        "footnote_ref": "12",
+        "footnote": "Continue on page 21. This is the first diagnostic level. Continue to find the appropriate diagnosis on the next level.",
+        "optional_continue": true,
+        "next": "n151",
+        "continues_to": {
+          "page": 21,
+          "branch": "Chronic Postsurgical or Post Traumatic Pain",
+          "stub": false
+        }
+      },
+      {
+        "id": "n13",
+        "number": 13,
+        "type": "decision",
+        "text": "History of relevant lesion or disease of the nervous system",
+        "footnote_ref": "13",
+        "footnote": "History of lesion or disease of the peripheral or central somatosensory nervous system, for example: polyneuropathy, nerve injury, stroke (see Appendix on page 41 for a list of examples).",
+        "appendix_ref": [
+          "MG30.51",
+          "MG30.50"
+        ],
+        "yes": "n14",
+        "no": "n16"
+      },
+      {
+        "id": "n14",
+        "number": 14,
+        "type": "decision",
+        "text": "Pain distribution neuroanatomically plausible",
+        "yes": "n15",
+        "no": "n16"
+      },
+      {
+        "id": "n15",
+        "number": 15,
+        "type": "diagnosis",
+        "code": "MG30.5",
+        "name": "Chronic neuropathic pain, possible",
+        "level": 2,
+        "border": "dotted",
+        "shared_note_ref": "check_all_pain_explained",
+        "footnote_ref": "15",
+        "footnote": "Continue on page 27. This is the first diagnostic level. Continue to find the appropriate diagnosis on the next level.",
+        "optional_continue": true,
+        "next": "n210",
+        "continues_to": {
+          "page": 27,
+          "branch": "Chronic Neuropathic Pain (Finnerup 2016 grading)",
+          "stub": false
+        }
+      },
+      {
+        "id": "n16",
+        "number": 16,
+        "type": "decision",
+        "text": "History of relevant dysfunction or disease of ≥ 1 internal organ",
+        "footnote_ref": "16",
+        "footnote": "History of inflammatory disease of one or more internal organs or history of alterations of arterial and/or venous blood vessels from or to internal organs, or history of mechanical factors affecting one or more internal organs. For example: Morbus Crohn, sickle cell disease, stenosis (see Appendix on page 41 for a list of examples).",
+        "appendix_ref": [
+          "MG30.42",
+          "MG30.41",
+          "MG30.40"
+        ],
+        "yes": "n17",
+        "no": "n21"
+      },
+      {
+        "id": "n17",
+        "number": 17,
+        "type": "decision",
+        "text": "Anatomical location compatible with typical referral pain patterns from specific internal organs",
+        "yes": "n18",
+        "no": "n21"
+      },
+      {
+        "id": "n18",
+        "number": 18,
+        "type": "decision",
+        "text": "≥ 1 test demonstrates anatomical location compatible with referral patterns",
+        "yes": "n19",
+        "no": "n21"
+      },
+      {
+        "id": "n19",
+        "number": 19,
+        "type": "decision",
+        "text": "≥ 1 test demonstrates the relevant dysfunction or disease",
+        "footnote_ref": "19",
+        "footnote": "For example: blood sampling, ultrasound.",
+        "yes": "n20",
+        "no": "n21"
+      },
+      {
+        "id": "n20",
+        "number": 20,
+        "type": "diagnosis",
+        "code": "MG30.4",
+        "name": "Chronic secondary visceral pain",
+        "level": 2,
+        "border": "dotted",
+        "shared_note_ref": "check_all_pain_explained",
+        "footnote_ref": "20",
+        "footnote": "Continue on page 32. This is the first diagnostic level. Continue to find the appropriate diagnosis on the next level.",
+        "optional_continue": true,
+        "next": "n260",
+        "continues_to": {
+          "page": 32,
+          "branch": "Chronic Secondary Visceral Pain",
+          "stub": false
+        }
+      },
+      {
+        "id": "n21",
+        "number": 21,
+        "type": "decision",
+        "text": "Pain in joint(s), bone(s), muscle(s), vertebral column, tendon(s), or related soft tissue",
+        "footnote_ref": "21",
+        "footnote": "The pain may be spontaneous or movement induced.",
+        "yes": "n22",
+        "no": "n24"
+      },
+      {
+        "id": "n22",
+        "number": 22,
+        "type": "decision",
+        "text": "Musculoskeletal disease or neurological disease with musculoskeletal involvement is present and demonstrated by appropriate clinical examination or appropriate tests",
+        "footnote_ref": "22",
+        "footnote": "At least one of the following is fulfilled: (a) Musculoskeletal disease with inflammation due to infection, auto-immunity, auto-inflammation, or metabolic disorders (crystals) is present (demonstrated by appropriate clinical examination or appropriate tests) and causes local activation of nociceptors. (b) Musculoskeletal disease with structural/biomechanical factors (demonstrated by appropriate clinical examination or appropriate tests) is present and causes local activation of nociceptors. (c) Neurological disease (classified elsewhere) is present, and causes altered biomechanical function (demonstrated by appropriate clinical examination or appropriate tests) that is responsible for the activation of nociceptors. See Appendix (page 41) for examples of relevant diseases. Examples for diagnostic tests include, e.g., blood tests for systemic inflammation, X-ray, uric acid.",
+        "appendix_ref": [
+          "MG30.30",
+          "MG30.31",
+          "MG30.32"
+        ],
+        "yes": "n23",
+        "no": "n24"
+      },
+      {
+        "id": "n23",
+        "number": 23,
+        "type": "diagnosis",
+        "code": "MG30.3",
+        "name": "Chronic secondary musculoskeletal pain",
+        "level": 2,
+        "border": "dotted",
+        "shared_note_ref": "check_all_pain_explained",
+        "footnote_ref": "23",
+        "footnote": "Continue on page 37. This is the first diagnostic level. Continue to find the appropriate diagnosis on the next level.",
+        "optional_continue": true,
+        "next": "n318",
+        "continues_to": {
+          "page": 37,
+          "branch": "Chronic Secondary Musculoskeletal Pain",
+          "stub": false
+        }
+      },
+      {
+        "id": "n24",
+        "number": 24,
+        "type": "decision",
+        "text": "Chronic headache or orofacial pain",
+        "yes": "n25",
+        "no": "n26"
+      },
+      {
+        "id": "n25",
+        "number": 25,
+        "type": "action",
+        "text": "Please refer to the ICHD-3 / the ICOP and the ICD-11 Coding Tool",
+        "footnote_ref": "25",
+        "footnote": "This algorithm is not applicable for chronic headache or orofacial pain. Refer to the International Classification of Headache Disorders, 3rd edition (ICHD-3, IHS 2018) or the International Classification of Orofacial Pain, 1st edition (ICOP, 2020), and to the ICD-11 Coding Tool for the corresponding code. On a general level, the following diagnoses for chronic primary and secondary headache or orofacial pain are available in the ICD-11: MG30.03 Chronic primary headache or orofacial pain, MG30.6 Chronic secondary headache or orofacial pain.",
+        "out_of_scope": true,
+        "next": "n26"
+      },
+      {
+        "id": "n26",
+        "number": 26,
+        "type": "decision",
+        "text": "Is all chronic pain explained after this?",
+        "yes": "n27",
+        "no": "n28"
+      },
+      {
+        "id": "n27",
+        "number": 27,
+        "type": "terminal_end",
+        "text": "END"
+      },
+      {
+        "id": "n28",
+        "number": 28,
+        "type": "action",
+        "text": "Check emotional distress and functional disability",
+        "shared_note_ref": "distress_disability_scoring",
+        "merge_with_next": true,
+        "next": "n29"
+      },
+      {
+        "id": "n29",
+        "number": 29,
+        "type": "decision",
+        "text": "Score ≥ 3 for distress OR disability",
+        "yes": "n30",
+        "no": "n31"
+      },
+      {
+        "id": "n30",
+        "number": 30,
+        "type": "diagnosis",
+        "code": "MG30.0",
+        "name": "Chronic primary pain",
+        "level": 2,
+        "border": "dotted",
+        "shared_note_ref": "check_all_pain_explained",
+        "footnote_ref": "7,30",
+        "footnote": "Continue on page 10. This is the first diagnostic level. Continue to find the appropriate diagnosis on the next level.",
+        "optional_continue": true,
+        "next": "n34",
+        "continues_to": {
+          "page": 10,
+          "branch": "Chronic Primary Pain",
+          "stub": false
+        }
+      },
+      {
+        "id": "n31",
+        "number": 31,
+        "type": "decision",
+        "text": "Other specified form of chronic pain",
+        "footnote_ref": "31",
+        "footnote": "For example: chronic pain associated with a disease of the skin.",
+        "yes": "n32",
+        "no": "n33"
+      },
+      {
+        "id": "n32",
+        "number": 32,
+        "type": "diagnosis",
+        "code": "MG30.Y",
+        "name": "Other specified chronic pain",
+        "level": 2,
+        "border": "dotted",
+        "shared_note_ref": "check_all_pain_explained",
+        "footnote_ref": "32",
+        "final": true
+      },
+      {
+        "id": "n33",
+        "number": 33,
+        "type": "diagnosis",
+        "code": "MG30.Z",
+        "name": "Chronic pain, unspecified",
+        "level": 2,
+        "border": "dotted",
+        "shared_note_ref": "check_all_pain_explained",
+        "footnote_ref": "33",
+        "final": true
+      },
+      {
+        "id": "n34",
+        "number": 34,
+        "type": "diagnosis",
+        "code": "MG30.0",
+        "name": "Chronic primary pain",
+        "level": 2,
+        "border": "dotted",
+        "next": "n35"
+      },
+      {
+        "id": "n35",
+        "number": 35,
+        "type": "decision",
+        "text": "Pain in ≥ 4 body regions: ≥ 3 body quadrants & axial skeleton",
+        "footnote_ref": "35",
+        "footnote": "Body quadrants are defined by upper-lower/left-right side of the body; axial skeleton: neck, back, chest, and abdomen.",
+        "yes": "n36",
+        "no": "n39"
+      },
+      {
+        "id": "n36",
+        "number": 36,
+        "type": "diagnosis",
+        "code": "MG30.01",
+        "name": "Chronic widespread pain",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "36",
+        "footnote": "This is the second diagnostic level. Decide whether you need to continue to the next level.",
+        "optional_continue": true,
+        "next": "n37"
+      },
+      {
+        "id": "n37",
+        "number": 37,
+        "type": "decision",
+        "text": "Pain is associated with:",
+        "criteria": [
+          "Sleep disorders",
+          "Cognitive dysfunction",
+          "Somatic symptoms"
+        ],
+        "yes": "n38",
+        "no": "n36x"
+      },
+      {
+        "id": "n38",
+        "number": 38,
+        "type": "diagnosis",
+        "code": "MG30.01",
+        "name": "Fibromyalgia syndrome",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "236601102",
+        "shared_note_ref": "check_all_pain_explained_p10_13"
+      },
+      {
+        "id": "n36x",
+        "number": "36 (confirmed)",
+        "type": "diagnosis",
+        "code": "MG30.01",
+        "name": "Chronic widespread pain",
+        "level": 2,
+        "border": "dotted",
+        "leaf": true,
+        "_note": "Same diagnosis box as n36 — the source diagram loops box 37's 'no' arrow back into box 36 itself to show the diagnosis is confirmed as final without progressing to fibromyalgia. Modelled here as a distinct leaf node because this wizard is a linear stateful walker, not a static diagram; the clinical meaning is identical to box 36.",
+        "shared_note_ref": "check_all_pain_explained_p10_13"
+      },
+      {
+        "id": "n39",
+        "number": 39,
+        "type": "decision",
+        "text": "Regional pain in limb initiated by nerve lesion or tissue trauma",
+        "yes": "n40",
+        "no": "n43"
+      },
+      {
+        "id": "n40",
+        "number": 40,
+        "type": "decision",
+        "text": "At least one symptom in ≥ 3 categories:",
+        "criteria": [
+          "Sensory",
+          "Vasomotor",
+          "Sudomotor/edema",
+          "Motor/trophic"
+        ],
+        "footnote_ref": "40,41",
+        "footnote": "Sensory signs and symptoms: hyperalgesia (to pinprick) and/or allodynia (to light touch or deep somatic pressure, or joint movement) - Vasomotor symptoms: temperature asymmetry and/or skin color changes and/or asymmetry - Sudomotor/edema: edema and/or sweating changes and/or sweating asymmetry - Motor/trophic symptoms: decreased range of motion and/or motor dysfunction (weakness, tremor, dystonia) and/or trophic changes (hair, nails, skin). These signs and symptoms are consistent with the established CRPS Budapest criteria (Bruehl et al., PAIN 1999;81:147–154).",
+        "yes": "n41",
+        "no": "n43"
+      },
+      {
+        "id": "n41",
+        "number": 41,
+        "type": "decision",
+        "text": "At least one sign at time of evaluation in ≥ 2 categories:",
+        "criteria": [
+          "Sensory",
+          "Vasomotor",
+          "Sudomotor/edema",
+          "Motor/trophic"
+        ],
+        "footnote_ref": "40,41",
+        "footnote": "See box 40 for category definitions and CRPS Budapest criteria reference.",
+        "yes": "n42",
+        "no": "n43"
+      },
+      {
+        "id": "n42",
+        "number": 42,
+        "type": "diagnosis",
+        "code": "8D8A.0",
+        "name": "Complex regional pain syndrome",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "42",
+        "footnote": "Decide whether you need to continue. If yes, continue on page 12. This diagnosis has two parents: MG30.0 Chronic primary pain, MG30.2 Chronic postsurgical or post traumatic pain. This is the second diagnostic level. Continue to find the correct diagnosis on level 3.",
+        "known_parents": [
+          "MG30.0 Chronic primary pain (this branch)",
+          "MG30.2 Chronic postsurgical or post traumatic pain (page 21 branch — not yet built)"
+        ],
+        "optional_continue": true,
+        "next": "n52"
+      },
+      {
+        "id": "n43",
+        "number": 43,
+        "type": "decision",
+        "text": "Pain in muscles, bones, Joints, or tendons",
+        "yes": "n44",
+        "no": "n45"
+      },
+      {
+        "id": "n44",
+        "number": 44,
+        "type": "diagnosis",
+        "code": "MG30.02",
+        "name": "Chronic primary musculoskeletal pain",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "44",
+        "footnote": "Continue on page 13. This is the second diagnostic level. Continue to find the correct diagnosis on level 3.",
+        "shared_note_ref": "check_all_pain_explained_p10_13",
+        "optional_continue": true,
+        "next": "n58"
+      },
+      {
+        "id": "n45",
+        "number": 45,
+        "type": "decision",
+        "text": "Headache or orofacial pain",
+        "yes": "n46",
+        "no": "n47"
+      },
+      {
+        "id": "n46",
+        "number": 46,
+        "type": "action",
+        "text": "Please refer to the ICHD-3/ICOP and the ICD-11 Coding Tool",
+        "footnote_ref": "46",
+        "footnote": "Coding Tool available at https://icd.who.int/ct11/icd11_mms/en/release",
+        "out_of_scope": true,
+        "next": "n47"
+      },
+      {
+        "id": "n47",
+        "number": 47,
+        "type": "decision",
+        "text": "Pain location compatible with referral pain patterns from internal organs",
+        "footnote_ref": "47",
+        "footnote": "The referral pain pattern should be demonstrated by at least one test.",
+        "yes": "n48",
+        "no": "n49"
+      },
+      {
+        "id": "n48",
+        "number": 48,
+        "type": "diagnosis",
+        "code": "MG30.00",
+        "name": "Chronic primary visceral pain",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "48",
+        "footnote": "Continue on page 14. This is the second diagnostic level. Continue to find the correct diagnosis on level 3.",
+        "shared_note_ref": "check_all_pain_explained_p10_13",
+        "optional_continue": true,
+        "next": "n68",
+        "continues_to": {
+          "page": 14,
+          "branch": "Chronic Primary Visceral Pain",
+          "stub": false
+        }
+      },
+      {
+        "id": "n49",
+        "number": 49,
+        "type": "decision",
+        "text": "Other specified chronic primary pain syndrome",
+        "yes": "n50",
+        "no": "n51"
+      },
+      {
+        "id": "n50",
+        "number": 50,
+        "type": "diagnosis",
+        "code": "MG30.0Y",
+        "name": "Other specified chronic primary pain",
+        "level": 2,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p10_13"
+      },
+      {
+        "id": "n51",
+        "number": 51,
+        "type": "diagnosis",
+        "code": "MG30.0Z",
+        "name": "Chronic primary pain, unspecified",
+        "level": 2,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p10_13"
+      },
+      {
+        "id": "n52",
+        "number": 52,
+        "type": "diagnosis",
+        "code": "8D8A.0",
+        "name": "Complex regional pain syndrome",
+        "level": 2,
+        "border": "dotted",
+        "next": "n53",
+        "known_parents": [
+          "n42 (MG30.0 Chronic primary pain branch)",
+          "n164 (MG30.21 Chronic postsurgical pain branch)",
+          "n201 (MG30.20 Chronic post traumatic pain, after musculoskeletal injury branch)",
+          "n208 (MG30.20 Chronic post traumatic pain, after peripheral nerve injury branch)"
+        ]
+      },
+      {
+        "id": "n53",
+        "number": 53,
+        "type": "decision",
+        "text": "Discrete peripheral nerve damage present",
+        "footnote_ref": "53",
+        "footnote": "As indicated by neurological examination, electrodiagnostic testing, or quasi-objective testing.",
+        "yes": "n54",
+        "no": "n56"
+      },
+      {
+        "id": "n54",
+        "number": 54,
+        "type": "decision",
+        "text": "Signs and symptoms extend beyond identified nerve territory",
+        "footnote_ref": "54",
+        "footnote": "See boxes 36 and 37 on page 10 for the signs and symptoms.",
+        "yes": "n55",
+        "no": "n57"
+      },
+      {
+        "id": "n55",
+        "number": 55,
+        "type": "diagnosis",
+        "code": "8D8A.01",
+        "name": "Complex regional pain syndrome type II",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1415867395",
+        "footnote_ref": "55,56",
+        "footnote": "These diagnoses have two parents: MG30.0 Chronic primary pain, MG30.2 Chronic postsurgical or post traumatic pain.",
+        "shared_note_ref": "check_all_pain_explained_p10_13"
+      },
+      {
+        "id": "n56",
+        "number": 56,
+        "type": "diagnosis",
+        "code": "8D8A.00",
+        "name": "Complex regional pain syndrome type I",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "2067142665",
+        "footnote_ref": "55,56",
+        "footnote": "These diagnoses have two parents: MG30.0 Chronic primary pain, MG30.2 Chronic postsurgical or post traumatic pain.",
+        "shared_note_ref": "check_all_pain_explained_p10_13"
+      },
+      {
+        "id": "n57",
+        "number": 57,
+        "type": "goto",
+        "text": "Go to initial decision trunk, box 14",
+        "footnote_ref": "57",
+        "footnote": "Continue on page 8, box 14.",
+        "next": "n14"
+      },
+      {
+        "id": "n58",
+        "number": 58,
+        "type": "diagnosis",
+        "code": "MG30.02",
+        "name": "Chronic primary musculoskeletal pain",
+        "level": 2,
+        "border": "dotted",
+        "next": "n59",
+        "known_parents": [
+          "n44 (MG30.0 Chronic primary pain branch)"
+        ]
+      },
+      {
+        "id": "n59",
+        "number": 59,
+        "type": "decision",
+        "text": "Pain located in the lumbar region",
+        "yes": "n60",
+        "no": "n61"
+      },
+      {
+        "id": "n60",
+        "number": 60,
+        "type": "diagnosis",
+        "code": "MG30.02",
+        "name": "Chronic primary low back pain",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1291385632",
+        "shared_note_ref": "check_all_pain_explained_p10_13"
+      },
+      {
+        "id": "n61",
+        "number": 61,
+        "type": "decision",
+        "text": "Pain located in the neck region",
+        "yes": "n62",
+        "no": "n63"
+      },
+      {
+        "id": "n62",
+        "number": 62,
+        "type": "diagnosis",
+        "code": "MG30.02",
+        "name": "Chronic primary cervical pain",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "2014134682",
+        "shared_note_ref": "check_all_pain_explained_p10_13"
+      },
+      {
+        "id": "n63",
+        "number": 63,
+        "type": "decision",
+        "text": "Pain located in thoracic region",
+        "yes": "n64",
+        "no": "n65"
+      },
+      {
+        "id": "n64",
+        "number": 64,
+        "type": "diagnosis",
+        "code": "MG30.02",
+        "name": "Chronic primary thoracic pain",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "642165115",
+        "shared_note_ref": "check_all_pain_explained_p10_13"
+      },
+      {
+        "id": "n65",
+        "number": 65,
+        "type": "decision",
+        "text": "Pain located in one or more limbs",
+        "yes": "n66",
+        "no": "n67"
+      },
+      {
+        "id": "n66",
+        "number": 66,
+        "type": "diagnosis",
+        "code": "MG30.02",
+        "name": "Chronic primary limb pain",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "413174579",
+        "shared_note_ref": "check_all_pain_explained_p10_13"
+      },
+      {
+        "id": "n67",
+        "number": 67,
+        "type": "diagnosis",
+        "code": "MG30.02",
+        "name": "Chronic primary musculoskeletal pain, other specified",
+        "level": 3,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": false,
+        "_note": "No distinct ICD-11 coding-tool link shown in source for this fallback box — code MG30.02 with clinical judgement.",
+        "shared_note_ref": "check_all_pain_explained_p10_13"
+      },
+      {
+        "id": "n68",
+        "number": 68,
+        "type": "diagnosis",
+        "code": "MG30.00",
+        "name": "Chronic primary visceral pain",
+        "level": 2,
+        "border": "dotted",
+        "next": "n69",
+        "known_parents": [
+          "n48 (MG30.0 Chronic primary pain branch)"
+        ]
+      },
+      {
+        "id": "n69",
+        "number": 69,
+        "type": "decision",
+        "text": "Pain location compatible with referral pain patterns from esophagus or other organ of the chest",
+        "yes": "n70",
+        "no": "n73"
+      },
+      {
+        "id": "n70",
+        "number": 70,
+        "type": "decision",
+        "text": "Symptom onset ≥ 6 months ago",
+        "yes": "n71",
+        "no": "n73"
+      },
+      {
+        "id": "n71",
+        "number": 71,
+        "type": "decision",
+        "text": "Pain frequency ≥ 1 day per week",
+        "yes": "n72",
+        "no": "n73"
+      },
+      {
+        "id": "n72",
+        "number": 72,
+        "type": "diagnosis",
+        "code": "MG30.00",
+        "name": "Chronic primary chest pain syndrome",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "128474405",
+        "shared_note_ref": "check_all_pain_explained_p14_15"
+      },
+      {
+        "id": "n73",
+        "number": 73,
+        "type": "decision",
+        "text": "Pain location compatible with referral pain patterns from epigastric region",
+        "yes": "n74",
+        "no": "n78"
+      },
+      {
+        "id": "n74",
+        "number": 74,
+        "type": "decision",
+        "text": "Pain associated with ≥ 1 of:",
+        "criteria": [
+          "Induced or relieved by ingestion of meal, or may occur while fasting",
+          "Postprandial epigastric bloating, belching, nausea",
+          "Not relieved by evacuation of feces or gas"
+        ],
+        "yes": "n75",
+        "no": "n78"
+      },
+      {
+        "id": "n75",
+        "number": 75,
+        "type": "decision",
+        "text": "Symptom onset ≥ 6 months ago",
+        "yes": "n76",
+        "no": "n78"
+      },
+      {
+        "id": "n76",
+        "number": 76,
+        "type": "decision",
+        "text": "Pain frequency ≥ 1 day per week",
+        "yes": "n77",
+        "no": "n78"
+      },
+      {
+        "id": "n77",
+        "number": 77,
+        "type": "diagnosis",
+        "code": "MG30.00",
+        "name": "Chronic primary epigastric pain syndrome",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1983908934",
+        "footnote_ref": "77",
+        "footnote": "Heartburn is not a dyspeptic symptom but may often coexist. Other digestive symptoms (such as from gastro-esophageal reflux disease and irritable bowel syndrome) may coexist with chronic primary epigastric pain syndrome.",
+        "shared_note_ref": "check_all_pain_explained_p14_15"
+      },
+      {
+        "id": "n78",
+        "number": 78,
+        "type": "decision",
+        "text": "Pain location compatible with referral pain patterns from other specific abdominal organs",
+        "yes": "n79",
+        "no": "n85"
+      },
+      {
+        "id": "n79",
+        "number": 79,
+        "type": "decision",
+        "text": "Pain associated with ≥ 2 of:",
+        "criteria": [
+          "Change in stool frequency",
+          "Related to defecation",
+          "Change in appearance/form of stool"
+        ],
+        "yes": "n80",
+        "no": "n83"
+      },
+      {
+        "id": "n80",
+        "number": 80,
+        "type": "decision",
+        "text": "Symptom onset ≥ 6 months ago",
+        "yes": "n81",
+        "no": "n83"
+      },
+      {
+        "id": "n81",
+        "number": 81,
+        "type": "decision",
+        "text": "Pain frequency ≥ 1 day per week",
+        "yes": "n82",
+        "no": "n83"
+      },
+      {
+        "id": "n82",
+        "number": 82,
+        "type": "diagnosis",
+        "code": "DD91.0",
+        "name": "Irritable bowel syndrome",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1158238623",
+        "shared_note_ref": "check_all_pain_explained_p14_15"
+      },
+      {
+        "id": "n83",
+        "number": 83,
+        "type": "decision",
+        "text": "History suggestive of hypersensitivity of one or more abdominal organs",
+        "yes": "n84",
+        "no": "n85"
+      },
+      {
+        "id": "n84",
+        "number": 84,
+        "type": "diagnosis",
+        "code": "MG30.00",
+        "name": "Chronic primary abdominal pain syndrome",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "709631177",
+        "shared_note_ref": "check_all_pain_explained_p14_15"
+      },
+      {
+        "id": "n85",
+        "number": 85,
+        "type": "decision",
+        "text": "Pain location compatible with referral pain patterns from urinary bladder",
+        "yes": "n86",
+        "no": "n88"
+      },
+      {
+        "id": "n86",
+        "number": 86,
+        "type": "decision",
+        "text": "Worsening of pain upon bladder filling OR associated with urinary frequency",
+        "footnote_ref": "86",
+        "footnote": "Urinary frequency during day-time and/or nighttime.",
+        "yes": "n87",
+        "no": "n88"
+      },
+      {
+        "id": "n87",
+        "number": 87,
+        "type": "diagnosis",
+        "code": "MG30.00",
+        "name": "Chronic primary bladder pain syndrome",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "2093682836",
+        "footnote_ref": "87",
+        "footnote": "This diagnosis also applies to what has previously been termed chronic interstitial cystitis.",
+        "shared_note_ref": "check_all_pain_explained_p14_15"
+      },
+      {
+        "id": "n88",
+        "number": 88,
+        "type": "decision",
+        "text": "Pain location compatible with referral pain patterns from other specific pelvic organs",
+        "yes": "n89",
+        "no": "n90"
+      },
+      {
+        "id": "n89",
+        "number": 89,
+        "type": "diagnosis",
+        "code": "MG30.00",
+        "name": "Chronic primary pelvic pain syndrome",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1663013388",
+        "footnote_ref": "89",
+        "footnote": "This diagnosis also applies to chronic dysmenorrhea and nonbacterial/idiopathic chronic prostatitis/chronic pelvic pain syndrome (CP/CPPS).",
+        "shared_note_ref": "check_all_pain_explained_p14_15"
+      },
+      {
+        "id": "n90",
+        "number": 90,
+        "type": "diagnosis",
+        "code": "MG30.00",
+        "name": "Chronic primary visceral pain, other specified",
+        "level": 3,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p14_15"
+      },
+      {
+        "id": "n91",
+        "number": 91,
+        "type": "diagnosis",
+        "code": "MG30.1",
+        "name": "Chronic cancer related pain",
+        "level": 2,
+        "border": "dotted",
+        "next": "n92",
+        "known_parents": [
+          "n9 (trunk)"
+        ]
+      },
+      {
+        "id": "n92",
+        "number": 92,
+        "type": "decision",
+        "text": "Pain anatomically related to confirmed tumor or metastases",
+        "footnote_ref": "92",
+        "footnote": "Tumor or metastases should be confirmed on clinical and radiological examination.",
+        "yes": "n93",
+        "no": "n94"
+      },
+      {
+        "id": "n93",
+        "number": 93,
+        "type": "diagnosis",
+        "code": "MG30.10",
+        "name": "Chronic cancer pain",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "93",
+        "footnote": "Continue on page 17. This is the second diagnostic level. Continue to find the correct diagnosis on level 3.",
+        "optional_continue": true,
+        "next": "n105"
+      },
+      {
+        "id": "n94",
+        "number": 94,
+        "type": "decision",
+        "text": "History of cancer surgery",
+        "yes": "n95",
+        "no": "n98"
+      },
+      {
+        "id": "n95",
+        "number": 95,
+        "type": "decision",
+        "text": "Pain located in or referred from area of the surgery",
+        "yes": "n96",
+        "no": "n99"
+      },
+      {
+        "id": "n96",
+        "number": 96,
+        "type": "decision",
+        "text": "Pain began or intensified after surgery",
+        "yes": "n97",
+        "no": "n100"
+      },
+      {
+        "id": "n97",
+        "number": 97,
+        "type": "goto",
+        "text": "Go to branch for chronic postsurgical pain",
+        "footnote_ref": "97",
+        "footnote": "Continue on page 22.",
+        "_note": "Footnote 97 says 'continue on page 22' specifically (the Chronic postsurgical pain, MG30.21, sub-branch entry) rather than page 21 (the MG30.2 top-level split) — pain already confirmed to have begun after surgery in the surgery area (box 96 = yes), so it skips straight to n159.",
+        "next": "n159",
+        "continues_to": {
+          "page": 22,
+          "branch": "Chronic Postsurgical Pain (MG30.21)",
+          "stub": false
+        }
+      },
+      {
+        "id": "n98",
+        "number": 98,
+        "type": "decision",
+        "text": "History of cancer treatment other than surgery",
+        "yes": "n99",
+        "no": "n102"
+      },
+      {
+        "id": "n99",
+        "number": 99,
+        "type": "decision",
+        "text": "It is likely that the pain is caused by cancer treatment",
+        "yes": "n100",
+        "no": "n102"
+      },
+      {
+        "id": "n100",
+        "number": 100,
+        "type": "decision",
+        "text": "Active or recurrent tumor/metastases excluded on radiological examination OR pain is not better accounted for by active tumor/metastases",
+        "yes": "n101",
+        "no": "n102"
+      },
+      {
+        "id": "n101",
+        "number": 101,
+        "type": "diagnosis",
+        "code": "MG30.11",
+        "name": "Chronic post cancer treatment pain",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "101",
+        "footnote": "Continue on page 18. This is the second diagnostic level. Continue to find the correct diagnosis on level 3.",
+        "optional_continue": true,
+        "next": "n122"
+      },
+      {
+        "id": "n102",
+        "number": 102,
+        "type": "decision",
+        "text": "Other specified form of chronic cancer related pain",
+        "footnote_ref": "102",
+        "footnote": "For example: painful soft-tissue invasion by tumor, skin pain in T-cell lymphoma, painful lymph node metastases, pain after insertion of esophageal or rectal stent.",
+        "yes": "n103",
+        "no": "n104"
+      },
+      {
+        "id": "n103",
+        "number": 103,
+        "type": "diagnosis",
+        "code": "MG30.1Y",
+        "name": "Other specified chronic cancer related pain",
+        "level": 2,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n104",
+        "number": 104,
+        "type": "diagnosis",
+        "code": "MG30.1Z",
+        "name": "Chronic cancer related pain, unspecified",
+        "level": 2,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n105",
+        "number": 105,
+        "type": "diagnosis",
+        "code": "MG30.10",
+        "name": "Chronic cancer pain",
+        "level": 2,
+        "border": "dotted",
+        "next": "n106",
+        "known_parents": [
+          "n93 (MG30.1 Chronic cancer related pain branch)"
+        ]
+      },
+      {
+        "id": "n106",
+        "number": 106,
+        "type": "decision",
+        "text": "History of cancer or metastases in internal organs",
+        "yes": "n107",
+        "no": "n110"
+      },
+      {
+        "id": "n107",
+        "number": 107,
+        "type": "decision",
+        "text": "Pain location compatible with typical visceral referral pain patterns",
+        "yes": "n108",
+        "no": "n110"
+      },
+      {
+        "id": "n108",
+        "number": 108,
+        "type": "decision",
+        "text": "≥ 1 confirmatory test demonstrates the location of the cancer",
+        "footnote_ref": "108",
+        "footnote": "For example: radiological examination, MRI.",
+        "yes": "n109",
+        "no": "n110"
+      },
+      {
+        "id": "n109",
+        "number": 109,
+        "type": "diagnosis",
+        "code": "MG30.10",
+        "name": "Chronic visceral cancer pain",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "925682659",
+        "footnote_ref": "109",
+        "footnote": "This diagnosis has two parents: MG30.1 Chronic cancer related pain, MG30.4 Chronic secondary visceral pain.",
+        "known_parents": [
+          "MG30.1 Chronic cancer related pain (this branch)",
+          "MG30.4 Chronic secondary visceral pain (n260, page 32 branch, already built — documentation-only overlap, no direct graph edge, same as the neuropathic cross-branch cases)"
+        ],
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n110",
+        "number": 110,
+        "type": "decision",
+        "text": "Pain related to known tumor or metastases in bone, confirmed on clinical and radiological examination",
+        "yes": "n111",
+        "no": "n112"
+      },
+      {
+        "id": "n111",
+        "number": 111,
+        "type": "diagnosis",
+        "code": "MG30.10",
+        "name": "Chronic bone cancer pain",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1223823468",
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n112",
+        "number": 112,
+        "type": "decision",
+        "text": "Pain anatomically related to known tumor or metastases comprising a structure of the somatosensory nervous system",
+        "yes": "n113",
+        "no": "n115"
+      },
+      {
+        "id": "n113",
+        "number": 113,
+        "type": "decision",
+        "text": "Pain distribution neuroanatomically plausible",
+        "yes": "n114",
+        "no": "n115"
+      },
+      {
+        "id": "n114",
+        "number": 114,
+        "type": "diagnosis",
+        "code": "MG30.10",
+        "name": "Chronic neuropathic cancer pain, possible",
+        "level": 3,
+        "border": "solid",
+        "coding_tool": true,
+        "external_id": "1480100314",
+        "footnote_ref": "114",
+        "footnote": "This diagnosis has two parents: MG30.1 Chronic cancer related pain, MG30.5 Chronic neuropathic pain.",
+        "known_parents": [
+          "MG30.1 Chronic cancer related pain (this branch)",
+          "MG30.5 Chronic neuropathic pain (page 27 branch — not yet built)"
+        ],
+        "next": "n116",
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n115",
+        "number": 115,
+        "type": "diagnosis",
+        "code": "MG30.10",
+        "name": "Chronic cancer pain, other specified",
+        "level": 3,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n116",
+        "number": 116,
+        "type": "decision",
+        "text": "Sensory signs in same neuroanatomically plausible distribution",
+        "shared_note_ref": "neuropathic_negative_testing_caution",
+        "yes": "n119",
+        "no": "n117"
+      },
+      {
+        "id": "n117",
+        "number": 117,
+        "type": "decision",
+        "text": "Clinical and radiological examinations confirm a primary tumor or metastases explaining the pain",
+        "shared_note_ref": "neuropathic_negative_testing_caution",
+        "yes": "n120",
+        "no": "n118"
+      },
+      {
+        "id": "n118",
+        "number": 118,
+        "type": "diagnosis",
+        "code": "MG30.10",
+        "name": "Chronic cancer pain, other specified",
+        "level": 3,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n119",
+        "number": 119,
+        "type": "decision",
+        "text": "Clinical and radiological examinations confirm a primary tumor or metastases explaining the pain",
+        "shared_note_ref": "neuropathic_negative_testing_caution",
+        "yes": "n121",
+        "no": "n120"
+      },
+      {
+        "id": "n120",
+        "number": 120,
+        "type": "diagnosis",
+        "code": "MG30.10",
+        "name": "Chronic neuropathic cancer pain, probable",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1480100314",
+        "footnote_ref": "120",
+        "footnote": "This diagnosis has two parents: MG30.1 Chronic cancer related pain, MG30.5 Chronic neuropathic pain.",
+        "known_parents": [
+          "MG30.1 Chronic cancer related pain (this branch)",
+          "MG30.5 Chronic neuropathic pain (page 27 branch — not yet built)"
+        ],
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n121",
+        "number": 121,
+        "type": "diagnosis",
+        "code": "MG30.10",
+        "name": "Chronic neuropathic cancer pain, definite",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1480100314",
+        "footnote_ref": "121",
+        "footnote": "This diagnosis has two parents: MG30.1 Chronic cancer related pain, MG30.5 Chronic neuropathic pain.",
+        "known_parents": [
+          "MG30.1 Chronic cancer related pain (this branch)",
+          "MG30.5 Chronic neuropathic pain (page 27 branch — not yet built)"
+        ],
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n122",
+        "number": 122,
+        "type": "diagnosis",
+        "code": "MG30.11",
+        "name": "Chronic post cancer treatment pain",
+        "level": 2,
+        "border": "dotted",
+        "next": "n123",
+        "known_parents": [
+          "n101 (MG30.1 Chronic cancer related pain branch)"
+        ]
+      },
+      {
+        "id": "n123",
+        "number": 123,
+        "type": "decision",
+        "text": "History of treatment with anti-cancer medicine",
+        "footnote_ref": "123",
+        "footnote": "For example: systemic chemotherapy, hormonal treatment, biological therapies.",
+        "yes": "n124",
+        "no": "n125"
+      },
+      {
+        "id": "n124",
+        "number": 124,
+        "type": "diagnosis",
+        "code": "MG30.11",
+        "name": "Chronic post cancer medicine pain",
+        "level": 3,
+        "border": "solid",
+        "coding_tool": true,
+        "external_id": "1065928586",
+        "footnote_ref": "124",
+        "footnote": "Decide whether you need to continue. If yes, continue on page 19. This is the third diagnostic level. Continue to find the correct diagnosis on level 4.",
+        "optional_continue": true,
+        "next": "n129",
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n125",
+        "number": 125,
+        "type": "decision",
+        "text": "History of treatment with radiotherapy",
+        "yes": "n126",
+        "no": "n128"
+      },
+      {
+        "id": "n126",
+        "number": 126,
+        "type": "decision",
+        "text": "Anatomical location of pain is related to the site of radiotherapy",
+        "yes": "n127",
+        "no": "n128"
+      },
+      {
+        "id": "n127",
+        "number": 127,
+        "type": "diagnosis",
+        "code": "MG30.11",
+        "name": "Chronic post radiotherapy pain",
+        "level": 3,
+        "border": "solid",
+        "coding_tool": true,
+        "external_id": "1727344827",
+        "footnote_ref": "127",
+        "footnote": "Decide whether you need to continue. If yes, continue on page 20. This is the third diagnostic level. Continue to find the correct diagnosis on level 4.",
+        "optional_continue": true,
+        "next": "n140",
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n128",
+        "number": 128,
+        "type": "diagnosis",
+        "code": "MG30.11",
+        "name": "Chronic post cancer treatment pain, other specified",
+        "level": 3,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n129",
+        "number": 129,
+        "type": "diagnosis",
+        "code": "MG30.11",
+        "name": "Chronic post cancer medicine pain",
+        "level": 3,
+        "border": "solid",
+        "coding_tool": true,
+        "external_id": "1065928586",
+        "next": "n130",
+        "known_parents": [
+          "n124 (MG30.11 Chronic post cancer treatment pain branch)"
+        ]
+      },
+      {
+        "id": "n130",
+        "number": 130,
+        "type": "decision",
+        "text": "History of polyneuropathy that developed during or after chemotherapy treatment",
+        "yes": "n131",
+        "no": "n133"
+      },
+      {
+        "id": "n131",
+        "number": 131,
+        "type": "decision",
+        "text": "Pain distribution neuroanatomically plausible",
+        "footnote_ref": "131",
+        "footnote": "Typically distal symmetric.",
+        "yes": "n132",
+        "no": "n133"
+      },
+      {
+        "id": "n132",
+        "number": 132,
+        "type": "diagnosis",
+        "code": "MG30.11",
+        "name": "Chronic painful chemotherapy-induced polyneuropathy, possible",
+        "level": 4,
+        "border": "solid",
+        "coding_tool": true,
+        "external_id": "1299421977",
+        "footnote_ref": "132",
+        "footnote": "This diagnosis has two parents: MG30.11 Chronic post cancer treatment pain, MG30.51 Chronic peripheral neuropathic pain.",
+        "known_parents": [
+          "MG30.11 Chronic post cancer treatment pain (this branch)",
+          "MG30.51 Chronic peripheral neuropathic pain (page 27 branch — not yet built)"
+        ],
+        "next": "n134",
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n133",
+        "number": 133,
+        "type": "diagnosis",
+        "code": "MG30.11",
+        "name": "Chronic post cancer medicine pain",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1065928586",
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n134",
+        "number": 134,
+        "type": "decision",
+        "text": "Sensory signs in same neuroanatomically plausible distribution",
+        "shared_note_ref": "neuropathic_negative_testing_caution",
+        "yes": "n137",
+        "no": "n135"
+      },
+      {
+        "id": "n135",
+        "number": 135,
+        "type": "decision",
+        "text": "Diagnostic test confirms polyneuropathy explaining the pain",
+        "shared_note_ref": "neuropathic_negative_testing_caution",
+        "yes": "n138",
+        "no": "n136"
+      },
+      {
+        "id": "n136",
+        "number": 136,
+        "type": "diagnosis",
+        "code": "MG30.11",
+        "name": "Chronic post cancer medicine pain",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1065928586",
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n137",
+        "number": 137,
+        "type": "decision",
+        "text": "Diagnostic test confirms polyneuropathy explaining the pain",
+        "shared_note_ref": "neuropathic_negative_testing_caution",
+        "yes": "n139",
+        "no": "n138"
+      },
+      {
+        "id": "n138",
+        "number": 138,
+        "type": "diagnosis",
+        "code": "MG30.11",
+        "name": "Chronic painful chemotherapy-induced polyneuropathy, probable",
+        "level": 4,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1299421977",
+        "footnote_ref": "138",
+        "footnote": "This diagnosis has two parents: MG30.11 Chronic post cancer treatment pain, MG30.51 Chronic peripheral neuropathic pain.",
+        "known_parents": [
+          "MG30.11 Chronic post cancer treatment pain (this branch)",
+          "MG30.51 Chronic peripheral neuropathic pain (page 27 branch — not yet built)"
+        ],
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n139",
+        "number": 139,
+        "type": "diagnosis",
+        "code": "MG30.11",
+        "name": "Chronic painful chemotherapy-induced polyneuropathy, definite",
+        "level": 4,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1299421977",
+        "footnote_ref": "139",
+        "footnote": "This diagnosis has two parents: MG30.11 Chronic post cancer treatment pain, MG30.51 Chronic peripheral neuropathic pain.",
+        "known_parents": [
+          "MG30.11 Chronic post cancer treatment pain (this branch)",
+          "MG30.51 Chronic peripheral neuropathic pain (page 27 branch — not yet built)"
+        ],
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n140",
+        "number": 140,
+        "type": "diagnosis",
+        "code": "MG30.11",
+        "name": "Chronic post radiotherapy pain",
+        "level": 3,
+        "border": "solid",
+        "coding_tool": true,
+        "external_id": "1727344827",
+        "next": "n141",
+        "known_parents": [
+          "n127 (MG30.11 Chronic post cancer treatment pain branch)"
+        ]
+      },
+      {
+        "id": "n141",
+        "number": 141,
+        "type": "decision",
+        "text": "Pain distribution neuroanatomically plausible",
+        "yes": "n142",
+        "no": "n144"
+      },
+      {
+        "id": "n142",
+        "number": 142,
+        "type": "decision",
+        "text": "History of neuropathy that developed during or after radiotherapy",
+        "yes": "n143",
+        "no": "n144"
+      },
+      {
+        "id": "n143",
+        "number": 143,
+        "type": "diagnosis",
+        "code": "MG30.11",
+        "name": "Chronic painful radiation-induced neuropathy, possible",
+        "level": 4,
+        "border": "solid",
+        "coding_tool": true,
+        "external_id": "629534369",
+        "footnote_ref": "143",
+        "footnote": "This diagnosis has two parents: MG30.11 Chronic post cancer treatment pain, MG30.51 Chronic peripheral neuropathic pain.",
+        "known_parents": [
+          "MG30.11 Chronic post cancer treatment pain (this branch)",
+          "MG30.51 Chronic peripheral neuropathic pain (page 27 branch — not yet built)"
+        ],
+        "next": "n145",
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n144",
+        "number": 144,
+        "type": "diagnosis",
+        "code": "MG30.11",
+        "name": "Chronic post-radiotherapy pain",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1727344827",
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n145",
+        "number": 145,
+        "type": "decision",
+        "text": "Sensory signs in same neuroanatomically plausible distribution",
+        "shared_note_ref": "neuropathic_negative_testing_caution",
+        "yes": "n148",
+        "no": "n146"
+      },
+      {
+        "id": "n146",
+        "number": 146,
+        "type": "decision",
+        "text": "Diagnostic test confirms neuropathy explaining the pain",
+        "shared_note_ref": "neuropathic_negative_testing_caution",
+        "yes": "n149",
+        "no": "n147"
+      },
+      {
+        "id": "n147",
+        "number": 147,
+        "type": "diagnosis",
+        "code": "MG30.11",
+        "name": "Chronic post-radiotherapy pain",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1727344827",
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n148",
+        "number": 148,
+        "type": "decision",
+        "text": "Diagnostic test confirms neuropathy explaining the pain",
+        "shared_note_ref": "neuropathic_negative_testing_caution",
+        "yes": "n150",
+        "no": "n149"
+      },
+      {
+        "id": "n149",
+        "number": 149,
+        "type": "diagnosis",
+        "code": "MG30.11",
+        "name": "Chronic painful radiation-induced neuropathy, probable",
+        "level": 4,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "629534369",
+        "footnote_ref": "149",
+        "footnote": "This diagnosis has two parents: MG30.11 Chronic post cancer treatment pain, MG30.51 Chronic peripheral neuropathic pain.",
+        "known_parents": [
+          "MG30.11 Chronic post cancer treatment pain (this branch)",
+          "MG30.51 Chronic peripheral neuropathic pain (page 27 branch — not yet built)"
+        ],
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n150",
+        "number": 150,
+        "type": "diagnosis",
+        "code": "MG30.11",
+        "name": "Chronic painful radiation-induced neuropathy, definite",
+        "level": 4,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "629534369",
+        "footnote_ref": "150",
+        "footnote": "This diagnosis has two parents: MG30.11 Chronic post cancer treatment pain, MG30.51 Chronic peripheral neuropathic pain.",
+        "known_parents": [
+          "MG30.11 Chronic post cancer treatment pain (this branch)",
+          "MG30.51 Chronic peripheral neuropathic pain (page 27 branch — not yet built)"
+        ],
+        "shared_note_ref": "check_all_pain_explained_p16_20"
+      },
+      {
+        "id": "n151",
+        "number": 151,
+        "type": "diagnosis",
+        "code": "MG30.2",
+        "name": "Chronic postsurgical or post traumatic pain",
+        "level": 2,
+        "border": "dotted",
+        "next": "n152",
+        "known_parents": [
+          "n12 (trunk)"
+        ]
+      },
+      {
+        "id": "n152",
+        "number": 152,
+        "type": "decision",
+        "text": "Pain began or intensified after surgery",
+        "yes": "n153",
+        "no": "n154"
+      },
+      {
+        "id": "n153",
+        "number": 153,
+        "type": "diagnosis",
+        "code": "MG30.21",
+        "name": "Chronic postsurgical pain",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "153",
+        "footnote": "Continue on page 22. This is the second diagnostic level. Continue to find the correct diagnosis on level 3.",
+        "optional_continue": true,
+        "next": "n159"
+      },
+      {
+        "id": "n154",
+        "number": 154,
+        "type": "decision",
+        "text": "Pain began or intensified after tissue trauma",
+        "yes": "n155",
+        "no": "n156"
+      },
+      {
+        "id": "n155",
+        "number": 155,
+        "type": "diagnosis",
+        "code": "MG30.20",
+        "name": "Chronic post traumatic pain",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "155",
+        "footnote": "Continue on page 24. This is the second diagnostic level. Continue to find the correct diagnosis on level 3. If you do not wish to continue, and the pain is associated with an injury of the nervous system, go to the initial decision trunk on page 8, box 14 to check whether the criteria for chronic neuropathic pain are met, and to find the correct diagnosis on the second diagnostic level. If the pain is located in a limb, and associated with sensory, vasomotor, sudomotor/edema, motor or trophic symptoms, go to the initial decision trunk on page 8, box 4, to check whether the criteria for chronic primary pain are met, and continue.",
+        "optional_continue": true,
+        "next": "n180"
+      },
+      {
+        "id": "n156",
+        "number": 156,
+        "type": "decision",
+        "text": "Other specified form of chronic post traumatic or postsurgical pain",
+        "yes": "n157",
+        "no": "n158"
+      },
+      {
+        "id": "n157",
+        "number": 157,
+        "type": "diagnosis",
+        "code": "MG30.2Y",
+        "name": "Other specified chronic postsurgical or post traumatic pain",
+        "level": 2,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p21_26"
+      },
+      {
+        "id": "n158",
+        "number": 158,
+        "type": "diagnosis",
+        "code": "MG30.2Z",
+        "name": "Chronic postsurgical or post traumatic pain, unspecified",
+        "level": 2,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p21_26"
+      },
+      {
+        "id": "n159",
+        "number": 159,
+        "type": "diagnosis",
+        "code": "MG30.21",
+        "name": "Chronic postsurgical pain",
+        "level": 2,
+        "border": "dotted",
+        "next": "n160",
+        "known_parents": [
+          "n153 (MG30.2 branch)",
+          "n97 (MG30.1 Chronic cancer related pain branch — surgery-area pain)"
+        ]
+      },
+      {
+        "id": "n160",
+        "number": 160,
+        "type": "decision",
+        "text": "Regional pain in limb",
+        "yes": "n161",
+        "no": "n165"
+      },
+      {
+        "id": "n161",
+        "number": 161,
+        "type": "decision",
+        "text": "Emotional distress OR functional interference ≥ 3",
+        "yes": "n162",
+        "no": "n165"
+      },
+      {
+        "id": "n162",
+        "number": 162,
+        "type": "decision",
+        "text": "At least one symptom in ≥ 3 categories:",
+        "criteria": [
+          "Sensory",
+          "Vasomotor",
+          "Sudomotor/edema",
+          "Motor/trophic"
+        ],
+        "footnote_ref": "162,163",
+        "footnote": "Sensory signs and symptoms: hyperalgesia (to pinprick) and/or allodynia (to light touch or deep somatic pressure, or joint movement) - Vasomotor symptoms: temperature asymmetry and/or skin color changes and/or asymmetry - Sudomotor/edema: edema and/or sweating changes and/or sweating asymmetry - Motor/trophic symptoms: decreased range of motion and/or motor dysfunction (weakness, tremor, dystonia) and/or trophic changes (hair, nails, skin). These signs and symptoms are consistent with the established CRPS Budapest criteria (Bruehl et al., PAIN 1999;81:147–154).",
+        "yes": "n163",
+        "no": "n165"
+      },
+      {
+        "id": "n163",
+        "number": 163,
+        "type": "decision",
+        "text": "At least one sign at time of evaluation in ≥ 2 categories:",
+        "criteria": [
+          "Sensory",
+          "Vasomotor",
+          "Sudomotor/edema",
+          "Motor/trophic"
+        ],
+        "footnote_ref": "162,163",
+        "footnote": "See box 162 for category definitions and CRPS Budapest criteria reference.",
+        "yes": "n164",
+        "no": "n165"
+      },
+      {
+        "id": "n164",
+        "number": 164,
+        "type": "diagnosis",
+        "code": "8D8A.0",
+        "name": "Complex regional pain syndrome",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "164",
+        "footnote": "Decide whether you need to continue. If yes, continue on page 12. This diagnosis has two parents: MG30.0 Chronic primary pain, MG30.2 Chronic postsurgical or post traumatic pain. This is the second diagnostic level. Continue to find the correct diagnosis on level 3.",
+        "known_parents": [
+          "MG30.21 Chronic postsurgical pain (this branch)",
+          "MG30.0 Chronic primary pain (page 10 branch, already built — shares the n52 CRPS subgraph)"
+        ],
+        "optional_continue": true,
+        "next": "n52"
+      },
+      {
+        "id": "n165",
+        "number": 165,
+        "type": "decision",
+        "text": "After amputation",
+        "yes": "n166",
+        "no": "n167"
+      },
+      {
+        "id": "n166",
+        "number": 166,
+        "type": "diagnosis",
+        "code": "MG30.21",
+        "name": "Chronic pain after amputation",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "88592431",
+        "footnote_ref": "166",
+        "footnote": "This diagnosis has two parents: MG30.21 Chronic postsurgical pain, MG30.51 Chronic peripheral neuropathic pain.",
+        "known_parents": [
+          "MG30.21 Chronic postsurgical pain (this branch)",
+          "MG30.51 Chronic peripheral neuropathic pain (page 27 branch — not yet built)"
+        ],
+        "shared_note_ref": "check_all_pain_explained_p21_26"
+      },
+      {
+        "id": "n167",
+        "number": 167,
+        "type": "decision",
+        "text": "After spinal surgery",
+        "yes": "n168",
+        "no": "n169"
+      },
+      {
+        "id": "n168",
+        "number": 168,
+        "type": "diagnosis",
+        "code": "MG30.21",
+        "name": "Chronic pain after spinal surgery",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "345002890",
+        "shared_note_ref": "check_all_pain_explained_p21_26"
+      },
+      {
+        "id": "n169",
+        "number": 169,
+        "type": "decision",
+        "text": "After thoracotomy",
+        "yes": "n170",
+        "no": "n171"
+      },
+      {
+        "id": "n170",
+        "number": 170,
+        "type": "diagnosis",
+        "code": "MG30.21",
+        "name": "Chronic pain after thoracotomy",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "36517384",
+        "shared_note_ref": "check_all_pain_explained_p21_26"
+      },
+      {
+        "id": "n171",
+        "number": 171,
+        "type": "decision",
+        "text": "After breast surgery",
+        "yes": "n172",
+        "no": "n173"
+      },
+      {
+        "id": "n172",
+        "number": 172,
+        "type": "diagnosis",
+        "code": "MG30.21",
+        "name": "Chronic pain after breast surgery",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1404329079",
+        "shared_note_ref": "check_all_pain_explained_p21_26"
+      },
+      {
+        "id": "n173",
+        "number": 173,
+        "type": "decision",
+        "text": "After herniotomy",
+        "yes": "n174",
+        "no": "n175"
+      },
+      {
+        "id": "n174",
+        "number": 174,
+        "type": "diagnosis",
+        "code": "MG30.21",
+        "name": "Chronic pain after herniotomy",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "10263346",
+        "shared_note_ref": "check_all_pain_explained_p21_26"
+      },
+      {
+        "id": "n175",
+        "number": 175,
+        "type": "decision",
+        "text": "After hysterectomy",
+        "yes": "n176",
+        "no": "n177"
+      },
+      {
+        "id": "n176",
+        "number": 176,
+        "type": "diagnosis",
+        "code": "MG30.21",
+        "name": "Chronic pain after hysterectomy",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1591178195",
+        "shared_note_ref": "check_all_pain_explained_p21_26"
+      },
+      {
+        "id": "n177",
+        "number": 177,
+        "type": "decision",
+        "text": "After arthroplasty",
+        "yes": "n178",
+        "no": "n179"
+      },
+      {
+        "id": "n178",
+        "number": 178,
+        "type": "diagnosis",
+        "code": "MG30.21",
+        "name": "Chronic pain after arthroplasty",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "500225460",
+        "shared_note_ref": "check_all_pain_explained_p21_26"
+      },
+      {
+        "id": "n179",
+        "number": 179,
+        "type": "diagnosis",
+        "code": "MG30.21",
+        "name": "Chronic postsurgical pain, other specified",
+        "level": 3,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "footnote_ref": "179",
+        "footnote": "This also includes chronic pain after abdominal surgery (bowel and colorectal), Caesarean delivery, cholecystectomy, craniotomy, dental surgery, inguinal herniotomy, melanoma resection, sternotomy, vasectomy, traumatic amputation, contusion, among others.",
+        "shared_note_ref": "check_all_pain_explained_p21_26"
+      },
+      {
+        "id": "n180",
+        "number": 180,
+        "type": "diagnosis",
+        "code": "MG30.20",
+        "name": "Chronic post traumatic pain",
+        "level": 2,
+        "border": "dotted",
+        "next": "n181",
+        "known_parents": [
+          "n155 (MG30.2 branch)"
+        ]
+      },
+      {
+        "id": "n181",
+        "number": 181,
+        "type": "decision",
+        "text": "Pain onset after burns injury",
+        "yes": "n182",
+        "no": "n183"
+      },
+      {
+        "id": "n182",
+        "number": 182,
+        "type": "diagnosis",
+        "code": "MG30.20",
+        "name": "Chronic pain after burns injury",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "883268554",
+        "shared_note_ref": "check_all_pain_explained_p21_26"
+      },
+      {
+        "id": "n183",
+        "number": 183,
+        "type": "decision",
+        "text": "Pain onset after neck injury with whiplash mechanism",
+        "yes": "n184",
+        "no": "n185"
+      },
+      {
+        "id": "n184",
+        "number": 184,
+        "type": "diagnosis",
+        "code": "MG30.20",
+        "name": "Chronic pain after whiplash injury",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "134684950",
+        "shared_note_ref": "check_all_pain_explained_p21_26"
+      },
+      {
+        "id": "n185",
+        "number": 185,
+        "type": "decision",
+        "text": "Pain onset after musculoskeletal injury",
+        "footnote_ref": "185",
+        "footnote": "For example: muscle injury, bone fractures, joint trauma.",
+        "yes": "n186",
+        "no": "n187"
+      },
+      {
+        "id": "n186",
+        "number": 186,
+        "type": "goto",
+        "text": "Continue on page 25",
+        "next": "n196"
+      },
+      {
+        "id": "n187",
+        "number": 187,
+        "type": "decision",
+        "text": "Pain onset after peripheral nerve injury",
+        "footnote_ref": "187",
+        "footnote": "This may be a mechanical, thermal, radiation, or chemical injury.",
+        "yes": "n188",
+        "no": "n189"
+      },
+      {
+        "id": "n188",
+        "number": 188,
+        "type": "goto",
+        "text": "Continue on page 26",
+        "next": "n203"
+      },
+      {
+        "id": "n189",
+        "number": 189,
+        "type": "decision",
+        "text": "Pain onset after spinal cord injury",
+        "yes": "n190",
+        "no": "n191"
+      },
+      {
+        "id": "n190",
+        "number": 190,
+        "type": "goto",
+        "text": "Go to initial decision trunk, box 14",
+        "footnote_ref": "190,192",
+        "footnote": "Continue on page 8, box 14.",
+        "next": "n14"
+      },
+      {
+        "id": "n191",
+        "number": 191,
+        "type": "decision",
+        "text": "Pain onset after brain injury",
+        "yes": "n192",
+        "no": "n193"
+      },
+      {
+        "id": "n192",
+        "number": 192,
+        "type": "goto",
+        "text": "Go to initial decision trunk, box 14",
+        "footnote_ref": "190,192",
+        "footnote": "Continue on page 8, box 14.",
+        "next": "n14"
+      },
+      {
+        "id": "n193",
+        "number": 193,
+        "type": "decision",
+        "text": "Pain onset after injury to the head or neck",
+        "yes": "n194",
+        "no": "n195"
+      },
+      {
+        "id": "n194",
+        "number": 194,
+        "type": "action",
+        "text": "Please refer to the ICHD-3/the ICOP and the ICD-11 Coding Tool",
+        "footnote_ref": "194",
+        "footnote": "Coding Tool available at https://icd.who.int/ct11/icd11_mms/en/release",
+        "out_of_scope": true,
+        "shared_note_ref": "check_all_pain_explained_p21_26",
+        "next": "n195"
+      },
+      {
+        "id": "n195",
+        "number": 195,
+        "type": "diagnosis",
+        "code": "MG30.20",
+        "name": "Chronic post traumatic pain, other specified",
+        "level": 3,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p21_26"
+      },
+      {
+        "id": "n196",
+        "number": 196,
+        "type": "action",
+        "text": "Pain onset after musculoskeletal injury",
+        "_note": "Restates the condition already confirmed true on page 24 (box 185) — entry point for this page, not a new question.",
+        "next": "n197"
+      },
+      {
+        "id": "n197",
+        "number": 197,
+        "type": "decision",
+        "text": "Regional pain in limb",
+        "yes": "n198",
+        "no": "n202"
+      },
+      {
+        "id": "n198",
+        "number": 198,
+        "type": "decision",
+        "text": "Emotional distress OR functional disability ≥ 3",
+        "footnote_ref": "198",
+        "footnote": "Check NRS on page 6.",
+        "yes": "n199",
+        "no": "n202"
+      },
+      {
+        "id": "n199",
+        "number": 199,
+        "type": "decision",
+        "text": "At least one symptom in ≥ 3 categories:",
+        "criteria": [
+          "Sensory",
+          "Vasomotor",
+          "Sudomotor/edema",
+          "Motor/trophic"
+        ],
+        "footnote_ref": "199,200",
+        "footnote": "Sensory signs and symptoms: hyperalgesia (to pinprick) and/or allodynia (to light touch or deep somatic pressure, or joint movement) - Vasomotor symptoms: temperature asymmetry and/or skin color changes and/or asymmetry - Sudomotor/edema: edema and/or sweating changes and/or sweating asymmetry - Motor/trophic symptoms: decreased range of motion and/or motor dysfunction (weakness, tremor, dystonia) and/or trophic changes (hair, nails, skin). These signs and symptoms are consistent with the established CRPS Budapest criteria (Bruehl et al., PAIN 1999;81:147–154).",
+        "yes": "n200",
+        "no": "n202"
+      },
+      {
+        "id": "n200",
+        "number": 200,
+        "type": "decision",
+        "text": "At least one sign at time of evaluation in ≥ 2 categories:",
+        "criteria": [
+          "Sensory",
+          "Vasomotor",
+          "Sudomotor/edema",
+          "Motor/trophic"
+        ],
+        "footnote_ref": "199,200",
+        "footnote": "See box 199 for category definitions and CRPS Budapest criteria reference.",
+        "yes": "n201",
+        "no": "n202"
+      },
+      {
+        "id": "n201",
+        "number": 201,
+        "type": "diagnosis",
+        "code": "8D8A.0",
+        "name": "Complex regional pain syndrome",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "201",
+        "footnote": "Decide whether you need to continue. If yes, continue on page 12. This diagnosis has two parents: MG30.0 Chronic primary pain, MG30.2 Chronic postsurgical or post traumatic pain. This is the second diagnostic level. Continue to find the correct diagnosis on level 3.",
+        "known_parents": [
+          "MG30.20 Chronic post traumatic pain, after musculoskeletal injury (this branch)",
+          "MG30.0 Chronic primary pain (page 10 branch, already built — shares the n52 CRPS subgraph)"
+        ],
+        "optional_continue": true,
+        "next": "n52"
+      },
+      {
+        "id": "n202",
+        "number": 202,
+        "type": "diagnosis",
+        "code": "MG30.20",
+        "name": "Chronic pain after musculoskeletal injury",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1627253733",
+        "shared_note_ref": "check_all_pain_explained_p21_26"
+      },
+      {
+        "id": "n203",
+        "number": 203,
+        "type": "action",
+        "text": "Pain onset after peripheral nerve injury",
+        "_note": "Restates the condition already confirmed true on page 24 (box 187) — entry point for this page, not a new question.",
+        "next": "n204"
+      },
+      {
+        "id": "n204",
+        "number": 204,
+        "type": "decision",
+        "text": "Regional pain in limb",
+        "yes": "n205",
+        "no": "n209"
+      },
+      {
+        "id": "n205",
+        "number": 205,
+        "type": "decision",
+        "text": "Emotional distress OR functional disability ≥ 3",
+        "footnote_ref": "205",
+        "footnote": "Check NRS on page 6.",
+        "yes": "n206",
+        "no": "n209"
+      },
+      {
+        "id": "n206",
+        "number": 206,
+        "type": "decision",
+        "text": "At least one symptom in ≥ 3 categories:",
+        "criteria": [
+          "Sensory",
+          "Vasomotor",
+          "Sudomotor/edema",
+          "Motor/trophic"
+        ],
+        "footnote_ref": "206,207",
+        "footnote": "Sensory signs and symptoms: hyperalgesia (to pinprick) and/or allodynia (to light touch or deep somatic pressure, or joint movement) - Vasomotor symptoms: temperature asymmetry and/or skin color changes and/or asymmetry - Sudomotor/edema: edema and/or sweating changes and/or sweating asymmetry - Motor/trophic symptoms: decreased range of motion and/or motor dysfunction (weakness, tremor, dystonia) and/or trophic changes (hair, nails, skin). These signs and symptoms are consistent with the established CRPS Budapest criteria (Bruehl et al., PAIN 1999;81:147–154).",
+        "yes": "n207",
+        "no": "n209"
+      },
+      {
+        "id": "n207",
+        "number": 207,
+        "type": "decision",
+        "text": "At least one sign at time of evaluation in ≥ 2 categories:",
+        "criteria": [
+          "Sensory",
+          "Vasomotor",
+          "Sudomotor/edema",
+          "Motor/trophic"
+        ],
+        "footnote_ref": "206,207",
+        "footnote": "See box 206 for category definitions and CRPS Budapest criteria reference.",
+        "yes": "n208",
+        "no": "n209"
+      },
+      {
+        "id": "n208",
+        "number": 208,
+        "type": "diagnosis",
+        "code": "8D8A.0",
+        "name": "Complex regional pain syndrome",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "208",
+        "footnote": "Decide whether you need to continue. If yes, continue on page 12. This diagnosis has two parents: MG30.0 Chronic primary pain, MG30.2 Chronic postsurgical or post traumatic pain. This is the second diagnostic level. Continue to find the correct diagnosis on level 3.",
+        "known_parents": [
+          "MG30.20 Chronic post traumatic pain, after peripheral nerve injury (this branch)",
+          "MG30.0 Chronic primary pain (page 10 branch, already built — shares the n52 CRPS subgraph)"
+        ],
+        "optional_continue": true,
+        "next": "n52"
+      },
+      {
+        "id": "n209",
+        "number": 209,
+        "type": "goto",
+        "text": "Go to initial decision trunk, box 14",
+        "footnote_ref": "209",
+        "footnote": "Continue on page 8, box 14.",
+        "next": "n14"
+      },
+      {
+        "id": "n210",
+        "number": 210,
+        "type": "diagnosis",
+        "code": "MG30.5",
+        "name": "Chronic neuropathic pain, possible",
+        "level": 2,
+        "border": "dotted",
+        "next": "n211",
+        "known_parents": [
+          "n15 (trunk)"
+        ]
+      },
+      {
+        "id": "n211",
+        "number": 211,
+        "type": "decision",
+        "text": "Sensory signs in same neuroanatomically plausible distribution",
+        "shared_note_ref": "neuropathic_negative_testing_caution",
+        "yes": "n214",
+        "no": "n212"
+      },
+      {
+        "id": "n212",
+        "number": 212,
+        "type": "decision",
+        "text": "Diagnostic test confirms lesion or disease of somatosensory nervous system explaining the pain",
+        "shared_note_ref": "neuropathic_negative_testing_caution",
+        "yes": "n215",
+        "no": "n213"
+      },
+      {
+        "id": "n213",
+        "number": 213,
+        "type": "goto",
+        "text": "Chronic neuropathic pain unlikely, go back to initial decision trunk",
+        "footnote_ref": "213",
+        "footnote": "Go to initial decision trunk on page 8.",
+        "_note": "RESOLVED (user decision 2026-07-12): footnote just says 'page 8' with no box number, unlike every other goto in the document. Checked the PDF's embedded link annotations directly — uninformative, every cross-page link in the document (including box-specific ones) uses an identical generic top-of-page destination, so the box precision only ever existed in footnote text, never the link itself. Wired to n4 (recheck chronic primary pain) by analogy with the visceral-pain branch's established convention (n264/n268/n272: secondary mechanism ruled out by negative test -> re-check primary pain at box 4), even though this node's own footnote doesn't cite box 4 explicitly.",
+        "next": "n4"
+      },
+      {
+        "id": "n214",
+        "number": 214,
+        "type": "decision",
+        "text": "Diagnostic test confirms lesion or disease of somatosensory nervous system explaining the pain",
+        "shared_note_ref": "neuropathic_negative_testing_caution",
+        "yes": "n216",
+        "no": "n215"
+      },
+      {
+        "id": "n215",
+        "number": 215,
+        "type": "diagnosis",
+        "code": "MG30.5",
+        "name": "Chronic neuropathic pain, probable",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "215,216",
+        "footnote": "This is the first diagnostic level. Continue to find the appropriate diagnosis on the next level.",
+        "next": "n217"
+      },
+      {
+        "id": "n216",
+        "number": 216,
+        "type": "diagnosis",
+        "code": "MG30.5",
+        "name": "Chronic neuropathic pain, definite",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "215,216",
+        "footnote": "This is the first diagnostic level. Continue to find the appropriate diagnosis on the next level.",
+        "next": "n217"
+      },
+      {
+        "id": "n217",
+        "number": 217,
+        "type": "decision",
+        "text": "History of relevant peripheral neurological lesion or disease",
+        "footnote_ref": "217",
+        "footnote": "For example: herpes zoster, radiculopathy (see Appendix on page 41 for a list of examples).",
+        "appendix_ref": [
+          "MG30.51"
+        ],
+        "yes": "n218",
+        "no": "n219"
+      },
+      {
+        "id": "n218",
+        "number": 218,
+        "type": "diagnosis",
+        "code": "MG30.51",
+        "name": "Chronic peripheral neuropathic pain",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "218",
+        "footnote": "Continue on page 30. This is the second diagnostic level. Continue to find the correct diagnosis on level 3.",
+        "optional_continue": true,
+        "next": "n237"
+      },
+      {
+        "id": "n219",
+        "number": 219,
+        "type": "decision",
+        "text": "History of relevant central neurological lesion or disease",
+        "footnote_ref": "219",
+        "footnote": "For example: brain injury, stroke (see Appendix on page 41 for a list of examples).",
+        "appendix_ref": [
+          "MG30.50"
+        ],
+        "yes": "n220",
+        "no": "n221"
+      },
+      {
+        "id": "n220",
+        "number": 220,
+        "type": "diagnosis",
+        "code": "MG30.50",
+        "name": "Chronic central neuropathic pain",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "220",
+        "footnote": "Continue on page 29. This is the second diagnostic level. Continue to find the correct diagnosis on level 3.",
+        "optional_continue": true,
+        "next": "n224"
+      },
+      {
+        "id": "n221",
+        "number": 221,
+        "type": "decision",
+        "text": "Other specified form of chronic neuropathic pain",
+        "yes": "n222",
+        "no": "n223"
+      },
+      {
+        "id": "n222",
+        "number": 222,
+        "type": "diagnosis",
+        "code": "MG30.5Y",
+        "name": "Other specified chronic neuropathic pain",
+        "level": 2,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p27_31"
+      },
+      {
+        "id": "n223",
+        "number": 223,
+        "type": "diagnosis",
+        "code": "MG30.5Z",
+        "name": "Chronic neuropathic pain, unspecified",
+        "level": 2,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p27_31"
+      },
+      {
+        "id": "n224",
+        "number": 224,
+        "type": "diagnosis",
+        "code": "MG30.50",
+        "name": "Chronic central neuropathic pain",
+        "level": 2,
+        "border": "dotted",
+        "next": "n225",
+        "known_parents": [
+          "n220 (MG30.5 branch)"
+        ]
+      },
+      {
+        "id": "n225",
+        "number": 225,
+        "type": "decision",
+        "text": "History of spinal cord injury",
+        "yes": "n226",
+        "no": "n228"
+      },
+      {
+        "id": "n226",
+        "number": 226,
+        "type": "decision",
+        "text": "Pain onset within one year after injury",
+        "yes": "n227",
+        "no": "n228"
+      },
+      {
+        "id": "n227",
+        "number": 227,
+        "type": "diagnosis",
+        "code": "MG30.50",
+        "name": "Chronic central neuropathic pain associated with spinal cord injury",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "869493945",
+        "footnote_ref": "227",
+        "footnote": "This diagnosis has two parents: MG30.50 Chronic central neuropathic pain, MG30.20 Chronic post traumatic pain.",
+        "_note": "The 'second parent' here (MG30.20, page 24 branch) is documentation-only, not a wired second graph edge — unlike the CRPS case (n52), there is no direct edge from the post-traumatic branch into this exact node. Box 189 on page 24 (spinal cord injury) redirects generically to trunk box 14 (n14/n190 goto), and a clinician re-answering from there would naturally arrive back at this same node through the ordinary graph traversal — the flat-graph design already makes this reachable without a special edge.",
+        "known_parents": [
+          "MG30.50 Chronic central neuropathic pain (this branch)",
+          "MG30.20 Chronic post traumatic pain (page 24 branch, already built — reachable via n189→n190→n14, not a direct edge)"
+        ],
+        "shared_note_ref": "check_all_pain_explained_p27_31"
+      },
+      {
+        "id": "n228",
+        "number": 228,
+        "type": "decision",
+        "text": "History of brain injury",
+        "yes": "n229",
+        "no": "n231"
+      },
+      {
+        "id": "n229",
+        "number": 229,
+        "type": "decision",
+        "text": "Pain onset within one year after injury",
+        "yes": "n230",
+        "no": "n231"
+      },
+      {
+        "id": "n230",
+        "number": 230,
+        "type": "diagnosis",
+        "code": "MG30.50",
+        "name": "Chronic central neuropathic pain associated with brain injury",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "334893123",
+        "footnote_ref": "230",
+        "footnote": "This diagnosis has two parents: MG30.50 Chronic central neuropathic pain, MG30.20 Chronic post traumatic pain.",
+        "known_parents": [
+          "MG30.50 Chronic central neuropathic pain (this branch)",
+          "MG30.20 Chronic post traumatic pain (page 24 branch, already built — reachable via n191→n192→n14, not a direct edge)"
+        ],
+        "shared_note_ref": "check_all_pain_explained_p27_31"
+      },
+      {
+        "id": "n231",
+        "number": 231,
+        "type": "decision",
+        "text": "History of a stroke",
+        "yes": "n232",
+        "no": "n234"
+      },
+      {
+        "id": "n232",
+        "number": 232,
+        "type": "decision",
+        "text": "Pain onset within one year after the stroke",
+        "yes": "n233",
+        "no": "n234"
+      },
+      {
+        "id": "n233",
+        "number": 233,
+        "type": "diagnosis",
+        "code": "MG30.50",
+        "name": "Chronic central post-stroke pain",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1221409481",
+        "_note": "No 'two parents' footnote for this node, unlike the spinal-cord-injury (n227) and brain-injury (n230) leaves immediately above it — stroke is not itself classified as a traumatic event in this algorithm's category scheme, so it doesn't overlap with MG30.20 Chronic post traumatic pain the way the other two do. This asymmetry appears intentional, not an omission.",
+        "shared_note_ref": "check_all_pain_explained_p27_31"
+      },
+      {
+        "id": "n234",
+        "number": 234,
+        "type": "decision",
+        "text": "History of multiple sclerosis",
+        "yes": "n235",
+        "no": "n236"
+      },
+      {
+        "id": "n235",
+        "number": 235,
+        "type": "diagnosis",
+        "code": "MG30.50",
+        "name": "Chronic central neuropathic pain associated with MS",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "2044099972",
+        "shared_note_ref": "check_all_pain_explained_p27_31"
+      },
+      {
+        "id": "n236",
+        "number": 236,
+        "type": "diagnosis",
+        "code": "MG30.50",
+        "name": "Chronic central neuropathic pain, other specified",
+        "level": 3,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p27_31"
+      },
+      {
+        "id": "n237",
+        "number": 237,
+        "type": "diagnosis",
+        "code": "MG30.51",
+        "name": "Chronic peripheral neuropathic pain",
+        "level": 2,
+        "border": "dotted",
+        "next": "n238",
+        "known_parents": [
+          "n218 (MG30.5 branch)"
+        ]
+      },
+      {
+        "id": "n238",
+        "number": 238,
+        "type": "decision",
+        "text": "History of peripheral nerve injury",
+        "yes": "n239",
+        "no": "n241"
+      },
+      {
+        "id": "n239",
+        "number": 239,
+        "type": "decision",
+        "text": "Pain in close temporal relationship",
+        "yes": "n240",
+        "no": "n241"
+      },
+      {
+        "id": "n240",
+        "number": 240,
+        "type": "diagnosis",
+        "code": "MG30.51",
+        "name": "Chronic neuropathic pain after peripheral nerve injury",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1934323282",
+        "footnote_ref": "240",
+        "footnote": "This diagnosis has two parents: MG30.51 Chronic peripheral neuropathic pain, MG30.20 Chronic post traumatic pain.",
+        "known_parents": [
+          "MG30.51 Chronic peripheral neuropathic pain (this branch)",
+          "MG30.20 Chronic post traumatic pain (page 24 branch, already built — reachable via n187→n188→n203..n209→n14, not a direct edge)"
+        ],
+        "shared_note_ref": "check_all_pain_explained_p27_31"
+      },
+      {
+        "id": "n241",
+        "number": 241,
+        "type": "decision",
+        "text": "History of polyneuropathy",
+        "yes": "n242",
+        "no": "n243"
+      },
+      {
+        "id": "n242",
+        "number": 242,
+        "type": "diagnosis",
+        "code": "MG30.51",
+        "name": "Chronic painful polyneuropathy",
+        "level": 3,
+        "border": "solid",
+        "coding_tool": true,
+        "external_id": "375159195",
+        "footnote_ref": "242",
+        "footnote": "Decide whether you need to continue. If yes, continue on page 31. This is the third diagnostic level. Continue to find the correct diagnosis on level 4.",
+        "optional_continue": true,
+        "next": "n253",
+        "shared_note_ref": "check_all_pain_explained_p27_31"
+      },
+      {
+        "id": "n243",
+        "number": 243,
+        "type": "decision",
+        "text": "History or laboratory evidence of herpes zoster",
+        "yes": "n244",
+        "no": "n246"
+      },
+      {
+        "id": "n244",
+        "number": 244,
+        "type": "decision",
+        "text": "Pain confined to innervation territory of cranial nerve OR a peripheral dermatome",
+        "yes": "n245",
+        "no": "n246"
+      },
+      {
+        "id": "n245",
+        "number": 245,
+        "type": "diagnosis",
+        "code": "1E91.5",
+        "name": "Chronic postherpetic neuralgia",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1797210650",
+        "_note": "Cross-chapter ICD-11 code: 1E91.5 is in the infectious-disease chapter, not an MG30.x chronic-pain code, unlike every other leaf in this whole document so far. Encoded as printed in the source.",
+        "shared_note_ref": "check_all_pain_explained_p27_31"
+      },
+      {
+        "id": "n246",
+        "number": 246,
+        "type": "decision",
+        "text": "History of degenerative changes/disease/lesion involving spinal structures",
+        "yes": "n247",
+        "no": "n249"
+      },
+      {
+        "id": "n247",
+        "number": 247,
+        "type": "decision",
+        "text": "Pain distribution within dermatome(s)",
+        "yes": "n248",
+        "no": "n249"
+      },
+      {
+        "id": "n248",
+        "number": 248,
+        "type": "diagnosis",
+        "code": "MG30.51",
+        "name": "Chronic painful radiculopathy",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "302257973",
+        "shared_note_ref": "check_all_pain_explained_p27_31"
+      },
+      {
+        "id": "n249",
+        "number": 249,
+        "type": "decision",
+        "text": "Pain precipitated by innocuous stimuli",
+        "footnote_ref": "249",
+        "footnote": "Pain location typically within the affected trigeminal territory and always on the ipsilateral side of the face.",
+        "yes": "n250",
+        "no": "n252"
+      },
+      {
+        "id": "n250",
+        "number": 250,
+        "type": "decision",
+        "text": "Pain characterized by all of the following:",
+        "criteria": [
+          "Unilateral facial or oral pain in divisions of trigeminal nerve",
+          "Recurring paroxysmal attacks up to 2 minutes",
+          "Severe intensity",
+          "Electric shock-like, shooting, stabbing or sharp in quality"
+        ],
+        "yes": "n251",
+        "no": "n252"
+      },
+      {
+        "id": "n251",
+        "number": 251,
+        "type": "diagnosis",
+        "code": "8B82.0",
+        "name": "Trigeminal neuralgia",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1803581281",
+        "footnote_ref": "251",
+        "footnote": "This diagnosis has two parents: MG30.51 Chronic peripheral neuropathic pain, MG30.62 Chronic neuropathic orofacial pain.",
+        "_note": "CORRECTED (user decision 2026-07-12): the source PDF's footnote literally reads 'MG30.50 Chronic peripheral neuropathic pain' — but MG30.50 is the code for Chronic CENTRAL neuropathic pain (see n224); the peripheral code is MG30.51, and this node lives under the peripheral branch (n237) in the diagram. Corrected to MG30.51 here per user instruction, since this is almost certainly a source-document typo. Also note MG30.62 (Chronic neuropathic orofacial pain) is outside CAL-CP's scope (headache/orofacial pain is explicitly out-of-scope per trunk n25/n46) and is not built anywhere in this graph.",
+        "known_parents": [
+          "MG30.51 Chronic peripheral neuropathic pain (this branch)",
+          "MG30.62 Chronic neuropathic orofacial pain (out of CAL-CP scope, not built)"
+        ],
+        "shared_note_ref": "check_all_pain_explained_p27_31"
+      },
+      {
+        "id": "n252",
+        "number": 252,
+        "type": "diagnosis",
+        "code": "MG30.51",
+        "name": "Chronic peripheral neuropathic pain, other specified",
+        "level": 3,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "footnote_ref": "252",
+        "footnote": "This also includes, e.g., chronic neuropathic pain associated entrapment, for example carpal tunnel syndrome, Morton's neuroma, pudendal syndrome, neuropathies after intensive care unit (ICU) treatment.",
+        "shared_note_ref": "check_all_pain_explained_p27_31"
+      },
+      {
+        "id": "n253",
+        "number": 253,
+        "type": "diagnosis",
+        "code": "MG30.51",
+        "name": "Chronic painful polyneuropathy",
+        "level": 3,
+        "border": "solid",
+        "coding_tool": true,
+        "external_id": "375159195",
+        "next": "n254",
+        "known_parents": [
+          "n242 (MG30.51 Chronic peripheral neuropathic pain branch)"
+        ]
+      },
+      {
+        "id": "n254",
+        "number": 254,
+        "type": "decision",
+        "text": "History of HIV infection",
+        "yes": "n255",
+        "no": "n257"
+      },
+      {
+        "id": "n255",
+        "number": 255,
+        "type": "decision",
+        "text": "History of HIV-associated sensory polyneuropathy",
+        "yes": "n256",
+        "no": "n257"
+      },
+      {
+        "id": "n256",
+        "number": 256,
+        "type": "diagnosis",
+        "code": "MG30.51",
+        "name": "Chronic painful polyneuropathy associated with human immunodeficiency virus (HIV) infection",
+        "level": 4,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "pending",
+        "footnote_ref": "256,258",
+        "footnote": "At the date of publication, the implementation of these entities into the ICD-11 is still pending.",
+        "shared_note_ref": "check_all_pain_explained_p27_31"
+      },
+      {
+        "id": "n257",
+        "number": 257,
+        "type": "decision",
+        "text": "History of diabetes mellitus",
+        "footnote_ref": "257",
+        "footnote": "Demonstrated by at least one diagnostic test.",
+        "yes": "n258",
+        "no": "n259"
+      },
+      {
+        "id": "n258",
+        "number": 258,
+        "type": "diagnosis",
+        "code": "MG30.51",
+        "name": "Chronic painful polyneuropathy associated with diabetes mellitus",
+        "level": 4,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "pending",
+        "footnote_ref": "256,258",
+        "footnote": "At the date of publication, the implementation of these entities into the ICD-11 is still pending.",
+        "shared_note_ref": "check_all_pain_explained_p27_31"
+      },
+      {
+        "id": "n259",
+        "number": 259,
+        "type": "diagnosis",
+        "code": "MG30.51",
+        "name": "Chronic painful polyneuropathy",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "375159195",
+        "footnote_ref": "259",
+        "footnote": "Other causes of chronic painful polyneuropathy include, e.g.,: leprosy, alcohol use disorder, metabolic disorders, toxins, genetic conditions, immune system diseases, with vitamin insufficiency (see Appendix on page 41 for a list of examples).",
+        "shared_note_ref": "check_all_pain_explained_p27_31"
+      },
+      {
+        "id": "n260",
+        "number": 260,
+        "type": "diagnosis",
+        "code": "MG30.4",
+        "name": "Chronic secondary visceral pain",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "260",
+        "footnote": "No minimal frequency of pain attacks has been defined for chronic secondary visceral pain. It depends on the clinical judgment of each individual case to decide whether visceral pain associated with an underlying disease that has been recurring in attacks for longer than 3 months should be considered as chronic secondary visceral pain.",
+        "next": "n261",
+        "known_parents": [
+          "n20 (trunk)"
+        ]
+      },
+      {
+        "id": "n261",
+        "number": 261,
+        "type": "decision",
+        "text": "History of relevant inflammatory disease of ≥ 1 internal organs",
+        "footnote_ref": "261",
+        "footnote": "For example: endometriosis, chronic pancreatitis, chronic gastritis, reflux disease (see Appendix on page 41 for a list of examples).",
+        "appendix_ref": [
+          "MG30.42"
+        ],
+        "yes": "n262",
+        "no": "n265"
+      },
+      {
+        "id": "n262",
+        "number": 262,
+        "type": "decision",
+        "text": "≥ 1 test demonstrates relevant inflammatory disease",
+        "footnote_ref": "262",
+        "footnote": "For example: indices of inflammation in blood or serum, indices of bacterial infections in blood or serum.",
+        "yes": "n263",
+        "no": "n264"
+      },
+      {
+        "id": "n263",
+        "number": 263,
+        "type": "diagnosis",
+        "code": "MG30.42",
+        "name": "Chronic visceral pain from persistent inflammation",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "263",
+        "footnote": "Continue on page 34. This is the second diagnostic level. Continue to find the correct diagnosis on level 3.",
+        "optional_continue": true,
+        "next": "n276"
+      },
+      {
+        "id": "n264",
+        "number": 264,
+        "type": "goto",
+        "text": "Go to initial decision trunk, box 4",
+        "footnote_ref": "264,268,272",
+        "footnote": "Go to the initial decision trunk on page 8, box 4.",
+        "next": "n4"
+      },
+      {
+        "id": "n265",
+        "number": 265,
+        "type": "decision",
+        "text": "History of relevant alterations of arterial and/or venous blood vessels from/to internal organs",
+        "footnote_ref": "265",
+        "footnote": "For example: ischemic heart disease, vasculitis, sickle cell disease (see Appendix on page 41 for a list of examples).",
+        "appendix_ref": [
+          "MG30.41"
+        ],
+        "yes": "n266",
+        "no": "n269"
+      },
+      {
+        "id": "n266",
+        "number": 266,
+        "type": "decision",
+        "text": "≥ 1 test demonstrates relevant vascular disease",
+        "footnote_ref": "266",
+        "footnote": "For example: angiogram, blood or serum sampling.",
+        "yes": "n267",
+        "no": "n268"
+      },
+      {
+        "id": "n267",
+        "number": 267,
+        "type": "diagnosis",
+        "code": "MG30.41",
+        "name": "Chronic visceral pain from vascular mechanisms",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "267",
+        "footnote": "Continue on page 35. This is the second diagnostic level. Continue to find the correct diagnosis on level 3.",
+        "optional_continue": true,
+        "next": "n290"
+      },
+      {
+        "id": "n268",
+        "number": 268,
+        "type": "goto",
+        "text": "Go to initial decision trunk, box 4",
+        "footnote_ref": "264,268,272",
+        "footnote": "Go to the initial decision trunk on page 8, box 4.",
+        "next": "n4"
+      },
+      {
+        "id": "n269",
+        "number": 269,
+        "type": "decision",
+        "text": "History of mechanical factors on internal organs",
+        "footnote_ref": "269",
+        "footnote": "For example: obstruction/distension of hollow internal organs or traction/compression of ligaments and vessels to internal organs, for example: stones obstructing the biliary or renal tracts, ureteric kinking (see Appendix on page 41 for a list of examples).",
+        "appendix_ref": [
+          "MG30.40"
+        ],
+        "yes": "n270",
+        "no": "n273"
+      },
+      {
+        "id": "n270",
+        "number": 270,
+        "type": "decision",
+        "text": "≥ 1 test demonstrates relevant mechanical factor",
+        "footnote_ref": "270",
+        "footnote": "For example: ultrasound.",
+        "yes": "n271",
+        "no": "n272"
+      },
+      {
+        "id": "n271",
+        "number": 271,
+        "type": "diagnosis",
+        "code": "MG30.40",
+        "name": "Chronic visceral pain from mechanical factors",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "271",
+        "footnote": "Continue on page 36. This is the second diagnostic level. Continue to find the correct diagnosis on level 3.",
+        "optional_continue": true,
+        "next": "n304"
+      },
+      {
+        "id": "n272",
+        "number": 272,
+        "type": "goto",
+        "text": "Go to initial decision trunk, box 4",
+        "footnote_ref": "264,268,272",
+        "footnote": "Go to the initial decision trunk on page 8, box 4.",
+        "next": "n4"
+      },
+      {
+        "id": "n273",
+        "number": 273,
+        "type": "decision",
+        "text": "Other specified form of chronic secondary visceral pain",
+        "footnote_ref": "273",
+        "footnote": "For example: degenerative neuropathies (identified recently in gastrointestinal tract).",
+        "yes": "n274",
+        "no": "n275"
+      },
+      {
+        "id": "n274",
+        "number": 274,
+        "type": "diagnosis",
+        "code": "MG30.4Y",
+        "name": "Other specified chronic secondary visceral pain",
+        "level": 2,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p32_36"
+      },
+      {
+        "id": "n275",
+        "number": 275,
+        "type": "diagnosis",
+        "code": "MG30.4Z",
+        "name": "Chronic secondary visceral pain, unspecified",
+        "level": 2,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p32_36"
+      },
+      {
+        "id": "n276",
+        "number": 276,
+        "type": "diagnosis",
+        "code": "MG30.42",
+        "name": "Chronic visceral pain from persistent inflammation",
+        "level": 2,
+        "border": "dotted",
+        "next": "n277",
+        "known_parents": [
+          "n263 (MG30.4 Chronic secondary visceral pain branch)"
+        ]
+      },
+      {
+        "id": "n277",
+        "number": 277,
+        "type": "decision",
+        "text": "Location compatible with referral pain patterns from specific internal organs of head/neck region",
+        "yes": "n278",
+        "no": "n280"
+      },
+      {
+        "id": "n278",
+        "number": 278,
+        "type": "decision",
+        "text": "History of relevant inflammatory disease of ≥ 1 internal organ of head/neck region",
+        "yes": "n279",
+        "no": "n280",
+        "shared_note_ref": "see_appendix_visceral_mechanisms",
+        "appendix_ref": [
+          "MG30.42"
+        ]
+      },
+      {
+        "id": "n279",
+        "number": 279,
+        "type": "diagnosis",
+        "code": "MG30.42",
+        "name": "Chronic visceral pain from persistent inflammation in the head or neck region",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "210724113",
+        "shared_note_ref": "check_all_pain_explained_p32_36"
+      },
+      {
+        "id": "n280",
+        "number": 280,
+        "type": "decision",
+        "text": "Location compatible with referral pain patterns from specific internal organs of thoracic cavity",
+        "yes": "n281",
+        "no": "n283"
+      },
+      {
+        "id": "n281",
+        "number": 281,
+        "type": "decision",
+        "text": "History of relevant inflammatory disease of ≥ 1 internal organ of thoracic cavity",
+        "yes": "n282",
+        "no": "n283",
+        "shared_note_ref": "see_appendix_visceral_mechanisms",
+        "appendix_ref": [
+          "MG30.42"
+        ]
+      },
+      {
+        "id": "n282",
+        "number": 282,
+        "type": "diagnosis",
+        "code": "MG30.42",
+        "name": "Chronic visceral pain from persistent inflammation in the thoracic region",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1995138046",
+        "shared_note_ref": "check_all_pain_explained_p32_36"
+      },
+      {
+        "id": "n283",
+        "number": 283,
+        "type": "decision",
+        "text": "Location compatible with referral pain patterns from specific internal organs of abdominal cavity",
+        "yes": "n284",
+        "no": "n286"
+      },
+      {
+        "id": "n284",
+        "number": 284,
+        "type": "decision",
+        "text": "History of relevant inflammatory disease of ≥ 1 internal organ of abdominal cavity",
+        "yes": "n285",
+        "no": "n286",
+        "shared_note_ref": "see_appendix_visceral_mechanisms",
+        "appendix_ref": [
+          "MG30.42"
+        ]
+      },
+      {
+        "id": "n285",
+        "number": 285,
+        "type": "diagnosis",
+        "code": "MG30.42",
+        "name": "Chronic visceral pain from persistent inflammation in the abdominal region",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "591490337",
+        "shared_note_ref": "check_all_pain_explained_p32_36"
+      },
+      {
+        "id": "n286",
+        "number": 286,
+        "type": "decision",
+        "text": "Location compatible with referral pain patterns from specific internal organs of pelvic cavity",
+        "yes": "n287",
+        "no": "n289"
+      },
+      {
+        "id": "n287",
+        "number": 287,
+        "type": "decision",
+        "text": "History of relevant inflammatory disease of ≥ 1 internal organ of pelvic cavity",
+        "yes": "n288",
+        "no": "n289",
+        "shared_note_ref": "see_appendix_visceral_mechanisms",
+        "appendix_ref": [
+          "MG30.42"
+        ]
+      },
+      {
+        "id": "n288",
+        "number": 288,
+        "type": "diagnosis",
+        "code": "MG30.42",
+        "name": "Chronic visceral pain from persistent inflammation in the pelvic region",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "942168651",
+        "shared_note_ref": "check_all_pain_explained_p32_36"
+      },
+      {
+        "id": "n289",
+        "number": 289,
+        "type": "diagnosis",
+        "code": "MG30.42",
+        "name": "Chronic visceral pain from persistent inflammation, other specified",
+        "level": 3,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p32_36"
+      },
+      {
+        "id": "n290",
+        "number": 290,
+        "type": "diagnosis",
+        "code": "MG30.41",
+        "name": "Chronic visceral pain from vascular mechanisms",
+        "level": 2,
+        "border": "dotted",
+        "next": "n291",
+        "known_parents": [
+          "n267 (MG30.4 Chronic secondary visceral pain branch)"
+        ]
+      },
+      {
+        "id": "n291",
+        "number": 291,
+        "type": "decision",
+        "text": "Location compatible with referral pain patterns from specific internal organs of head/neck region",
+        "yes": "n292",
+        "no": "n294"
+      },
+      {
+        "id": "n292",
+        "number": 292,
+        "type": "decision",
+        "text": "History of relevant alterations of arterial and/or venous blood vessels from/to internal organs of head/neck region",
+        "yes": "n293",
+        "no": "n294",
+        "shared_note_ref": "see_appendix_visceral_mechanisms",
+        "appendix_ref": [
+          "MG30.41"
+        ]
+      },
+      {
+        "id": "n293",
+        "number": 293,
+        "type": "diagnosis",
+        "code": "MG30.41",
+        "name": "Chronic visceral pain from vascular mechanisms in the head or neck region",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1817874322",
+        "shared_note_ref": "check_all_pain_explained_p32_36"
+      },
+      {
+        "id": "n294",
+        "number": 294,
+        "type": "decision",
+        "text": "Location compatible with referral pain patterns from specific internal organs of thoracic cavity",
+        "yes": "n295",
+        "no": "n297"
+      },
+      {
+        "id": "n295",
+        "number": 295,
+        "type": "decision",
+        "text": "History of relevant alterations of arterial and/or venous blood vessels from/to internal organs of thoracic cavity",
+        "yes": "n296",
+        "no": "n297",
+        "shared_note_ref": "see_appendix_visceral_mechanisms",
+        "appendix_ref": [
+          "MG30.41"
+        ]
+      },
+      {
+        "id": "n296",
+        "number": 296,
+        "type": "diagnosis",
+        "code": "MG30.41",
+        "name": "Chronic visceral pain from vascular mechanisms in the thoracic region",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "331750653",
+        "shared_note_ref": "check_all_pain_explained_p32_36"
+      },
+      {
+        "id": "n297",
+        "number": 297,
+        "type": "decision",
+        "text": "Location compatible with referral pain patterns from specific internal organs of abdominal cavity",
+        "yes": "n298",
+        "no": "n300"
+      },
+      {
+        "id": "n298",
+        "number": 298,
+        "type": "decision",
+        "text": "History of relevant alterations of arterial and/or venous blood vessels from/to internal organs of abdominal cavity",
+        "yes": "n299",
+        "no": "n300",
+        "shared_note_ref": "see_appendix_visceral_mechanisms",
+        "appendix_ref": [
+          "MG30.41"
+        ]
+      },
+      {
+        "id": "n299",
+        "number": 299,
+        "type": "diagnosis",
+        "code": "MG30.41",
+        "name": "Chronic visceral pain from vascular mechanisms in the abdominal region",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1190251164",
+        "shared_note_ref": "check_all_pain_explained_p32_36"
+      },
+      {
+        "id": "n300",
+        "number": 300,
+        "type": "decision",
+        "text": "Location compatible with referral pain patterns from specific internal organs of pelvic cavity",
+        "yes": "n301",
+        "no": "n303"
+      },
+      {
+        "id": "n301",
+        "number": 301,
+        "type": "decision",
+        "text": "History of relevant alterations of arterial and/or venous blood vessels from/to internal organs of pelvic cavity",
+        "yes": "n302",
+        "no": "n303",
+        "shared_note_ref": "see_appendix_visceral_mechanisms",
+        "appendix_ref": [
+          "MG30.41"
+        ]
+      },
+      {
+        "id": "n302",
+        "number": 302,
+        "type": "diagnosis",
+        "code": "MG30.41",
+        "name": "Chronic visceral pain from vascular mechanisms in the pelvic region",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1759342950",
+        "shared_note_ref": "check_all_pain_explained_p32_36"
+      },
+      {
+        "id": "n303",
+        "number": 303,
+        "type": "diagnosis",
+        "code": "MG30.41",
+        "name": "Chronic visceral pain from vascular mechanisms, other specified",
+        "level": 3,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p32_36"
+      },
+      {
+        "id": "n304",
+        "number": 304,
+        "type": "diagnosis",
+        "code": "MG30.40",
+        "name": "Chronic visceral pain from mechanical factors",
+        "level": 2,
+        "border": "dotted",
+        "next": "n305",
+        "known_parents": [
+          "n271 (MG30.4 Chronic secondary visceral pain branch)"
+        ]
+      },
+      {
+        "id": "n305",
+        "number": 305,
+        "type": "decision",
+        "text": "Location compatible with referral pain patterns from specific internal organs of head/neck region",
+        "yes": "n306",
+        "no": "n308"
+      },
+      {
+        "id": "n306",
+        "number": 306,
+        "type": "decision",
+        "text": "History of mechanical factors of the head/neck region",
+        "yes": "n307",
+        "no": "n308",
+        "shared_note_ref": "see_appendix_visceral_mechanisms",
+        "appendix_ref": [
+          "MG30.40"
+        ]
+      },
+      {
+        "id": "n307",
+        "number": 307,
+        "type": "diagnosis",
+        "code": "MG30.40",
+        "name": "Chronic visceral pain from mechanical factors in the head or neck region",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1394366198",
+        "shared_note_ref": "check_all_pain_explained_p32_36"
+      },
+      {
+        "id": "n308",
+        "number": 308,
+        "type": "decision",
+        "text": "Location compatible with referral pain patterns from specific internal organs of thoracic region",
+        "yes": "n309",
+        "no": "n311"
+      },
+      {
+        "id": "n309",
+        "number": 309,
+        "type": "decision",
+        "text": "History of mechanical factors of the thoracic region",
+        "yes": "n310",
+        "no": "n311",
+        "shared_note_ref": "see_appendix_visceral_mechanisms",
+        "appendix_ref": [
+          "MG30.40"
+        ]
+      },
+      {
+        "id": "n310",
+        "number": 310,
+        "type": "diagnosis",
+        "code": "MG30.40",
+        "name": "Chronic visceral pain from mechanical factors in the thoracic region",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "750947707",
+        "shared_note_ref": "check_all_pain_explained_p32_36"
+      },
+      {
+        "id": "n311",
+        "number": 311,
+        "type": "decision",
+        "text": "Location compatible with referral pain patterns from specific internal organs of abdominal region",
+        "yes": "n312",
+        "no": "n314"
+      },
+      {
+        "id": "n312",
+        "number": 312,
+        "type": "decision",
+        "text": "History of mechanical factors of the abdominal region",
+        "yes": "n313",
+        "no": "n314",
+        "shared_note_ref": "see_appendix_visceral_mechanisms",
+        "appendix_ref": [
+          "MG30.40"
+        ]
+      },
+      {
+        "id": "n313",
+        "number": 313,
+        "type": "diagnosis",
+        "code": "MG30.40",
+        "name": "Chronic visceral pain from mechanical factors in the abdominal region",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "501182273",
+        "shared_note_ref": "check_all_pain_explained_p32_36"
+      },
+      {
+        "id": "n314",
+        "number": 314,
+        "type": "decision",
+        "text": "Location compatible with referral pain patterns from specific internal organs of pelvic cavity",
+        "yes": "n315",
+        "no": "n317"
+      },
+      {
+        "id": "n315",
+        "number": 315,
+        "type": "decision",
+        "text": "History of mechanical factors of the pelvic cavity",
+        "yes": "n316",
+        "no": "n317",
+        "shared_note_ref": "see_appendix_visceral_mechanisms",
+        "appendix_ref": [
+          "MG30.40"
+        ]
+      },
+      {
+        "id": "n316",
+        "number": 316,
+        "type": "diagnosis",
+        "code": "MG30.40",
+        "name": "Chronic visceral pain from mechanical factors in the pelvic region",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "327439389",
+        "shared_note_ref": "check_all_pain_explained_p32_36"
+      },
+      {
+        "id": "n317",
+        "number": 317,
+        "type": "diagnosis",
+        "code": "MG30.40",
+        "name": "Chronic visceral pain from mechanical factors, other specified",
+        "level": 3,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p32_36"
+      },
+      {
+        "id": "n318",
+        "number": 318,
+        "type": "diagnosis",
+        "code": "MG30.3",
+        "name": "Chronic secondary musculoskeletal pain",
+        "level": 2,
+        "border": "dotted",
+        "next": "n319",
+        "known_parents": [
+          "n23 (trunk)"
+        ]
+      },
+      {
+        "id": "n319",
+        "number": 319,
+        "type": "decision",
+        "text": "Systemic inflammatory illness OR local signs of inflammation OR raised laboratory markers of inflammation present",
+        "footnote_ref": "319",
+        "footnote": "For example: Lyme disease, gout, rheumatoid arthritis (see Appendix on page 41 for a list of examples).",
+        "appendix_ref": [
+          "MG30.30"
+        ],
+        "yes": "n320",
+        "no": "n321"
+      },
+      {
+        "id": "n320",
+        "number": 320,
+        "type": "diagnosis",
+        "code": "MG30.30",
+        "name": "Chronic musculoskeletal pain from persistent inflammation",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "320",
+        "footnote": "Continue on page 38. This is the second diagnostic level. Continue to find the correct diagnosis on level 3.",
+        "optional_continue": true,
+        "next": "n330"
+      },
+      {
+        "id": "n321",
+        "number": 321,
+        "type": "decision",
+        "text": "Structural change inferred from clinical examination OR imaging",
+        "footnote_ref": "321",
+        "footnote": "For example: osteoarthritis, spondylosis (see Appendix on page 41 for a list of examples).",
+        "appendix_ref": [
+          "MG30.31"
+        ],
+        "yes": "n322",
+        "no": "n324"
+      },
+      {
+        "id": "n322",
+        "number": 322,
+        "type": "decision",
+        "text": "Swelling OR allodynia over the part present",
+        "yes": "n323",
+        "no": "n324"
+      },
+      {
+        "id": "n323",
+        "number": 323,
+        "type": "diagnosis",
+        "code": "MG30.31",
+        "name": "Chronic musculoskeletal pain associated with structural changes",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "323",
+        "footnote": "Continue on page 39. This is the second diagnostic level. Continue to find the correct diagnosis on level 3. If you do not wish to continue, and the pain is associated with structural changes due to a musculoskeletal injury, go to the initial decision trunk on page 8, box 11, to check whether the criteria for chronic postsurgical or post traumatic pain are met, and to find the correct diagnosis on the second diagnostic level.",
+        "optional_continue": true,
+        "next": "n338"
+      },
+      {
+        "id": "n324",
+        "number": 324,
+        "type": "decision",
+        "text": "Clinical features of neurological disease present",
+        "footnote_ref": "324",
+        "footnote": "For example: motor neuron disease, Morbus Parkinson (see Appendix on page 41 for a list of examples).",
+        "appendix_ref": [
+          "MG30.32"
+        ],
+        "yes": "n325",
+        "no": "n327"
+      },
+      {
+        "id": "n325",
+        "number": 325,
+        "type": "decision",
+        "text": "Altered biomechanical function due to neurological disease responsible for activation of nociceptors in MSK tissues",
+        "yes": "n326",
+        "no": "n327"
+      },
+      {
+        "id": "n326",
+        "number": 326,
+        "type": "diagnosis",
+        "code": "MG30.32",
+        "name": "Chronic musculoskeletal pain due to disease of the nervous system",
+        "level": 2,
+        "border": "dotted",
+        "footnote_ref": "326",
+        "footnote": "Continue on page 40. This is the second diagnostic level. Continue to find the correct diagnosis on level 3.",
+        "optional_continue": true,
+        "next": "n347"
+      },
+      {
+        "id": "n327",
+        "number": 327,
+        "type": "decision",
+        "text": "Other specified form of chronic secondary musculoskeletal pain",
+        "footnote_ref": "327",
+        "footnote": "For example: chronic pain from overuse.",
+        "yes": "n328",
+        "no": "n329"
+      },
+      {
+        "id": "n328",
+        "number": 328,
+        "type": "diagnosis",
+        "code": "MG30.3Y",
+        "name": "Other specified chronic secondary musculoskeletal pain",
+        "level": 2,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p37_40"
+      },
+      {
+        "id": "n329",
+        "number": 329,
+        "type": "diagnosis",
+        "code": "MG30.3Z",
+        "name": "Chronic secondary musculoskeletal pain, unspecified",
+        "level": 2,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p37_40"
+      },
+      {
+        "id": "n330",
+        "number": 330,
+        "type": "diagnosis",
+        "code": "MG30.30",
+        "name": "Chronic musculoskeletal pain from persistent inflammation",
+        "level": 2,
+        "border": "dotted",
+        "next": "n331",
+        "known_parents": [
+          "n320 (MG30.3 Chronic secondary musculoskeletal pain branch)"
+        ]
+      },
+      {
+        "id": "n331",
+        "number": 331,
+        "type": "decision",
+        "text": "Infection demonstrated by ≥ 1 test",
+        "footnote_ref": "331",
+        "footnote": "For example: blood sampling.",
+        "yes": "n332",
+        "no": "n333"
+      },
+      {
+        "id": "n332",
+        "number": 332,
+        "type": "diagnosis",
+        "code": "MG30.30",
+        "name": "Chronic musculoskeletal pain from persistent inflammation due to infection",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1288724318",
+        "shared_note_ref": "check_all_pain_explained_p37_40"
+      },
+      {
+        "id": "n333",
+        "number": 333,
+        "type": "decision",
+        "text": "Crystal deposition confirmed by ≥ 1 test",
+        "footnote_ref": "333",
+        "footnote": "For example: uric acid.",
+        "yes": "n334",
+        "no": "n335"
+      },
+      {
+        "id": "n334",
+        "number": 334,
+        "type": "diagnosis",
+        "code": "MG30.30",
+        "name": "Chronic musculoskeletal pain from persistent inflammation due to crystal deposition",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1763508894",
+        "shared_note_ref": "check_all_pain_explained_p37_40"
+      },
+      {
+        "id": "n335",
+        "number": 335,
+        "type": "decision",
+        "text": "Autoimmune or auto-inflammatory disease confirmed by ≥ 1 test",
+        "footnote_ref": "335",
+        "footnote": "For example: blood sampling.",
+        "yes": "n336",
+        "no": "n337"
+      },
+      {
+        "id": "n336",
+        "number": 336,
+        "type": "diagnosis",
+        "code": "MG30.30",
+        "name": "Chronic musculoskeletal pain from persistent inflammation due to autoimmune or auto-inflammatory disorders",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "2083458732",
+        "shared_note_ref": "check_all_pain_explained_p37_40"
+      },
+      {
+        "id": "n337",
+        "number": 337,
+        "type": "diagnosis",
+        "code": "MG30.30",
+        "name": "Chronic musculoskeletal pain from persistent inflammation, other specified",
+        "level": 3,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p37_40"
+      },
+      {
+        "id": "n338",
+        "number": 338,
+        "type": "diagnosis",
+        "code": "MG30.31",
+        "name": "Chronic musculoskeletal pain associated with structural changes",
+        "level": 2,
+        "border": "dotted",
+        "next": "n339",
+        "known_parents": [
+          "n323 (MG30.3 Chronic secondary musculoskeletal pain branch)"
+        ]
+      },
+      {
+        "id": "n339",
+        "number": 339,
+        "type": "decision",
+        "text": "History of osteoarthritis inferred from clinical examination or imaging",
+        "yes": "n340",
+        "no": "n341"
+      },
+      {
+        "id": "n340",
+        "number": 340,
+        "type": "diagnosis",
+        "code": "MG30.31",
+        "name": "Chronic musculoskeletal pain associated with osteoarthritis",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1613844891",
+        "shared_note_ref": "check_all_pain_explained_p37_40"
+      },
+      {
+        "id": "n341",
+        "number": 341,
+        "type": "decision",
+        "text": "History of spondylosis demonstrated on radiological findings or clinical examination",
+        "footnote_ref": "341",
+        "footnote": "Radiological findings demonstrate changes to intervertebral disc ± osteoarthritis of zygapophyseal joints.",
+        "yes": "n342",
+        "no": "n344"
+      },
+      {
+        "id": "n342",
+        "number": 342,
+        "type": "decision",
+        "text": "Restricted movement of the spinal segment(s) OR allodynia",
+        "yes": "n343",
+        "no": "n344"
+      },
+      {
+        "id": "n343",
+        "number": 343,
+        "type": "diagnosis",
+        "code": "MG30.31",
+        "name": "Chronic musculoskeletal pain associated with spondylosis",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1138151236",
+        "shared_note_ref": "check_all_pain_explained_p37_40"
+      },
+      {
+        "id": "n344",
+        "number": 344,
+        "type": "decision",
+        "text": "History of musculoskeletal injury inferred from clinical examination",
+        "yes": "n345",
+        "no": "n346"
+      },
+      {
+        "id": "n345",
+        "number": 345,
+        "type": "goto",
+        "text": "Go to initial decision trunk, box 11",
+        "footnote_ref": "345",
+        "footnote": "Go to the initial decision trunk on page 8, box 11.",
+        "next": "n11"
+      },
+      {
+        "id": "n346",
+        "number": 346,
+        "type": "diagnosis",
+        "code": "MG30.31",
+        "name": "Chronic musculoskeletal pain associated with structural changes, other specified",
+        "level": 3,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "footnote_ref": "346",
+        "footnote": "This also includes, for example: chronic pain associated with rotator-cuff syndrome, plantar fasciitis, tendinopathy.",
+        "shared_note_ref": "check_all_pain_explained_p37_40"
+      },
+      {
+        "id": "n347",
+        "number": 347,
+        "type": "diagnosis",
+        "code": "MG30.32",
+        "name": "Chronic musculoskeletal pain due to disease of the nervous system",
+        "level": 2,
+        "border": "dotted",
+        "next": "n348",
+        "known_parents": [
+          "n326 (MG30.3 Chronic secondary musculoskeletal pain branch)"
+        ]
+      },
+      {
+        "id": "n348",
+        "number": 348,
+        "type": "decision",
+        "text": "History of Morbus Parkinson",
+        "footnote_ref": "348",
+        "footnote": "As classified elsewhere.",
+        "yes": "n349",
+        "no": "n350"
+      },
+      {
+        "id": "n349",
+        "number": 349,
+        "type": "diagnosis",
+        "code": "MG30.32",
+        "name": "Chronic musculoskeletal pain associated with Parkinson's disease",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "1793929447",
+        "shared_note_ref": "check_all_pain_explained_p37_40"
+      },
+      {
+        "id": "n350",
+        "number": 350,
+        "type": "decision",
+        "text": "History of multiple sclerosis",
+        "footnote_ref": "350",
+        "footnote": "As classified elsewhere.",
+        "yes": "n351",
+        "no": "n352"
+      },
+      {
+        "id": "n351",
+        "number": 351,
+        "type": "diagnosis",
+        "code": "MG30.32",
+        "name": "Chronic musculoskeletal pain associated with multiple sclerosis",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "536610020",
+        "shared_note_ref": "check_all_pain_explained_p37_40"
+      },
+      {
+        "id": "n352",
+        "number": 352,
+        "type": "decision",
+        "text": "History of peripheral neurologic disease",
+        "footnote_ref": "352",
+        "footnote": "As classified elsewhere. For example: Charcot joint disease in peripheral neuropathy.",
+        "yes": "n353",
+        "no": "n354"
+      },
+      {
+        "id": "n353",
+        "number": 353,
+        "type": "diagnosis",
+        "code": "MG30.32",
+        "name": "Chronic musculoskeletal pain associated with peripheral neurologic disease",
+        "level": 3,
+        "border": "solid",
+        "leaf": true,
+        "coding_tool": true,
+        "external_id": "904982940",
+        "shared_note_ref": "check_all_pain_explained_p37_40"
+      },
+      {
+        "id": "n354",
+        "number": 354,
+        "type": "diagnosis",
+        "code": "MG30.32",
+        "name": "Chronic musculoskeletal pain due to disease of the nervous system, other specified",
+        "level": 3,
+        "border": "dotted",
+        "leaf": true,
+        "coding_tool": true,
+        "shared_note_ref": "check_all_pain_explained_p37_40"
+      }
+    ]
+  }
+}

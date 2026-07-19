@@ -59,6 +59,15 @@ class KBPanel(ScrollableContainer):
         lines = entry.render_lines()
         self._get_content().update("\n".join(lines))
 
+    def show_raw(self, text: str) -> None:
+        """Set panel content directly from pre-rendered markup, bypassing the
+        KB registry lookup. Used by callers that aren't part of the
+        region/field KB (e.g. the CAL-CP diagnosis walker's per-node notes,
+        appendix examples, and source footnote text)."""
+        self._current_region = ""
+        self._current_field = ""
+        self._get_content().update(text)
+
     def show_placeholder(self) -> None:
         """Show a startup hint when no field is focused yet."""
         self._get_content().update(" Knowledge Base\n" + "─" * 36 + "\n\n Focus a test or\n field to see info.")
