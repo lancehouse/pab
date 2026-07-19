@@ -14,6 +14,8 @@ import logging
 from pathlib import Path
 from typing import Optional
 
+from .cal_cp_model import Workup as _CalCpWorkup
+
 
 logger = logging.getLogger(__name__)
 
@@ -3358,42 +3360,59 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
     dx = a.get("diagnosis", {}) or {}
     sec("Section 6: Diagnosis")
 
-    sub("ICD-11 Pathway Selection")
-    f("duration_over_3_months", dx)
-    f("mechanism",              dx)
+    workups = dx.get("workups") or []
+    if workups:
+        # CAL-CP (ICD-11 Chronic Pain Classification Algorithm) result —
+        # compact by design (this report is the clinical-facing summary;
+        # the full per-question decision path lives in the raw report
+        # only). One line per workup/pain site; incomplete workups show
+        # the last node reached rather than being silently omitted.
+        sub("ICD-11 Diagnosis (CAL-CP)")
+        for wd in workups:
+            wu = _CalCpWorkup.from_dict(wd)
+            line = f"**{wu.label}:** {wu.result_or_progress_text()}"
+            _emit(line + "  " if clean else line)
+    else:
+        # Pre-CAL-CP sessions (or sessions never re-opened since the
+        # rebuild) keep their old free-form fields under "legacy" —
+        # rendered as-is rather than silently dropped.
+        legacy = dx.get("legacy") or dx
+        sub("ICD-11 Pathway Selection")
+        f("duration_over_3_months", legacy)
+        f("mechanism",              legacy)
 
-    sub("Chronic Primary Pain")
-    f("primary_distress",     dx)
-    f("primary_not_other_dx", dx)
-    f("primary_subtype",      dx)
-    f("primary_severity",     dx)
+        sub("Chronic Primary Pain")
+        f("primary_distress",     legacy)
+        f("primary_not_other_dx", legacy)
+        f("primary_subtype",      legacy)
+        f("primary_severity",     legacy)
 
-    sub("Chronic Post-Surgical Pain")
-    f("surgical_procedure", dx)
-    f("surgical_subtype",   dx)
-    f("surgical_source",    dx)
-    f("surgical_severity",  dx)
+        sub("Chronic Post-Surgical Pain")
+        f("surgical_procedure", legacy)
+        f("surgical_subtype",   legacy)
+        f("surgical_source",    legacy)
+        f("surgical_severity",  legacy)
 
-    sub("Chronic Post-Traumatic Pain")
-    f("traumatic_event",    dx)
-    f("traumatic_subtype",  dx)
-    f("traumatic_source",   dx)
-    f("traumatic_severity", dx)
+        sub("Chronic Post-Traumatic Pain")
+        f("traumatic_event",    legacy)
+        f("traumatic_subtype",  legacy)
+        f("traumatic_source",   legacy)
+        f("traumatic_severity", legacy)
 
-    sub("Chronic Secondary MSK Pain")
-    f("msk_pathology", dx)
-    f("msk_subtype",   dx)
-    f("msk_source",    dx)
-    f("msk_severity",  dx)
+        sub("Chronic Secondary MSK Pain")
+        f("msk_pathology", legacy)
+        f("msk_subtype",   legacy)
+        f("msk_source",    legacy)
+        f("msk_severity",  legacy)
 
-    sub("Chronic Neuropathic Pain")
-    f("neuro_lesion",   dx)
-    f("neuro_subtype",  dx)
-    f("neuro_severity", dx)
+        sub("Chronic Neuropathic Pain")
+        f("neuro_lesion",   legacy)
+        f("neuro_subtype",  legacy)
+        f("neuro_severity", legacy)
 
-    sub("Mixed / Indeterminate")
-    f("mixed_dominant",    dx)
-    txt("mixed_reasoning", dx)
+        sub("Mixed / Indeterminate")
+        f("mixed_dominant",    legacy)
+        txt("mixed_reasoning", legacy)
 
     _emit_yaml_subs_md("diagnosis", dx, clean, _emit, sub)
 
@@ -5058,42 +5077,70 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     dx = a.get("diagnosis", {}) or {}
     sec("SECTION 6: DIAGNOSIS")
 
-    sub("ICD-11 Pathway Selection")
-    f("duration_over_3_months", dx)
-    f("mechanism",              dx)
+    workups = dx.get("workups") or []
+    if workups:
+        sub("ICD-11 Diagnosis (CAL-CP)")
+        for wd in workups:
+            wu = _CalCpWorkup.from_dict(wd)
+            _emit(f"  {wu.label}:")
+            if clean:
+                # *_clean.txt — compact, same one-line-per-workup summary
+                # as the Markdown report; the full question-by-question
+                # path is raw.txt's job only (see the else branch).
+                _emit(f"    {wu.result_or_progress_text()}")
+            else:
+                # *_raw.txt — the full decision tree: every question
+                # answered on this workup's path, in order, then the
+                # final result or (if the walk is incomplete) the last
+                # node reached.
+                breadcrumb = wu.breadcrumb(markup=False)
+                if breadcrumb:
+                    for step_line in breadcrumb.split("  →  "):
+                        _emit(f"    {step_line}")
+                else:
+                    _emit("    (no questions answered yet)")
+                _emit(f"    Result: {wu.result_or_progress_text()}")
+    else:
+        # Pre-CAL-CP sessions (or sessions never re-opened since the
+        # rebuild) keep their old free-form fields under "legacy" —
+        # rendered as-is rather than silently dropped.
+        legacy = dx.get("legacy") or dx
+        sub("ICD-11 Pathway Selection")
+        f("duration_over_3_months", legacy)
+        f("mechanism",              legacy)
 
-    sub("Chronic Primary Pain")
-    f("primary_distress",     dx)
-    f("primary_not_other_dx", dx)
-    f("primary_subtype",      dx)
-    f("primary_severity",     dx)
+        sub("Chronic Primary Pain")
+        f("primary_distress",     legacy)
+        f("primary_not_other_dx", legacy)
+        f("primary_subtype",      legacy)
+        f("primary_severity",     legacy)
 
-    sub("Chronic Post-Surgical Pain")
-    f("surgical_procedure", dx)
-    f("surgical_subtype",   dx)
-    f("surgical_source",    dx)
-    f("surgical_severity",  dx)
+        sub("Chronic Post-Surgical Pain")
+        f("surgical_procedure", legacy)
+        f("surgical_subtype",   legacy)
+        f("surgical_source",    legacy)
+        f("surgical_severity",  legacy)
 
-    sub("Chronic Post-Traumatic Pain")
-    f("traumatic_event",    dx)
-    f("traumatic_subtype",  dx)
-    f("traumatic_source",   dx)
-    f("traumatic_severity", dx)
+        sub("Chronic Post-Traumatic Pain")
+        f("traumatic_event",    legacy)
+        f("traumatic_subtype",  legacy)
+        f("traumatic_source",   legacy)
+        f("traumatic_severity", legacy)
 
-    sub("Chronic Secondary MSK Pain")
-    f("msk_pathology", dx)
-    f("msk_subtype",   dx)
-    f("msk_source",    dx)
-    f("msk_severity",  dx)
+        sub("Chronic Secondary MSK Pain")
+        f("msk_pathology", legacy)
+        f("msk_subtype",   legacy)
+        f("msk_source",    legacy)
+        f("msk_severity",  legacy)
 
-    sub("Chronic Neuropathic Pain")
-    f("neuro_lesion",   dx)
-    f("neuro_subtype",  dx)
-    f("neuro_severity", dx)
+        sub("Chronic Neuropathic Pain")
+        f("neuro_lesion",   legacy)
+        f("neuro_subtype",  legacy)
+        f("neuro_severity", legacy)
 
-    sub("Mixed / Indeterminate")
-    f("mixed_dominant",     dx)
-    txt("mixed_reasoning",  dx)
+        sub("Mixed / Indeterminate")
+        f("mixed_dominant",     legacy)
+        txt("mixed_reasoning",  legacy)
 
     _emit_yaml_subs_raw("diagnosis", dx, clean, _emit, sub)
 

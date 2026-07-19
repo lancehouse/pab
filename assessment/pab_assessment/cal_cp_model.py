@@ -130,7 +130,11 @@ class Workup:
     def current_node(self) -> dict:
         return NODES_BY_ID[self.current_node_id]
 
-    def breadcrumb(self) -> str:
+    def breadcrumb(self, markup: bool = True) -> str:
+        """The full Yes/No decision path walked so far. markup=True (the
+        Textual UI default) wraps answers in Rich colour tags; markup=False
+        renders plain "(Yes)"/"(No)" suffixes instead, for plain-text/
+        Markdown report output where Rich tags would show up literally."""
         if not self.path:
             return ""
         parts = []
@@ -138,12 +142,25 @@ class Workup:
             node = NODES_BY_ID[step.node_id]
             label = short(node.get("text") or node.get("name") or "")
             if step.answer == "yes":
-                parts.append(f"{label} [green]✔[/green]")
+                parts.append(f"{label} [green]✔[/green]" if markup else f"{label} (Yes)")
             elif step.answer == "no":
-                parts.append(f"{label} [red]✘[/red]")
+                parts.append(f"{label} [red]✘[/red]" if markup else f"{label} (No)")
             elif label:
                 parts.append(label)
         return "  →  ".join(p for p in parts if p)
+
+    def result_or_progress_text(self) -> str:
+        """One-line summary for reports: the finished result, or a
+        description of the last node reached if the walk is incomplete."""
+        if self.finished:
+            return self.result_summary or "(finished, no result recorded)"
+        if not self.intro_done:
+            return "Not started"
+        node = NODES_BY_ID.get(self.current_node_id)
+        text = short((node.get("text") or node.get("name") or "")) if node else ""
+        if not self.path:
+            return f"Incomplete — at: {text}" if text else "Incomplete"
+        return f"Incomplete — last reached: {text}" if text else "Incomplete"
 
     def answer(self, ans: str) -> None:
         node = self.current_node()
