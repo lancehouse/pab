@@ -14,6 +14,8 @@ import logging
 from pathlib import Path
 from typing import Optional
 
+from .cal_cp_model import Workup as _CalCpWorkup
+
 
 logger = logging.getLogger(__name__)
 
@@ -488,9 +490,8 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
             for label, prefix, bilateral in rows_def:
                 def _cell(p, s):
                     v   = act.get(f"{p}_{s}_range", "") or ""
-                    ps  = act.get(f"{p}_{s}_ps") or ""
                     txt = f"{v}°" if v else "—"
-                    return f"{txt} {ps}".strip() if ps else txt
+                    return txt
                 ax_l = _cell(prefix, "ax_l"); reax_l = _cell(prefix, "reax_l")
                 if bilateral:
                     tbl_rows.append([label, ax_l, "—", reax_l, "—"])
@@ -503,9 +504,8 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         if any(k.startswith("cx_") or k.startswith("tx_cx_") for k in act):
             def _cx_cell(p, s):
                 v  = act.get(f"{p}_{s}_range","") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 txt = f"{v}°" if v else "—"
-                return f"{txt} {ps}".strip() if ps else txt
+                return txt
             for cx_title, cx_rows_def in [
                 ("Cervical ROM", [("Flexion","cx_flex",True),("Extension","cx_ext",True),
                                   ("Lat Flex","cx_lf",False),("Rotation","cx_rot",False)]),
@@ -527,9 +527,8 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         if any(k.startswith("sh_") or k.startswith("tx_sh_") for k in act):
             def _sh_cell(p, s):
                 v  = act.get(f"{p}_{s}_range", "") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 txt = f"{v}°" if v else "—"
-                return f"{txt} {ps}".strip() if ps else txt
+                return txt
             sh_rom_def = [("Flexion","sh_flex"),("Extension","sh_ext"),
                           ("Abduction","sh_abd"),("Int Rotation","sh_ir"),
                           ("Ext Rotation","sh_er"),("Horiz Add","sh_hadd"),
@@ -555,9 +554,8 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         if any(k.startswith("hp_") for k in act):
             def _hp_cell(p, s):
                 v  = act.get(f"{p}_{s}_range", "") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 txt = f"{v}°" if v else "—"
-                return f"{txt} {ps}".strip() if ps else txt
+                return txt
             hp_rom_def = [("Flexion","hp_flex"),("Extension","hp_ext"),
                           ("Abduction","hp_abd"),("Adduction","hp_add"),
                           ("Int Rotation","hp_ir"),("Ext Rotation","hp_er")]
@@ -569,9 +567,8 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         if any(k.startswith("kn_") for k in act):
             def _kn_cell(p, s):
                 v  = act.get(f"{p}_{s}_range", "") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 txt = f"{v}°" if v else "—"
-                return f"{txt} {ps}".strip() if ps else txt
+                return txt
             kn_rom_def = [("Flexion","kn_flex"),("Extension","kn_ext")]
             kn_tbl = [[lbl, _kn_cell(p,"ax_l"), _kn_cell(p,"ax_r"),
                             _kn_cell(p,"reax_l"), _kn_cell(p,"reax_r")]
@@ -581,9 +578,8 @@ def _render_objective_md(obj: dict, clean: bool = False) -> list:
         if any(k.startswith("ak_") for k in act):
             def _ak_cell(p, s):
                 v  = act.get(f"{p}_{s}_range", "") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 txt = f"{v}°" if v else "—"
-                return f"{txt} {ps}".strip() if ps else txt
+                return txt
             ak_rom_def = [("Dorsiflexion","ak_df"),("Plantarflexion","ak_pf"),
                           ("Inversion","ak_inv"),("Eversion","ak_ev"),
                           ("WB DF (lunge)","ak_wbdf")]
@@ -1302,9 +1298,8 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
             for lbl, prefix, bilateral in rows_def:
                 def _cell(p, s):
                     v  = act.get(f"{p}_{s}_range", "") or ""
-                    ps = act.get(f"{p}_{s}_ps") or ""
                     t  = f"{v}°" if v else "-"
-                    return f"{t} {ps}".strip() if ps else t
+                    return t
                 ax_l = _cell(prefix,"ax_l"); reax_l = _cell(prefix,"reax_l")
                 if bilateral:
                     tbl_rows.append([lbl, ax_l, "-", reax_l, "-"])
@@ -1327,9 +1322,8 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         if any(k.startswith("cx_") or k.startswith("tx_cx_") for k in act):
             def _cx_cell_r(p, s):
                 v  = act.get(f"{p}_{s}_range","") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 t  = f"{v}°" if v else "-"
-                return f"{t} {ps}".strip() if ps else t
+                return t
             for cx_title, cx_rows_def in [
                 ("Cervical ROM", [("Flexion","cx_flex",True),("Extension","cx_ext",True),
                                   ("Lat Flex","cx_lf",False),("Rotation","cx_rot",False)]),
@@ -1361,9 +1355,8 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         if any(k.startswith("sh_") or k.startswith("tx_sh_") for k in act):
             def _sh_cell_r(p, s):
                 v  = act.get(f"{p}_{s}_range", "") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 t  = f"{v}°" if v else "-"
-                return f"{t} {ps}".strip() if ps else t
+                return t
             sh_rom_def_r = [("Flexion","sh_flex"),("Extension","sh_ext"),
                             ("Abduction","sh_abd"),("Int Rotation","sh_ir"),
                             ("Ext Rotation","sh_er"),("Horiz Add","sh_hadd"),
@@ -1405,9 +1398,8 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         if any(k.startswith("hp_") for k in act):
             def _hp_cell_r(p, s):
                 v  = act.get(f"{p}_{s}_range", "") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 t  = f"{v}°" if v else "-"
-                return f"{t} {ps}".strip() if ps else t
+                return t
             hp_rom_def_r = [("Flexion","hp_flex"),("Extension","hp_ext"),
                             ("Abduction","hp_abd"),("Adduction","hp_add"),
                             ("Int Rotation","hp_ir"),("Ext Rotation","hp_er")]
@@ -1429,9 +1421,8 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         if any(k.startswith("kn_") for k in act):
             def _kn_cell_r(p, s):
                 v  = act.get(f"{p}_{s}_range", "") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 t  = f"{v}°" if v else "-"
-                return f"{t} {ps}".strip() if ps else t
+                return t
             kn_rom_def_r = [("Flexion","kn_flex"),("Extension","kn_ext")]
             kn_tbl_r = [[lbl, _kn_cell_r(p,"ax_l"), _kn_cell_r(p,"ax_r"),
                               _kn_cell_r(p,"reax_l"), _kn_cell_r(p,"reax_r")]
@@ -1451,9 +1442,8 @@ def _render_objective_raw(obj: dict, lines: list, SEP: str, SEP2: str,
         if any(k.startswith("ak_") for k in act):
             def _ak_cell_r(p, s):
                 v  = act.get(f"{p}_{s}_range", "") or ""
-                ps = act.get(f"{p}_{s}_ps") or ""
                 t  = f"{v}°" if v else "-"
-                return f"{t} {ps}".strip() if ps else t
+                return t
             ak_rom_def_r = [("Dorsiflexion","ak_df"),("Plantarflexion","ak_pf"),
                             ("Inversion","ak_inv"),("Eversion","ak_ev"),
                             ("WB DF (lunge)","ak_wbdf")]
@@ -2441,8 +2431,15 @@ def _emit_pain_class_dev(pc: dict, clean: bool, emit_fn, sub_fn) -> None:
               ("Dynamic mechanical allodynia","bacpap_dynamic"),
               ("Heat or cold allodynia","bacpap_thermal"),
               ("Painful after-sensations","bacpap_after")]
-    _BP_NO = [("Hx hypersensitivity","bacpap_hx"),
-              ("Comorbid symptom present","bacpap_comorbid")]
+    _BP_NO = [("Hypersensitivity — touch","bacpap_hyper_touch"),
+              ("Hypersensitivity — movement","bacpap_hyper_movement"),
+              ("Hypersensitivity — pressure","bacpap_hyper_pressure"),
+              ("Hypersensitivity — heat","bacpap_hyper_heat"),
+              ("Hypersensitivity — cold","bacpap_hyper_cold"),
+              ("Comorbid — light/sound/odour sensitivity","bacpap_como_sensory"),
+              ("Comorbid — sleep disturbance","bacpap_como_sleep"),
+              ("Comorbid — fatigue","bacpap_como_fatigue"),
+              ("Comorbid — cognitive problems","bacpap_como_cognitive")]
     bp_notes = (pc.get("bacpap_notes") or "").strip()
     _bp_all  = _BP_CH + _BP_ME + _BP_EV + _BP_NO
     if not clean or _any(_bp_all):
@@ -3238,8 +3235,15 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
                 ("Dynamic mechanical allodynia",     "bacpap_dynamic"),
                 ("Heat or cold allodynia",           "bacpap_thermal"),
                 ("Painful after-sensations",         "bacpap_after"),
-                ("Hx hypersensitivity",              "bacpap_hx"),
-                ("Comorbid symptom present",         "bacpap_comorbid"),
+                ("Hypersensitivity — touch",         "bacpap_hyper_touch"),
+                ("Hypersensitivity — movement",      "bacpap_hyper_movement"),
+                ("Hypersensitivity — pressure",      "bacpap_hyper_pressure"),
+                ("Hypersensitivity — heat",          "bacpap_hyper_heat"),
+                ("Hypersensitivity — cold",          "bacpap_hyper_cold"),
+                ("Comorbid — light/sound/odour sensitivity", "bacpap_como_sensory"),
+                ("Comorbid — sleep disturbance",     "bacpap_como_sleep"),
+                ("Comorbid — fatigue",               "bacpap_como_fatigue"),
+                ("Comorbid — cognitive problems",    "bacpap_como_cognitive"),
             ], pc)
         else:
             f("bacpap_chronic",      pc)
@@ -3250,8 +3254,15 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
             f("bacpap_dynamic",      pc)
             f("bacpap_thermal",      pc)
             f("bacpap_after",        pc)
-            f("bacpap_hx",           pc)
-            f("bacpap_comorbid",     pc)
+            f("bacpap_hyper_touch",     pc)
+            f("bacpap_hyper_movement",  pc)
+            f("bacpap_hyper_pressure",  pc)
+            f("bacpap_hyper_heat",      pc)
+            f("bacpap_hyper_cold",      pc)
+            f("bacpap_como_sensory",    pc)
+            f("bacpap_como_sleep",      pc)
+            f("bacpap_como_fatigue",    pc)
+            f("bacpap_como_cognitive",  pc)
         txt("bacpap_notes",          pc)
 
         sub("Pain Type Summary")
@@ -3358,42 +3369,59 @@ def export_session_report(session_file: str, clean: bool = False, dev: bool = Fa
     dx = a.get("diagnosis", {}) or {}
     sec("Section 6: Diagnosis")
 
-    sub("ICD-11 Pathway Selection")
-    f("duration_over_3_months", dx)
-    f("mechanism",              dx)
+    workups = dx.get("workups") or []
+    if workups:
+        # CAL-CP (ICD-11 Chronic Pain Classification Algorithm) result —
+        # compact by design (this report is the clinical-facing summary;
+        # the full per-question decision path lives in the raw report
+        # only). One line per workup/pain site; incomplete workups show
+        # the last node reached rather than being silently omitted.
+        sub("ICD-11 Diagnosis (CAL-CP)")
+        for wd in workups:
+            wu = _CalCpWorkup.from_dict(wd)
+            line = f"**{wu.label}:** {wu.result_or_progress_text()}"
+            _emit(line + "  " if clean else line)
+    else:
+        # Pre-CAL-CP sessions (or sessions never re-opened since the
+        # rebuild) keep their old free-form fields under "legacy" —
+        # rendered as-is rather than silently dropped.
+        legacy = dx.get("legacy") or dx
+        sub("ICD-11 Pathway Selection")
+        f("duration_over_3_months", legacy)
+        f("mechanism",              legacy)
 
-    sub("Chronic Primary Pain")
-    f("primary_distress",     dx)
-    f("primary_not_other_dx", dx)
-    f("primary_subtype",      dx)
-    f("primary_severity",     dx)
+        sub("Chronic Primary Pain")
+        f("primary_distress",     legacy)
+        f("primary_not_other_dx", legacy)
+        f("primary_subtype",      legacy)
+        f("primary_severity",     legacy)
 
-    sub("Chronic Post-Surgical Pain")
-    f("surgical_procedure", dx)
-    f("surgical_subtype",   dx)
-    f("surgical_source",    dx)
-    f("surgical_severity",  dx)
+        sub("Chronic Post-Surgical Pain")
+        f("surgical_procedure", legacy)
+        f("surgical_subtype",   legacy)
+        f("surgical_source",    legacy)
+        f("surgical_severity",  legacy)
 
-    sub("Chronic Post-Traumatic Pain")
-    f("traumatic_event",    dx)
-    f("traumatic_subtype",  dx)
-    f("traumatic_source",   dx)
-    f("traumatic_severity", dx)
+        sub("Chronic Post-Traumatic Pain")
+        f("traumatic_event",    legacy)
+        f("traumatic_subtype",  legacy)
+        f("traumatic_source",   legacy)
+        f("traumatic_severity", legacy)
 
-    sub("Chronic Secondary MSK Pain")
-    f("msk_pathology", dx)
-    f("msk_subtype",   dx)
-    f("msk_source",    dx)
-    f("msk_severity",  dx)
+        sub("Chronic Secondary MSK Pain")
+        f("msk_pathology", legacy)
+        f("msk_subtype",   legacy)
+        f("msk_source",    legacy)
+        f("msk_severity",  legacy)
 
-    sub("Chronic Neuropathic Pain")
-    f("neuro_lesion",   dx)
-    f("neuro_subtype",  dx)
-    f("neuro_severity", dx)
+        sub("Chronic Neuropathic Pain")
+        f("neuro_lesion",   legacy)
+        f("neuro_subtype",  legacy)
+        f("neuro_severity", legacy)
 
-    sub("Mixed / Indeterminate")
-    f("mixed_dominant",    dx)
-    txt("mixed_reasoning", dx)
+        sub("Mixed / Indeterminate")
+        f("mixed_dominant",    legacy)
+        txt("mixed_reasoning", legacy)
 
     _emit_yaml_subs_md("diagnosis", dx, clean, _emit, sub)
 
@@ -4026,8 +4054,15 @@ LABELS: dict[str, str] = {
     "bacpap_dynamic":                   "BACPAP: Dynamic mechanical allodynia",
     "bacpap_thermal":                   "BACPAP: Heat or cold allodynia",
     "bacpap_after":                     "BACPAP: Painful after-sensations",
-    "bacpap_hx":                        "BACPAP: Hx hypersensitivity",
-    "bacpap_comorbid":                  "BACPAP: Comorbid symptom present",
+    "bacpap_hyper_touch":               "BACPAP: Hypersensitivity — touch",
+    "bacpap_hyper_movement":            "BACPAP: Hypersensitivity — movement",
+    "bacpap_hyper_pressure":            "BACPAP: Hypersensitivity — pressure",
+    "bacpap_hyper_heat":                "BACPAP: Hypersensitivity — heat",
+    "bacpap_hyper_cold":                "BACPAP: Hypersensitivity — cold",
+    "bacpap_como_sensory":              "BACPAP: Comorbid — light/sound/odour sensitivity",
+    "bacpap_como_sleep":                "BACPAP: Comorbid — sleep disturbance",
+    "bacpap_como_fatigue":              "BACPAP: Comorbid — fatigue",
+    "bacpap_como_cognitive":            "BACPAP: Comorbid — cognitive problems",
     "bacpap_notes":                     "BACPAP: Notes",
     "summary_dominant":                 "Dominant pain type",
     "summary_contributing":             "Contributing pain types",
@@ -4936,8 +4971,15 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
             ("Dynamic mechanical allodynia",     "bacpap_dynamic"),
             ("Heat or cold allodynia",           "bacpap_thermal"),
             ("Painful after-sensations",         "bacpap_after"),
-            ("Hx hypersensitivity",              "bacpap_hx"),
-            ("Comorbid symptom present",         "bacpap_comorbid"),
+            ("Hypersensitivity — touch",         "bacpap_hyper_touch"),
+            ("Hypersensitivity — movement",      "bacpap_hyper_movement"),
+            ("Hypersensitivity — pressure",      "bacpap_hyper_pressure"),
+            ("Hypersensitivity — heat",          "bacpap_hyper_heat"),
+            ("Hypersensitivity — cold",          "bacpap_hyper_cold"),
+            ("Comorbid — light/sound/odour sensitivity", "bacpap_como_sensory"),
+            ("Comorbid — sleep disturbance",     "bacpap_como_sleep"),
+            ("Comorbid — fatigue",               "bacpap_como_fatigue"),
+            ("Comorbid — cognitive problems",    "bacpap_como_cognitive"),
         ], pc)
     else:
         f("bacpap_chronic",      pc)
@@ -4948,8 +4990,15 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
         f("bacpap_dynamic",      pc)
         f("bacpap_thermal",      pc)
         f("bacpap_after",        pc)
-        f("bacpap_hx",           pc)
-        f("bacpap_comorbid",     pc)
+        f("bacpap_hyper_touch",     pc)
+        f("bacpap_hyper_movement",  pc)
+        f("bacpap_hyper_pressure",  pc)
+        f("bacpap_hyper_heat",      pc)
+        f("bacpap_hyper_cold",      pc)
+        f("bacpap_como_sensory",    pc)
+        f("bacpap_como_sleep",      pc)
+        f("bacpap_como_fatigue",    pc)
+        f("bacpap_como_cognitive",  pc)
     txt("bacpap_notes",         pc)
 
     sub("Pain Type Summary")
@@ -5058,42 +5107,70 @@ def export_raw_report(session_data: dict, clean: bool = False) -> str:  # noqa: 
     dx = a.get("diagnosis", {}) or {}
     sec("SECTION 6: DIAGNOSIS")
 
-    sub("ICD-11 Pathway Selection")
-    f("duration_over_3_months", dx)
-    f("mechanism",              dx)
+    workups = dx.get("workups") or []
+    if workups:
+        sub("ICD-11 Diagnosis (CAL-CP)")
+        for wd in workups:
+            wu = _CalCpWorkup.from_dict(wd)
+            _emit(f"  {wu.label}:")
+            if clean:
+                # *_clean.txt — compact, same one-line-per-workup summary
+                # as the Markdown report; the full question-by-question
+                # path is raw.txt's job only (see the else branch).
+                _emit(f"    {wu.result_or_progress_text()}")
+            else:
+                # *_raw.txt — the full decision tree: every question
+                # answered on this workup's path, in order, then the
+                # final result or (if the walk is incomplete) the last
+                # node reached.
+                breadcrumb = wu.breadcrumb(markup=False)
+                if breadcrumb:
+                    for step_line in breadcrumb.split("  →  "):
+                        _emit(f"    {step_line}")
+                else:
+                    _emit("    (no questions answered yet)")
+                _emit(f"    Result: {wu.result_or_progress_text()}")
+    else:
+        # Pre-CAL-CP sessions (or sessions never re-opened since the
+        # rebuild) keep their old free-form fields under "legacy" —
+        # rendered as-is rather than silently dropped.
+        legacy = dx.get("legacy") or dx
+        sub("ICD-11 Pathway Selection")
+        f("duration_over_3_months", legacy)
+        f("mechanism",              legacy)
 
-    sub("Chronic Primary Pain")
-    f("primary_distress",     dx)
-    f("primary_not_other_dx", dx)
-    f("primary_subtype",      dx)
-    f("primary_severity",     dx)
+        sub("Chronic Primary Pain")
+        f("primary_distress",     legacy)
+        f("primary_not_other_dx", legacy)
+        f("primary_subtype",      legacy)
+        f("primary_severity",     legacy)
 
-    sub("Chronic Post-Surgical Pain")
-    f("surgical_procedure", dx)
-    f("surgical_subtype",   dx)
-    f("surgical_source",    dx)
-    f("surgical_severity",  dx)
+        sub("Chronic Post-Surgical Pain")
+        f("surgical_procedure", legacy)
+        f("surgical_subtype",   legacy)
+        f("surgical_source",    legacy)
+        f("surgical_severity",  legacy)
 
-    sub("Chronic Post-Traumatic Pain")
-    f("traumatic_event",    dx)
-    f("traumatic_subtype",  dx)
-    f("traumatic_source",   dx)
-    f("traumatic_severity", dx)
+        sub("Chronic Post-Traumatic Pain")
+        f("traumatic_event",    legacy)
+        f("traumatic_subtype",  legacy)
+        f("traumatic_source",   legacy)
+        f("traumatic_severity", legacy)
 
-    sub("Chronic Secondary MSK Pain")
-    f("msk_pathology", dx)
-    f("msk_subtype",   dx)
-    f("msk_source",    dx)
-    f("msk_severity",  dx)
+        sub("Chronic Secondary MSK Pain")
+        f("msk_pathology", legacy)
+        f("msk_subtype",   legacy)
+        f("msk_source",    legacy)
+        f("msk_severity",  legacy)
 
-    sub("Chronic Neuropathic Pain")
-    f("neuro_lesion",   dx)
-    f("neuro_subtype",  dx)
-    f("neuro_severity", dx)
+        sub("Chronic Neuropathic Pain")
+        f("neuro_lesion",   legacy)
+        f("neuro_subtype",  legacy)
+        f("neuro_severity", legacy)
 
-    sub("Mixed / Indeterminate")
-    f("mixed_dominant",     dx)
-    txt("mixed_reasoning",  dx)
+        sub("Mixed / Indeterminate")
+        f("mixed_dominant",     legacy)
+        txt("mixed_reasoning",  legacy)
 
     _emit_yaml_subs_raw("diagnosis", dx, clean, _emit, sub)
 

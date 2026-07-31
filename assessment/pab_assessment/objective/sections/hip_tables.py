@@ -14,7 +14,7 @@ from textual.containers import Horizontal
 from textual.message import Message
 from textual.widgets import Button, Label, Static, TextArea
 
-from ...widgets import CycleButton, GridInput
+from ...widgets import CycleButton, GridInput, GridTextArea
 
 
 class HipTables:
@@ -66,9 +66,11 @@ class HipPassiveTables(Static):
     HipPassiveTables .op_subhdr_txt  { width: 1fr; }
     HipPassiveTables .op_row         { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
     HipPassiveTables .op_row_lbl     { width: 16; height: 3; content-align: left middle; }
-    HipPassiveTables .op_txt         { width: 1fr; height: 3; padding: 0 1; }
+    HipPassiveTables .op_txt         { width: 1fr; height: 3; padding: 0 1; border: solid $panel-lighten-3; }
+    HipPassiveTables .op_txt:focus   { border: solid $accent; }
 
-    HipPassiveTables TextArea { height: auto; min-height: 3; max-height: 12; padding: 0 1; }
+    HipPassiveTables TextArea { height: auto; min-height: 3; max-height: 12; padding: 0 1; border: solid $panel-lighten-3; }
+    HipPassiveTables TextArea:focus { border: solid $accent; }
     HipPassiveTables Label    { height: auto; margin-top: 0; }
     """
 
@@ -121,7 +123,7 @@ class HipPassiveTables(Static):
                                 id=f"{prefix}_r_txt", classes="op_txt")
 
         yield Label("OP notes:")
-        yield TextArea(id="hp_op_notes", language="plain")
+        yield GridTextArea(id="hp_op_notes", language="plain")
 
     def on_mount(self) -> None:
         for _, prefix in _HP_OP_ROWS:
@@ -138,6 +140,8 @@ class HipPassiveTables(Static):
             self._op_grid.append(row)
             for col_idx, wid in enumerate(row):
                 self._op_grid_pos[wid] = (row_idx, col_idx)
+        self._op_grid_pos["hp_op_notes"] = (len(self._op_grid), 0)
+        self._op_grid.append(["hp_op_notes"])
 
     def _nav(self, fid: str, direction: str) -> bool:
         if fid not in self._op_grid_pos:

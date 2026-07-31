@@ -4,7 +4,7 @@ from textual.app import ComposeResult, on
 from textual.containers import Container
 from textual.message import Message
 from textual import events
-from textual.widgets import Button, Input, Label, Static
+from textual.widgets import Button, Input, Label, Static, TextArea
 
 
 # ---------------------------------------------------------------------------
@@ -34,6 +34,39 @@ class GridInput(Input):
             event.stop()
             return
         super()._on_key(event)
+
+
+# ---------------------------------------------------------------------------
+# GridTextArea — TextArea that posts Navigate at document boundaries
+# ---------------------------------------------------------------------------
+
+class GridTextArea(TextArea):
+    """TextArea that posts GridInput.Navigate when the cursor is at a document boundary.
+
+    Reuses GridInput.Navigate (rather than a new message) so existing
+    @on(GridInput.Navigate) handlers pick these up with no changes — Textual
+    dispatches purely by message class, not by sender widget type.
+    """
+
+    async def _on_key(self, event: events.Key) -> None:
+        key = event.key
+        if key == "up" and self.cursor_at_first_line:
+            self.post_message(GridInput.Navigate(key))
+            event.stop()
+            return
+        if key == "down" and self.cursor_at_last_line:
+            self.post_message(GridInput.Navigate(key))
+            event.stop()
+            return
+        if key == "left" and self.cursor_at_start_of_text:
+            self.post_message(GridInput.Navigate(key))
+            event.stop()
+            return
+        if key == "right" and self.cursor_at_end_of_text:
+            self.post_message(GridInput.Navigate(key))
+            event.stop()
+            return
+        await super()._on_key(event)
 
 
 # ---------------------------------------------------------------------------

@@ -16,7 +16,7 @@ from textual.containers import Horizontal
 from textual.message import Message
 from textual.widgets import Button, Label, Static, TextArea
 
-from ...widgets import CheckButton, CycleButton, GridInput
+from ...widgets import CheckButton, CycleButton, GridInput, GridTextArea
 
 
 # ── Shared changed message ────────────────────────────────────────────────────
@@ -84,7 +84,8 @@ class LumbarPassiveTables(Static):
     LumbarPassiveTables .op_row      { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
     LumbarPassiveTables .op_row_lbl  { width: 16; height: 3; content-align: left middle; }
     LumbarPassiveTables .op_side     { width: 2; height: 3; content-align: left middle; color: $text-muted; }
-    LumbarPassiveTables .op_txt      { width: 1fr; height: 3; padding: 0 1; }
+    LumbarPassiveTables .op_txt      { width: 1fr; height: 3; padding: 0 1; border: solid $panel-lighten-3; }
+    LumbarPassiveTables .op_txt:focus { border: solid $accent; }
 
     LumbarPassiveTables .paivm_hdr      { layout: horizontal; height: 1; width: 100%; color: $text-muted; }
     LumbarPassiveTables .paivm_hdr_lbl  { width: 6; }
@@ -92,18 +93,18 @@ class LumbarPassiveTables(Static):
     LumbarPassiveTables .paivm_hdr_txt  { width: 1fr; }
     LumbarPassiveTables .paivm_row      { layout: horizontal; height: 3; width: 100%; margin-bottom: 0; }
     LumbarPassiveTables .paivm_row_lbl  { width: 6; height: 3; content-align: left middle; }
-    LumbarPassiveTables .paivm_txt      { width: 1fr; height: 3; padding: 0 1; }
+    LumbarPassiveTables .paivm_txt      { width: 1fr; height: 3; padding: 0 1; border: solid $panel-lighten-3; }
+    LumbarPassiveTables .paivm_txt:focus { border: solid $accent; }
 
-    LumbarPassiveTables TextArea { height: auto; min-height: 2; padding: 0 1; }
+    LumbarPassiveTables TextArea { height: auto; min-height: 2; padding: 0 1; border: solid $panel-lighten-3; }
+    LumbarPassiveTables TextArea:focus { border: solid $accent; }
     LumbarPassiveTables Label    { height: auto; margin-top: 0; }
     """
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        self._op_grid:      list[list[str]] = []
-        self._op_grid_pos:  dict[str, tuple[int, int]] = {}
-        self._pm_grid:      list[list[str]] = []
-        self._pm_grid_pos:  dict[str, tuple[int, int]] = {}
+        self._grid:     list[list[str]] = []
+        self._grid_pos: dict[str, tuple[int, int]] = {}
 
     def compose(self) -> ComposeResult:
         # ── Overpressure ──────────────────────────────────────────────────────
@@ -129,7 +130,7 @@ class LumbarPassiveTables(Static):
                     yield GridInput(placeholder="findings / // reassessment",
                                     id=f"{prefix}_txt", classes="op_txt")
         yield Label("OP notes:")
-        yield TextArea(id="pm_op_notes", language="plain")
+        yield GridTextArea(id="pm_op_notes", language="plain")
 
         # ── PAIVMs ────────────────────────────────────────────────────────────
         yield Label("PAIVMs", classes="subsection_header")
@@ -148,30 +149,36 @@ class LumbarPassiveTables(Static):
                 yield GridInput(placeholder="grade / findings",
                                 id=f"pm_{level}_txt", classes="paivm_txt")
         yield Label("PAIVM notes:")
-        yield TextArea(id="pm_paivm_notes", language="plain")
+        yield GridTextArea(id="pm_paivm_notes", language="plain")
 
     def on_mount(self) -> None:
-        for row_idx, (_, prefix, bilateral) in enumerate(_OP_ROWS):
+        for _, prefix, bilateral in _OP_ROWS:
+            row_idx = len(self._grid)
             if bilateral:
                 row = [f"{prefix}_l_norm_btn", f"{prefix}_l_txt",
                        f"{prefix}_r_norm_btn", f"{prefix}_r_txt"]
             else:
                 row = [f"{prefix}_norm_btn", f"{prefix}_txt"]
-            self._op_grid.append(row)
+            self._grid.append(row)
             for col_idx, wid in enumerate(row):
-                self._op_grid_pos[wid] = (row_idx, col_idx)
-        for row_idx, level in enumerate(_PAIVM_LEVELS):
+                self._grid_pos[wid] = (row_idx, col_idx)
+        self._grid_pos["pm_op_notes"] = (len(self._grid), 0)
+        self._grid.append(["pm_op_notes"])
+        for level in _PAIVM_LEVELS:
+            row_idx = len(self._grid)
             row = [f"pm_{level}_l_norm_btn", f"pm_{level}_c_norm_btn",
                    f"pm_{level}_r_norm_btn", f"pm_{level}_txt"]
-            self._pm_grid.append(row)
+            self._grid.append(row)
             for col_idx, wid in enumerate(row):
-                self._pm_grid_pos[wid] = (row_idx, col_idx)
+                self._grid_pos[wid] = (row_idx, col_idx)
+        self._grid_pos["pm_paivm_notes"] = (len(self._grid), 0)
+        self._grid.append(["pm_paivm_notes"])
 
-    def _nav(self, grid: list[list[str]], grid_pos: dict[str, tuple[int, int]],
-             fid: str, direction: str) -> bool:
-        if fid not in grid_pos:
+    def _nav(self, fid: str, direction: str) -> bool:
+        if fid not in self._grid_pos:
             return False
-        row, col = grid_pos[fid]
+        row, col = self._grid_pos[fid]
+        grid = self._grid
         target_id = None
         if direction == "up" and row > 0:
             tc = min(col, len(grid[row - 1]) - 1)
@@ -198,14 +205,9 @@ class LumbarPassiveTables(Static):
         fid = focused.id or ""
         if event.key not in ("up", "down", "left", "right"):
             return
-        for grid, grid_pos in [
-            (self._op_grid, self._op_grid_pos),
-            (self._pm_grid, self._pm_grid_pos),
-        ]:
-            if fid in grid_pos:
-                if self._nav(grid, grid_pos, fid, event.key):
-                    event.stop()
-                return
+        if fid in self._grid_pos:
+            if self._nav(fid, event.key):
+                event.stop()
 
     @on(GridInput.Navigate)
     def _on_grid_navigate(self, event: GridInput.Navigate) -> None:
@@ -213,14 +215,8 @@ class LumbarPassiveTables(Static):
         if focused is None:
             return
         fid = focused.id or ""
-        for grid, grid_pos in [
-            (self._op_grid, self._op_grid_pos),
-            (self._pm_grid, self._pm_grid_pos),
-        ]:
-            if fid in grid_pos:
-                self._nav(grid, grid_pos, fid, event.direction)
-                event.stop()
-                return
+        if fid in self._grid_pos:
+            self._nav(fid, event.direction)
         event.stop()
 
     @on(CycleButton.Changed)

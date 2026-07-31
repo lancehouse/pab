@@ -909,6 +909,7 @@ struct _WizardData {
     char        voice_text[256];
     GtkWidget  *mic_btn;
     GtkWidget  *voice_label;
+    GtkWidget  *voice_reset_btn;
 };
 
 static gboolean g_wizard_open = FALSE;
@@ -1089,6 +1090,35 @@ static void whis_run_wiz(const char *subcmd)
     if (err) g_error_free(err);
 }
 
+/* Synchronous status probe — a local IPC round-trip, single-digit ms, safe
+ * to call on the UI thread right before starting a recording. Detects a
+ * daemon left in "recording" state by a prior session that never toggled
+ * it off (e.g. app closed mid-recording), which would otherwise make the
+ * next toggle stop that stale recording instead of starting a fresh one. */
+static gboolean whis_stuck_recording(void)
+{
+    gchar *out = NULL;
+    gchar *argv[] = { "whis", "status", NULL };
+    g_spawn_sync(NULL, argv, NULL,
+                 G_SPAWN_SEARCH_PATH | G_SPAWN_STDERR_TO_DEV_NULL,
+                 NULL, NULL, &out, NULL, NULL, NULL);
+    gboolean stuck = out && (strstr(out, "Recording") || strstr(out, "recording"));
+    g_free(out);
+    return stuck;
+}
+
+/* Force a clean daemon state: stop (idempotent even if already stopped),
+ * then start fresh. Used for both automatic stale-state recovery and the
+ * manual reset button. */
+static void whis_reset_daemon(void)
+{
+    gchar *stop_argv[] = { "whis", "stop", NULL };
+    g_spawn_sync(NULL, stop_argv, NULL,
+                 G_SPAWN_SEARCH_PATH | G_SPAWN_STDERR_TO_DEV_NULL,
+                 NULL, NULL, NULL, NULL, NULL, NULL);
+    whis_run_wiz("start");
+}
+
 typedef struct { WizardData *wd; int attempts; } VoiceCtx;
 
 static gboolean voice_poll_cb(gpointer data)
@@ -1137,6 +1167,18 @@ static gboolean voice_poll_cb(gpointer data)
     return G_SOURCE_REMOVE;
 }
 
+/* Manual fallback for the automatic recovery above — lets you force a clean
+ * daemon state directly if a recording still won't start. */
+static void on_voice_reset_clicked(GtkButton *b, gpointer data)
+{
+    (void)b;
+    WizardData *wd = data;
+    if (wd->voice_busy || wd->voice_poll_id != 0) return;  /* mid-flow, don't touch */
+    gtk_label_set_text(GTK_LABEL(wd->voice_label), "Resetting voice service…");
+    whis_reset_daemon();
+    gtk_label_set_text(GTK_LABEL(wd->voice_label), "— or tap descriptors below —");
+}
+
 static void on_voice_btn_clicked(GtkButton *b, gpointer data)
 {
     (void)b;
@@ -1144,7 +1186,11 @@ static void on_voice_btn_clicked(GtkButton *b, gpointer data)
 
     if (!wd->voice_busy) {
         if (wd->voice_poll_id != 0) return;  /* poll still running */
-        whis_run_wiz("start");
+        if (whis_stuck_recording()) {
+            whis_reset_daemon();
+        } else {
+            whis_run_wiz("start");
+        }
         whis_run_wiz("toggle");
         wd->voice_busy = TRUE;
         gtk_button_set_label(GTK_BUTTON(wd->mic_btn), "⏹  Stop");
@@ -1188,6 +1234,16 @@ static GtkWidget *wiz_quality_grid(WizardData *wd)
         g_signal_connect(wd->mic_btn, "clicked",
                          G_CALLBACK(on_voice_btn_clicked), wd);
         gtk_box_append(GTK_BOX(voice_row), wd->mic_btn);
+
+        wd->voice_reset_btn = gtk_button_new_with_label("↺");
+        gtk_widget_set_name(wd->voice_reset_btn, "wiz-btn");
+        gtk_widget_set_size_request(wd->voice_reset_btn, 44, 44);
+        gtk_widget_set_tooltip_text(wd->voice_reset_btn,
+                                    "Reset voice service (use if mic stops responding)");
+        g_signal_connect(wd->voice_reset_btn, "clicked",
+                         G_CALLBACK(on_voice_reset_clicked), wd);
+        gtk_box_append(GTK_BOX(voice_row), wd->voice_reset_btn);
+
         gtk_box_append(GTK_BOX(vbox), voice_row);
 
         wd->voice_label = gtk_label_new("— or tap descriptors below —");

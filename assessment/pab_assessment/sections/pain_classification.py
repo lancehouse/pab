@@ -175,7 +175,10 @@ class PainClassificationSection(BaseSection):
         "bacpap_chronic", "bacpap_distribution",
         "bacpap_nociceptive", "bacpap_neuropathic",
         "bacpap_static", "bacpap_dynamic", "bacpap_thermal", "bacpap_after",
-        "bacpap_hx", "bacpap_comorbid",
+        "bacpap_hyper_touch", "bacpap_hyper_movement", "bacpap_hyper_pressure",
+        "bacpap_hyper_heat", "bacpap_hyper_cold",
+        "bacpap_como_sensory", "bacpap_como_sleep", "bacpap_como_fatigue",
+        "bacpap_como_cognitive",
     ]
 
     _LIKELIHOOD_FIELDS = [
@@ -377,8 +380,19 @@ class PainClassificationSection(BaseSection):
             yield FlagButton("Painful after-sensations", id="bacpap_after")
 
         yield Label("Nociplastic features:", classes="subgroup_header")
-        yield FlagButton("Hx hypersensitivity (touch / movement / pressure / heat / cold)", id="bacpap_hx")
-        yield FlagButton("≥1 comorbid symptom (light/sound/odour sensitivity, sleep, fatigue, cognition)", id="bacpap_comorbid")
+        yield Label("Subjective hypersensitivity to:", classes="subgroup_header")
+        with Horizontal(classes="btn_row"):
+            yield FlagButton("Touch", id="bacpap_hyper_touch")
+            yield FlagButton("Movement", id="bacpap_hyper_movement")
+            yield FlagButton("Pressure", id="bacpap_hyper_pressure")
+            yield FlagButton("Heat", id="bacpap_hyper_heat")
+            yield FlagButton("Cold", id="bacpap_hyper_cold")
+        yield Label("Comorbid symptoms:", classes="subgroup_header")
+        with Horizontal(classes="btn_row"):
+            yield FlagButton("Sensitive to light, sound, or odours", id="bacpap_como_sensory")
+            yield FlagButton("Sleep disturbance", id="bacpap_como_sleep")
+            yield FlagButton("Fatigue", id="bacpap_como_fatigue")
+            yield FlagButton("Cognitive problems", id="bacpap_como_cognitive")
 
         yield Static("", id="bacpap_result")
         yield Label("Notes:")
@@ -676,8 +690,20 @@ class PainClassificationSection(BaseSection):
                     alert.display = False
                 return
 
-            hx      = val("bacpap_hx")
-            comorbid = val("bacpap_comorbid")
+            hyper_ids = ("bacpap_hyper_touch", "bacpap_hyper_movement",
+                         "bacpap_hyper_pressure", "bacpap_hyper_heat", "bacpap_hyper_cold")
+            hyper_vals = [val(f) for f in hyper_ids]
+            hyper_any_yes = any(v is True for v in hyper_vals)
+            hyper_all_answered = all(v is not None for v in hyper_vals)
+            hx = True if hyper_any_yes else (False if hyper_all_answered else None)
+
+            como_ids = ("bacpap_como_sensory", "bacpap_como_sleep",
+                        "bacpap_como_fatigue", "bacpap_como_cognitive")
+            como_vals = [val(f) for f in como_ids]
+            como_any_yes = any(v is True for v in como_vals)
+            como_all_answered = all(v is not None for v in como_vals)
+            comorbid = True if como_any_yes else (False if como_all_answered else None)
+
             if hx is None or comorbid is None:
                 alert.display = False
                 return

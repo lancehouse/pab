@@ -4,10 +4,10 @@ from textual import events
 from textual.app import ComposeResult, on
 from textual.containers import Horizontal
 from textual.message import Message
-from textual.widgets import Input, Label, Static, TextArea
+from textual.widgets import Button, Input, Label, Static, TextArea
 
 from ...sections.base import BaseSection
-from ...widgets import CheckButton, FlagButton, RadioGroup
+from ...widgets import CheckButton, FlagButton, GridInput, GridTextArea, RadioGroup
 
 
 # ---------------------------------------------------------------------------
@@ -183,7 +183,7 @@ class NeurologicalSection(BaseSection):
                 yield RadioGroup(states, id=f"{prefix}_l", classes="rg-w8")
                 yield Static("",    classes="rm_gap")
                 yield RadioGroup(states, id=f"{prefix}_r", classes="rg-w8")
-        yield TextArea(id="nr_ul_reflex_notes", language="plain")
+        yield GridTextArea(id="nr_ul_reflex_notes", language="plain")
 
         # ── Upper Limb — Myotomes ─────────────────────────────────────────────
         yield Label("Upper Limb — Myotomes", classes="subsection_header", id="nr_ul_myotomes")
@@ -198,7 +198,7 @@ class NeurologicalSection(BaseSection):
                 yield RadioGroup(states, id=f"{prefix}_l")
                 yield Static("",    classes="rm_gap")
                 yield RadioGroup(states, id=f"{prefix}_r")
-        yield TextArea(id="nr_ul_myotome_notes", language="plain")
+        yield GridTextArea(id="nr_ul_myotome_notes", language="plain")
 
         # ── Upper Limb — Dermatomes ───────────────────────────────────────────
         yield Label("Upper Limb — Dermatomes", classes="subsection_header", id="nr_ul_dermatomes")
@@ -213,7 +213,7 @@ class NeurologicalSection(BaseSection):
                 yield RadioGroup(_DERM, id=f"{prefix}_l")
                 yield Static("",       classes="rm_gap")
                 yield RadioGroup(_DERM, id=f"{prefix}_r")
-        yield TextArea(id="nr_ul_derm_notes", language="plain")
+        yield GridTextArea(id="nr_ul_derm_notes", language="plain")
 
         # ── Upper Limb — Neurodynamics ────────────────────────────────────────
         yield Label("Upper Limb — Neurodynamics", classes="subsection_header", id="nr_ul_neurodynamics")
@@ -226,15 +226,15 @@ class NeurologicalSection(BaseSection):
             with Horizontal(classes="nd_row"):
                 yield Static(label, classes="nd_lbl")
                 if has_deg:
-                    yield Input(placeholder="°", id=f"{prefix}_l_deg", classes="nd_deg")
+                    yield GridInput(placeholder="°", id=f"{prefix}_l_deg", classes="nd_deg")
                     yield Static("", classes="nd_gap")
-                yield Input(placeholder="Response", id=f"{prefix}_l_resp", classes="nd_resp")
+                yield GridInput(placeholder="Response", id=f"{prefix}_l_resp", classes="nd_resp")
                 yield Static("", classes="nd_gap")
                 if has_deg:
-                    yield Input(placeholder="°", id=f"{prefix}_r_deg", classes="nd_deg")
+                    yield GridInput(placeholder="°", id=f"{prefix}_r_deg", classes="nd_deg")
                     yield Static("", classes="nd_gap")
-                yield Input(placeholder="Response", id=f"{prefix}_r_resp", classes="nd_resp")
-        yield TextArea(id="nr_ul_nd_notes", language="plain")
+                yield GridInput(placeholder="Response", id=f"{prefix}_r_resp", classes="nd_resp")
+        yield GridTextArea(id="nr_ul_nd_notes", language="plain")
 
         # ── Lower Limb — Reflexes ─────────────────────────────────────────────
         yield Label("Lower Limb — Reflexes", classes="subsection_header", id="nr_reflexes")
@@ -249,7 +249,7 @@ class NeurologicalSection(BaseSection):
                 yield RadioGroup(states, id=f"{prefix}_l", classes="rg-w8")
                 yield Static("",    classes="rm_gap")
                 yield RadioGroup(states, id=f"{prefix}_r", classes="rg-w8")
-        yield TextArea(id="nr_ll_reflex_notes", language="plain")
+        yield GridTextArea(id="nr_ll_reflex_notes", language="plain")
 
         # ── Lower Limb — Myotomes ─────────────────────────────────────────────
         yield Label("Lower Limb — Myotomes", classes="subsection_header", id="nr_myotomes")
@@ -264,7 +264,7 @@ class NeurologicalSection(BaseSection):
                 yield RadioGroup(states, id=f"{prefix}_l")
                 yield Static("",    classes="rm_gap")
                 yield RadioGroup(states, id=f"{prefix}_r")
-        yield TextArea(id="nr_ll_myotome_notes", language="plain")
+        yield GridTextArea(id="nr_ll_myotome_notes", language="plain")
 
         # ── Lower Limb — Dermatomes ───────────────────────────────────────────
         yield Label("Lower Limb — Dermatomes", classes="subsection_header", id="nr_dermatomes")
@@ -279,7 +279,7 @@ class NeurologicalSection(BaseSection):
                 yield RadioGroup(_DERM, id=f"{prefix}_l")
                 yield Static("",       classes="rm_gap")
                 yield RadioGroup(_DERM, id=f"{prefix}_r")
-        yield TextArea(id="nr_ll_derm_notes", language="plain")
+        yield GridTextArea(id="nr_ll_derm_notes", language="plain")
 
         # ── Lower Limb — Neurodynamics ────────────────────────────────────────
         yield Label("Lower Limb — Neurodynamics", classes="subsection_header", id="nr_neurodynamics")
@@ -292,78 +292,129 @@ class NeurologicalSection(BaseSection):
             with Horizontal(classes="nd_row"):
                 yield Static(label, classes="nd_lbl")
                 if has_deg:
-                    yield Input(placeholder="°", id=f"{prefix}_l_deg", classes="nd_deg")
+                    yield GridInput(placeholder="°", id=f"{prefix}_l_deg", classes="nd_deg")
                     yield Static("", classes="nd_gap")
-                yield Input(placeholder="Response", id=f"{prefix}_l_resp", classes="nd_resp")
+                yield GridInput(placeholder="Response", id=f"{prefix}_l_resp", classes="nd_resp")
                 yield Static("", classes="nd_gap")
                 if has_deg:
-                    yield Input(placeholder="°", id=f"{prefix}_r_deg", classes="nd_deg")
+                    yield GridInput(placeholder="°", id=f"{prefix}_r_deg", classes="nd_deg")
                     yield Static("", classes="nd_gap")
-                yield Input(placeholder="Response", id=f"{prefix}_r_resp", classes="nd_resp")
-        yield TextArea(id="nr_ll_nd_notes", language="plain")
+                yield GridInput(placeholder="Response", id=f"{prefix}_r_resp", classes="nd_resp")
+        yield GridTextArea(id="nr_ll_nd_notes", language="plain")
 
         # ── UMN Signs ─────────────────────────────────────────────────────────
         yield Label("UMN Signs", classes="subsection_header", id="nr_umn")
         with Horizontal(classes="umn_row"):
             for label, uid in _UMN_ITEMS:
                 yield FlagButton(label, id=uid)
-        yield TextArea(id="nr_umn_notes", language="plain")
+        yield GridTextArea(id="nr_umn_notes", language="plain")
 
         # ── General Notes ─────────────────────────────────────────────────────
         yield Label("General Notes:")
-        yield TextArea(id="nr_notes", language="plain")
+        yield GridTextArea(id="nr_notes", language="plain")
 
     # ------------------------------------------------------------------
-    # Grid navigation — up/down across reflex + myotome + dermatome rows
+    # Grid navigation — one continuous grid spanning the whole section:
+    # reflex/myotome/dermatome RadioGroup rows, neurodynamics GridInput
+    # rows, notes GridTextArea rows, and the UMN FlagButton row.
     # ------------------------------------------------------------------
+
+    def _add_rg_rows(self, rows_def) -> None:
+        for row_def in rows_def:
+            prefix = row_def[1]
+            row_idx = len(self._grid)
+            row = [f"{prefix}_l", f"{prefix}_r"]
+            self._grid.append(row)
+            for col_idx, rg_id in enumerate(row):
+                self._grid_pos[rg_id] = (row_idx, col_idx)
+
+    def _add_nd_rows(self, rows_def) -> None:
+        for _, prefix, has_deg in rows_def:
+            row_idx = len(self._grid)
+            if has_deg:
+                row = [f"{prefix}_l_deg", f"{prefix}_l_resp",
+                       f"{prefix}_r_deg", f"{prefix}_r_resp"]
+            else:
+                row = [f"{prefix}_l_resp", f"{prefix}_r_resp"]
+            self._grid.append(row)
+            for col_idx, wid in enumerate(row):
+                self._grid_pos[wid] = (row_idx, col_idx)
+
+    def _add_notes_row(self, notes_id: str) -> None:
+        self._grid_pos[notes_id] = (len(self._grid), 0)
+        self._grid.append([notes_id])
 
     def on_mount(self) -> None:
-        # Upper limb — reflexes + myotomes (3-tuple)
-        for _, prefix, _ in _UL_REFLEX_ROWS + _UL_MYOTOME_ROWS:
-            row_idx = len(self._grid)
-            row = [f"{prefix}_l", f"{prefix}_r"]
-            self._grid.append(row)
-            for col_idx, rg_id in enumerate(row):
-                self._grid_pos[rg_id] = (row_idx, col_idx)
-        # Upper limb — dermatomes (2-tuple)
-        for _, prefix in _UL_DERM_ROWS:
-            row_idx = len(self._grid)
-            row = [f"{prefix}_l", f"{prefix}_r"]
-            self._grid.append(row)
-            for col_idx, rg_id in enumerate(row):
-                self._grid_pos[rg_id] = (row_idx, col_idx)
-        # Lower limb — reflexes + myotomes (3-tuple)
-        for _, prefix, _ in _REFLEX_ROWS + _MYOTOME_ROWS:
-            row_idx = len(self._grid)
-            row = [f"{prefix}_l", f"{prefix}_r"]
-            self._grid.append(row)
-            for col_idx, rg_id in enumerate(row):
-                self._grid_pos[rg_id] = (row_idx, col_idx)
-        # Lower limb — dermatomes (2-tuple)
-        for _, prefix in _DERM_ROWS:
-            row_idx = len(self._grid)
-            row = [f"{prefix}_l", f"{prefix}_r"]
-            self._grid.append(row)
-            for col_idx, rg_id in enumerate(row):
-                self._grid_pos[rg_id] = (row_idx, col_idx)
+        self._add_rg_rows(_UL_REFLEX_ROWS)
+        self._add_notes_row("nr_ul_reflex_notes")
+        self._add_rg_rows(_UL_MYOTOME_ROWS)
+        self._add_notes_row("nr_ul_myotome_notes")
+        self._add_rg_rows(_UL_DERM_ROWS)
+        self._add_notes_row("nr_ul_derm_notes")
+        self._add_nd_rows(_UL_ND_ROWS)
+        self._add_notes_row("nr_ul_nd_notes")
+        self._add_rg_rows(_REFLEX_ROWS)
+        self._add_notes_row("nr_ll_reflex_notes")
+        self._add_rg_rows(_MYOTOME_ROWS)
+        self._add_notes_row("nr_ll_myotome_notes")
+        self._add_rg_rows(_DERM_ROWS)
+        self._add_notes_row("nr_ll_derm_notes")
+        self._add_nd_rows(_ND_ROWS)
+        self._add_notes_row("nr_ll_nd_notes")
+        umn_row_idx = len(self._grid)
+        umn_row = [uid for _, uid in _UMN_ITEMS]
+        self._grid.append(umn_row)
+        for col_idx, wid in enumerate(umn_row):
+            self._grid_pos[wid] = (umn_row_idx, col_idx)
+        self._add_notes_row("nr_umn_notes")
+        self._add_notes_row("nr_notes")
+
+    def _nav(self, fid: str, direction: str) -> bool:
+        if fid not in self._grid_pos:
+            return False
+        row, col = self._grid_pos[fid]
+        grid = self._grid
+        target_id = None
+        if direction == "up" and row > 0:
+            tc = min(col, len(grid[row - 1]) - 1)
+            target_id = grid[row - 1][tc]
+        elif direction == "down" and row < len(grid) - 1:
+            tc = min(col, len(grid[row + 1]) - 1)
+            target_id = grid[row + 1][tc]
+        elif direction == "left" and col > 0:
+            target_id = grid[row][col - 1]
+        elif direction == "right" and col < len(grid[row]) - 1:
+            target_id = grid[row][col + 1]
+        if target_id is None:
+            return False
+        try:
+            self.query_one(f"#{target_id}").focus()
+            return True
+        except Exception:
+            return False
 
     def on_key(self, event: events.Key) -> None:
         focused = self.app.focused
-        if not isinstance(focused, RadioGroup):
+        if not isinstance(focused, (RadioGroup, Button)):
             return
+        if isinstance(focused, RadioGroup) and event.key in ("left", "right"):
+            return  # RadioGroup handles its own left/right internally
         fid = focused.id or ""
         if fid not in self._grid_pos:
             return
-        if event.key not in ("up", "down"):
+        if event.key not in ("up", "down", "left", "right"):
             return
-        row, col = self._grid_pos[fid]
-        target_row = row - 1 if event.key == "up" else row + 1
-        if 0 <= target_row < len(self._grid):
-            try:
-                self.query_one(f"#{self._grid[target_row][col]}", RadioGroup).focus()
-                event.stop()
-            except Exception:
-                pass
+        if self._nav(fid, event.key):
+            event.stop()
+            event.prevent_default()
+
+    @on(GridInput.Navigate)
+    def _on_grid_navigate(self, event: GridInput.Navigate) -> None:
+        focused = self.app.focused
+        fid = focused.id if focused else ""
+        if fid in self._grid_pos:
+            self._nav(fid, event.direction)
+        event.stop()
 
     # ------------------------------------------------------------------
     # Field change → autosave

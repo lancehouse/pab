@@ -27,7 +27,7 @@ from textual.containers import Container, Horizontal, Vertical
 from textual.message import Message
 from textual.widgets import Label, Static, TextArea
 
-from ...widgets import CycleButton, GridInput, RadioGroup
+from ...widgets import CycleButton, GridInput, GridTextArea, RadioGroup
 from .active_movement import RangeCell, ROMRow
 from .ankle_tables import AnkleMuscleTables, AnklePassiveTables, AnkleTables
 from .cervical_tables import CervicalMuscleTables, CervicalPassiveTables, CervicalTables
@@ -109,7 +109,24 @@ class ROMGroupWidget(Static):
             )
         if self._notes_id:
             yield Label("Comment:")
-            yield TextArea(id=self._notes_id, language="plain")
+            yield GridTextArea(id=self._notes_id, language="plain")
+
+    def grid_rows(self) -> list[list[str]]:
+        """Row ids for RegionContainer's cross-group nav grid, in DOM order."""
+        rows: list[list[str]] = []
+        for row in self._group.get("rows", []):
+            prefix = row["id"]
+            bilateral = row.get("bilateral", False)
+            cols = [f"{prefix}_ax_l_range"]
+            if not bilateral:
+                cols.append(f"{prefix}_ax_r_range")
+            cols.append(f"{prefix}_reax_l_range")
+            if not bilateral:
+                cols.append(f"{prefix}_reax_r_range")
+            rows.append(cols)
+        if self._notes_id:
+            rows.append([self._notes_id])
+        return rows
 
     def collect(self) -> dict:
         data: dict = {}
@@ -303,31 +320,49 @@ class SpecialTestsWidget(Static):
                 yield RadioGroup(gang, id=self._rg_id(row["id"]))
         if self._notes_id:
             yield Label("Notes:")
-            yield TextArea(id=self._notes_id, language="plain")
+            yield GridTextArea(id=self._notes_id, language="plain")
 
     def on_mount(self) -> None:
         for idx, row in enumerate(self._rows):
             rg_id = self._rg_id(row["id"])
             self._grid.append(rg_id)
             self._grid_pos[rg_id] = idx
+        if self._notes_id:
+            self._grid_pos[self._notes_id] = len(self._grid)
+            self._grid.append(self._notes_id)
+
+    def _focus_by_index(self, direction: str, fid: str) -> bool:
+        if fid not in self._grid_pos:
+            return False
+        idx = self._grid_pos[fid]
+        target = idx - 1 if direction == "up" else idx + 1
+        if 0 <= target < len(self._grid):
+            try:
+                self.query_one(f"#{self._grid[target]}").focus()
+                return True
+            except Exception:
+                return False
+        return False
 
     def on_key(self, event) -> None:
         focused = self.app.focused
         if not isinstance(focused, RadioGroup):
             return
-        fid = focused.id or ""
-        if fid not in self._grid_pos:
-            return
         if event.key not in ("up", "down"):
             return
-        idx = self._grid_pos[fid]
-        target = idx - 1 if event.key == "up" else idx + 1
-        if 0 <= target < len(self._grid):
-            try:
-                self.query_one(f"#{self._grid[target]}", RadioGroup).focus()
-                event.stop()
-            except Exception:
-                pass
+        fid = focused.id or ""
+        if fid in self._grid_pos and self._focus_by_index(event.key, fid):
+            event.stop()
+
+    @on(GridInput.Navigate)
+    def _on_grid_navigate(self, event: GridInput.Navigate) -> None:
+        if event.direction not in ("up", "down"):
+            return
+        focused = self.app.focused
+        fid = focused.id if focused else ""
+        if fid in self._grid_pos:
+            self._focus_by_index(event.direction, fid)
+        event.stop()
 
     def collect(self) -> dict:
         data: dict = {}
@@ -429,7 +464,7 @@ class BilateralGridSpecialTestsWidget(Static):
                             yield CycleButton(self._STATES, id=f"st_{right['id']}_r")
         if self._notes_id:
             yield Label("Notes:")
-            yield TextArea(id=self._notes_id, language="plain")
+            yield GridTextArea(id=self._notes_id, language="plain")
 
     def on_mount(self) -> None:
         for group in self._groups:
@@ -443,6 +478,22 @@ class BilateralGridSpecialTestsWidget(Static):
                 for btn_id in btn_ids:
                     self._grid_pos[btn_id] = len(self._grid)
                     self._grid.append(btn_id)
+        if self._notes_id:
+            self._grid_pos[self._notes_id] = len(self._grid)
+            self._grid.append(self._notes_id)
+
+    def _focus_by_index(self, direction: str, fid: str) -> bool:
+        if fid not in self._grid_pos:
+            return False
+        idx = self._grid_pos[fid]
+        target = idx - 1 if direction == "up" else idx + 1
+        if 0 <= target < len(self._grid):
+            try:
+                self.query_one(f"#{self._grid[target]}").focus()
+                return True
+            except Exception:
+                return False
+        return False
 
     def on_key(self, event) -> None:
         focused = self.app.focused
@@ -451,14 +502,18 @@ class BilateralGridSpecialTestsWidget(Static):
             return
         if event.key not in ("up", "down"):
             return
-        idx = self._grid_pos[fid]
-        target = idx - 1 if event.key == "up" else idx + 1
-        if 0 <= target < len(self._grid):
-            try:
-                self.query_one(f"#{self._grid[target]}").focus()
-                event.stop()
-            except Exception:
-                pass
+        if self._focus_by_index(event.key, fid):
+            event.stop()
+
+    @on(GridInput.Navigate)
+    def _on_grid_navigate(self, event: GridInput.Navigate) -> None:
+        if event.direction not in ("up", "down"):
+            return
+        focused = self.app.focused
+        fid = focused.id if focused else ""
+        if fid in self._grid_pos:
+            self._focus_by_index(event.direction, fid)
+        event.stop()
 
     def collect(self) -> dict:
         data: dict = {}
@@ -525,6 +580,8 @@ class RegionContainer(Static):
         self._extras_class: Type | None = REGION_EXTRAS.get((region_id, section_key))
         self._loading = False
         self._notes_ids: list[str] = []
+        self._nav_grid: list[list[str]] = []
+        self._nav_grid_pos: dict[str, tuple[int, int]] = {}
 
     def compose(self) -> ComposeResult:
         label = self._yaml.get("label", self._region_id.upper())
@@ -572,6 +629,52 @@ class RegionContainer(Static):
                 yield SpecialTestsWidget(
                     section_def, id=f"sptests_{self._region_id}"
                 )
+
+    # ── Cross-widget arrow-key nav (Active Movement only for now) ──────────────
+
+    def on_mount(self) -> None:
+        if self._section_key != "active":
+            return
+        for widget in self.query(ROMGroupWidget):
+            for row in widget.grid_rows():
+                row_idx = len(self._nav_grid)
+                self._nav_grid.append(row)
+                for col_idx, wid in enumerate(row):
+                    self._nav_grid_pos[wid] = (row_idx, col_idx)
+
+    def _nav(self, fid: str, direction: str) -> bool:
+        if fid not in self._nav_grid_pos:
+            return False
+        row, col = self._nav_grid_pos[fid]
+        grid = self._nav_grid
+        target_id = None
+        if direction == "up" and row > 0:
+            tc = min(col, len(grid[row - 1]) - 1)
+            target_id = grid[row - 1][tc]
+        elif direction == "down" and row < len(grid) - 1:
+            tc = min(col, len(grid[row + 1]) - 1)
+            target_id = grid[row + 1][tc]
+        elif direction == "left" and col > 0:
+            target_id = grid[row][col - 1]
+        elif direction == "right" and col < len(grid[row]) - 1:
+            target_id = grid[row][col + 1]
+        if target_id is None:
+            return False
+        try:
+            self.query_one(f"#{target_id}").focus()
+            return True
+        except Exception:
+            return False
+
+    @on(GridInput.Navigate)
+    def _on_grid_navigate(self, event: GridInput.Navigate) -> None:
+        if not self._nav_grid_pos:
+            return
+        focused = self.app.focused
+        fid = focused.id if focused else ""
+        if fid in self._nav_grid_pos:
+            self._nav(fid, event.direction)
+            event.stop()
 
     # ── Event handlers ────────────────────────────────────────────────────────
 

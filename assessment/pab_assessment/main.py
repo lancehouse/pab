@@ -2,7 +2,9 @@
 
 import sys
 import asyncio
+import faulthandler
 import logging
+import signal
 import subprocess
 import time as _time
 from pathlib import Path
@@ -269,8 +271,51 @@ def main():
             session_path = args[i + 1]
             break
 
+    # Diagnostics for a crash that leaves no Python traceback anywhere (the
+    # _exception check below covers Textual's own exception handling, but
+    # not a hang or a hard/segfault-level exit — both are still invisible
+    # otherwise since bodychart/src/integration.c destroys the VTE window
+    # the instant this process exits, before any output could be read).
+    # faulthandler.enable() dumps a real traceback to this file on a
+    # segfault/fatal signal; dump_traceback_later dumps one if the process
+    # is still alive-but-stuck 5s from now (cancelled below on any normal
+    # exit, so a healthy run leaves this file empty).
+    fault_log = open("/tmp/pab_fault.log", "w")
+    faulthandler.enable(file=fault_log)
+    faulthandler.dump_traceback_later(5, file=fault_log)
+    # Also dump on an external signal-based kill (SIGTERM/SIGHUP) — these
+    # skip faulthandler.enable()'s fatal-signal handler (that only covers
+    # SIGSEGV/SIGABRT/SIGBUS/SIGFPE/SIGILL) and skip Python exception
+    # handling entirely, so without this a kill from outside the process
+    # (e.g. the GTK/VTE side) would look identical to a clean exit here.
+    faulthandler.register(signal.SIGTERM, file=fault_log)
+    faulthandler.register(signal.SIGHUP, file=fault_log)
+
     app = PhysioAssessment(session_path=session_path)
-    app.run()
+    try:
+        app.run()
+    except Exception:
+        # Belt-and-braces: exceptions escaping run() itself (rare — see the
+        # _exception check below for the actual common case).
+        logging.getLogger(__name__).exception("Unhandled exception, app exiting")
+        raise
+    finally:
+        faulthandler.cancel_dump_traceback_later()
+    if app._exception is not None:
+        # Textual's App._handle_exception() (any unhandled exception in a
+        # message handler or worker) sets self._exception and exits the app
+        # WITHOUT raising it back to run() — that re-raise only happens
+        # inside run_test(), for test frameworks (see textual/app.py's
+        # run_test(), "so test frameworks are aware"). Production run() just
+        # returns normally, so this was previously invisible here. It's also
+        # invisible in the terminal itself: bodychart/src/integration.c
+        # destroys the VTE window the instant this process exits
+        # (on_tui_child_exited), before anyone could read the printed
+        # traceback off it. Log it explicitly so it survives.
+        logging.getLogger(__name__).error(
+            "App exited via unhandled exception (return_code=%s): %r",
+            app.return_code, app._exception, exc_info=app._exception,
+        )
 
 
 if __name__ == "__main__":

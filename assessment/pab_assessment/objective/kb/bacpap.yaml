@@ -87,29 +87,104 @@ bacpap_after:
     or thermal allodynia assessment. Positive = pain outlasts the stimulus.
   note: "Can follow any one of the three allodynia assessments above."
 
-bacpap_hx:
-  label: "Step 6 — History of Hypersensitivity"
+bacpap_hyper_touch:
+  label: "Step 6 — History of Hypersensitivity: Touch"
   purpose: >
-    Self-reported hypersensitivity to touch, movement, pressure, heat, or
-    cold in the lower back region.
+    Self-reported hypersensitivity to touch in the lower back region.
   assess: >
-    Ask about: clothing/belts/handbags unpleasant against skin; pain flares
-    with warm/cold bath or shower; pain with low-intensity activities such as
-    walking, gardening, or grocery shopping.
+    Ask about: clothing/belts/handbags unpleasant against skin.
   note: >
+    Criterion met if ANY ONE of the 5 hypersensitivity items is present.
     Nociplastic = unpredictable, disproportionate to movement intensity.
     Nociceptive/neuropathic = predictable and proportionate.
 
-bacpap_comorbid:
-  label: "Step 7 — Comorbid Symptoms"
+bacpap_hyper_movement:
+  label: "Step 6 — History of Hypersensitivity: Movement"
   purpose: >
-    Central sensitisation signature symptoms beyond the LBP region.
-    Criterion met if ANY ONE is present.
+    Self-reported hypersensitivity to movement in the lower back region.
   assess: >
-    Screen for: increased sensitivity to sound, light, or odours; sleep
-    disturbance with frequent nocturnal awakenings; fatigue; cognitive
-    difficulties (concentration, "brain fog").
-    Tool: CSI (reliable/valid for chronic LBP — not gold standard for CS).
+    Ask about pain with low-intensity activities such as walking, gardening,
+    or grocery shopping.
   note: >
+    Criterion met if ANY ONE of the 5 hypersensitivity items is present.
+    Nociplastic = unpredictable, disproportionate to movement intensity.
+    Nociceptive/neuropathic = predictable and proportionate.
+
+bacpap_hyper_pressure:
+  label: "Step 6 — History of Hypersensitivity: Pressure"
+  purpose: >
+    Self-reported hypersensitivity to pressure in the lower back region.
+  assess: >
+    Ask about clothing/belts/handbags unpleasant against skin, or discomfort
+    from light manual pressure.
+  note: >
+    Criterion met if ANY ONE of the 5 hypersensitivity items is present.
+    Nociplastic = unpredictable, disproportionate to movement intensity.
+    Nociceptive/neuropathic = predictable and proportionate.
+
+bacpap_hyper_heat:
+  label: "Step 6 — History of Hypersensitivity: Heat"
+  purpose: >
+    Self-reported hypersensitivity to heat in the lower back region.
+  assess: >
+    Ask whether pain flares with a warm bath or shower.
+  note: >
+    Criterion met if ANY ONE of the 5 hypersensitivity items is present.
+    Nociplastic = unpredictable, disproportionate to movement intensity.
+    Nociceptive/neuropathic = predictable and proportionate.
+
+bacpap_hyper_cold:
+  label: "Step 6 — History of Hypersensitivity: Cold"
+  purpose: >
+    Self-reported hypersensitivity to cold in the lower back region.
+  assess: >
+    Ask whether pain flares with a cold bath or shower.
+  note: >
+    Criterion met if ANY ONE of the 5 hypersensitivity items is present.
+    Nociplastic = unpredictable, disproportionate to movement intensity.
+    Nociceptive/neuropathic = predictable and proportionate.
+
+bacpap_como_sensory:
+  label: "Step 7 — Comorbid Symptoms: Light/Sound/Odour Sensitivity"
+  purpose: >
+    Central sensitisation signature symptom beyond the LBP region.
+  assess: >
+    Screen for increased sensitivity to sound, light, or odours.
+  note: >
+    Criterion met if ANY ONE of the 4 comorbid items is present.
+    Tool: CSI (reliable/valid for chronic LBP — not gold standard for CS).
+    Steps 1–7 all met = probable nociplastic LBP.
+
+bacpap_como_sleep:
+  label: "Step 7 — Comorbid Symptoms: Sleep Disturbance"
+  purpose: >
+    Central sensitisation signature symptom beyond the LBP region.
+  assess: >
+    Screen for sleep disturbance with frequent nocturnal awakenings.
+  note: >
+    Criterion met if ANY ONE of the 4 comorbid items is present.
+    Tool: CSI (reliable/valid for chronic LBP — not gold standard for CS).
+    Steps 1–7 all met = probable nociplastic LBP.
+
+bacpap_como_fatigue:
+  label: "Step 7 — Comorbid Symptoms: Fatigue"
+  purpose: >
+    Central sensitisation signature symptom beyond the LBP region.
+  assess: >
+    Screen for fatigue.
+  note: >
+    Criterion met if ANY ONE of the 4 comorbid items is present.
+    Tool: CSI (reliable/valid for chronic LBP — not gold standard for CS).
+    Steps 1–7 all met = probable nociplastic LBP.
+
+bacpap_como_cognitive:
+  label: "Step 7 — Comorbid Symptoms: Cognitive Problems"
+  purpose: >
+    Central sensitisation signature symptom beyond the LBP region.
+  assess: >
+    Screen for cognitive difficulties (concentration, "brain fog").
+  note: >
+    Criterion met if ANY ONE of the 4 comorbid items is present.
+    Tool: CSI (reliable/valid for chronic LBP — not gold standard for CS).
     Steps 1–7 all met = probable nociplastic LBP.
     Steps 1–5 met, step 6 or 7 absent = possible nociplastic LBP.

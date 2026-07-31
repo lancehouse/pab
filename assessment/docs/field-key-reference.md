@@ -226,8 +226,15 @@ dynamically by the search index. They have IDs beginning with `rf_`, `cvd_`,
 | `bacpap_dynamic` | BACPAP: Dynamic mechanical allodynia |
 | `bacpap_thermal` | BACPAP: Heat or cold allodynia |
 | `bacpap_after` | BACPAP: Painful after-sensations |
-| `bacpap_hx` | BACPAP: History of hypersensitivity |
-| `bacpap_comorbid` | BACPAP: ≥1 comorbid symptom present |
+| `bacpap_hyper_touch` | BACPAP: Hypersensitivity — touch |
+| `bacpap_hyper_movement` | BACPAP: Hypersensitivity — movement |
+| `bacpap_hyper_pressure` | BACPAP: Hypersensitivity — pressure |
+| `bacpap_hyper_heat` | BACPAP: Hypersensitivity — heat |
+| `bacpap_hyper_cold` | BACPAP: Hypersensitivity — cold |
+| `bacpap_como_sensory` | BACPAP: Comorbid — light/sound/odour sensitivity |
+| `bacpap_como_sleep` | BACPAP: Comorbid — sleep disturbance |
+| `bacpap_como_fatigue` | BACPAP: Comorbid — fatigue |
+| `bacpap_como_cognitive` | BACPAP: Comorbid — cognitive problems |
 | `bacpap_notes` | BACPAP: Clinician notes |
 | `summary_contributing` | Contributing factor summary |
 | `summary_reasoning` | Pain classification reasoning |
@@ -288,16 +295,62 @@ dynamically by the search index. They have IDs beginning with `rf_`, `cvd_`,
 
 ## 06 Diagnosis
 
+CAL-CP (ICD-11 Chronic Pain Classification Algorithm, Korwisi et al 2021) walker
+— see `sections/diagnosis.py` and `cal_cp_model.py`. One independent workup per
+pain site; storage shape and live widget ids are both dynamic (a workup count
+that varies at runtime), not a fixed field list, so this section documents the
+*shape* rather than individual keys.
+
+**Storage** (`diagnosis` in `_assessment.json`):
+
 | Key | Description |
 |---|---|
-| `surgical_procedure` | Surgical procedure description |
-| `surgical_source` | Surgical pain source |
-| `traumatic_event` | Traumatic event description |
-| `traumatic_source` | Traumatic pain source |
-| `msk_pathology` | MSK pathology description |
-| `msk_source` | MSK pain source |
-| `neuro_lesion` | Neurological lesion description |
-| `mixed_reasoning` | Mixed pain — reasoning |
+| `workups` | List of workup dicts, one per pain site (see below) |
+| `legacy` | Pre-CAL-CP free-form fields, preserved verbatim if present (old `mechanism`/`primary_subtype`/etc — see "Legacy fields" below). Never written to by the current UI; only ever read back for display. |
+
+**Workup dict** (`Workup.to_dict()` in `cal_cp_model.py`):
+
+| Key | Description |
+|---|---|
+| `id` | Workup id, e.g. `"w1"`, `"w2"` — also the namespace suffix for that workup's widget ids (see below) |
+| `label` | Site label, e.g. `"Left knee"` — shown as the tab title |
+| `intro_done` | Whether the p6 chronic pain specifier form has been completed and the trunk walk started |
+| `intro` | Dict of specifier answers: `onset_date`, `nrs_intensity`, `distress`, `interference`, `temporal_pattern` |
+| `current_node_id` | Graph node id (e.g. `"n34"`) the walk is currently at |
+| `path` | List of `{node_id, answer, merged}` steps taken so far |
+| `finished` | Whether this workup has reached a diagnosis/terminal node |
+| `result_summary` | Final ICD-11 code + name once finished, e.g. `"MG30.01 — Chronic widespread pain"` |
+
+**Live widget ids** — every queryable widget is namespaced `<base>__<workup_id>`
+since Textual keeps every workup's tab content mounted simultaneously (only the
+active tab is visually hidden, not unmounted), so a plain id would collide the
+instant a second workup existed:
+
+| Base id | Description |
+|---|---|
+| `dx_add_workup` | "+ New workup" button (not namespaced — section-level) |
+| `dx_node_box__<wid>` | Current trunk question / diagnosis display |
+| `dx_restart__<wid>` | Restart this workup's walk |
+| `dx_intro_start__<wid>` | "Start decision trunk" button |
+| `dx_intro_label__<wid>` | Intro form: site label |
+| `dx_intro_onset_date__<wid>` | Intro form: onset (MM/YYYY) |
+| `dx_intro_nrs_intensity__<wid>` | Intro form: pain intensity NRS |
+| `dx_intro_distress__<wid>` | Intro form: distress NRS |
+| `dx_intro_interference__<wid>` | Intro form: interference NRS |
+| `dx_intro_temporal__<wid>` | Intro form: temporal pattern (RadioSet) |
+
+**Legacy fields** (pre-CAL-CP, `diagnosis.legacy.*` — read-only, never written by
+current code; documented here only because old sessions may still carry them):
+
+| Key | Description |
+|---|---|
+| `mechanism` | Pain mechanism selection |
+| `primary_subtype` / `primary_severity` | Chronic primary pain subtype/severity |
+| `surgical_procedure` / `surgical_source` / `surgical_subtype` / `surgical_severity` | Post-surgical pain fields |
+| `traumatic_event` / `traumatic_source` / `traumatic_subtype` / `traumatic_severity` | Post-traumatic pain fields |
+| `msk_pathology` / `msk_source` / `msk_subtype` / `msk_severity` | Secondary MSK pain fields |
+| `neuro_lesion` / `neuro_subtype` / `neuro_severity` | Neuropathic pain fields |
+| `mixed_dominant` / `mixed_reasoning` | Mixed/indeterminate pain fields |
 
 ---
 
@@ -866,7 +919,6 @@ Field IDs: `sh_acc_{direction}_{side}_{type}` — direction: `inf`, `post`, `ant
 | Left field | Right field | Notes |
 |---|---|---|
 | `hp_flex_ax_l_range` | `hp_flex_ax_r_range` | Flexion range (°) |
-| `hp_flex_ax_l_ps` | `hp_flex_ax_r_ps` | Pain/Stiff qualifier |
 | `hp_ext_ax_l_range` | `hp_ext_ax_r_range` | Extension range |
 | `hp_abd_ax_l_range` | `hp_abd_ax_r_range` | Abduction range |
 | `hp_add_ax_l_range` | `hp_add_ax_r_range` | Adduction range |
